@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>三人輪班更期對照系統</title>
+  <style>
+    :root {
+      --primary-color: #2c3e50;
+      --accent-color: #3498db;
+      --off-bg: #ffeaa7;
+      --night-bg: #dfe6e9;
+      --today-highlight: #fdcb6e;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 0;
+      padding: 15px;
+      background-color: #f8f9fa;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      color: var(--primary-color);
+      font-size: 1.5rem;
+      margin-bottom: 20px;
+    }
+    .status-bar {
+      background: white;
+      padding: 12px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      margin-bottom: 15px;
+      text-align: center;
+      font-size: 0.9rem;
+    }
+    .person-card {
+      background: white;
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.08);
+      border-top: 5px solid var(--accent-color);
+    }
+    .person-card:nth-child(2) { border-top-color: #e84393; }
+    .person-card:nth-child(3) { border-top-color: #00b894; }
+    
+    .person-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .person-name {
+      font-size: 1.2rem;
+      font-weight: bold;
+    }
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    select {
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 0.9rem;
+      background: #fdfdfd;
+    }
+    
+    .table-container {
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: center;
+      font-size: 0.85rem;
+    }
+    th, td {
+      padding: 8px 4px;
+      border: 1px solid #e0e0e0;
+    }
+    th {
+      background-color: #f1f2f6;
+      color: #57606f;
+    }
+    .row-active {
+      background-color: #e3f2fd;
+      font-weight: bold;
+    }
+    .cell-today {
+      background-color: var(--today-highlight) !important;
+      border: 2px solid #e1701a !important;
+      font-weight: bold;
+      position: relative;
+      box-shadow: inset 0 0 5px rgba(0,0,0,0.2);
+    }
+    .cell-today::after {
+      content: " ★今日";
+      font-size: 0.65rem;
+      color: #d63031;
+      display: block;
+    }
+    .shift-off {
+      background-color: var(--off-bg);
+      color: #d63031;
+    }
+    .shift-night {
+      background-color: var(--night-bg);
+    }
+  </style>
+
+  <!-- SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+    import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+    // Firebase 配置
+    const firebaseConfig = {
+      apiKey: "AIzaSyBR6sSm99LLA7k7x6bzqMRsKHP7lBLNnnM",
+      authDomain: "three-mum.firebaseapp.com",
+      projectId: "three-mum",
+      storageBucket: "three-mum.firebasestorage.app",
+      messagingSenderId: "759414785710",
+      appId: "1:759414785710:web:6ae6f93040be6325898f3f",
+      measurementId: "G-QFKQMNB71B"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // 班表資料
+    const ROSTERS = {
+      group2: {
+        name: "2組 (12行)",
+        totalRows: 12,
+        data: [
+          ["N (10-8)", "R", "W", "1-11", "1-9", "9-6", "9-4"],
+          ["9-5", "N (10-8)", "R", "W", "1-11", "1-9", "9-5"],
+          ["9-5", "9-5", "1-9", "9-5", "9-5", "9-1", "W"],
+          ["8-4", "9-5", "N (10-8)", "R", "W", "1-11", "1-9"],
+          ["9-6", "8-4", "9-4", "N (10-8)", "R", "W", "1-11"],
+          ["1-9", "9-6", "8-4", "9-5", "4-11", "W", "9-1"],
+          ["3-11", "9-5", "9-6", "9-6", "N (10-8)", "R", "W"],
+          ["8-4", "8-4", "8-4", "8-4", "8-4", "9-1", "W"],
+          ["1-11", "1-9", "W", "8-5", "9-4", "N (10-8)", "R"],
+          ["W", "1-11", "5-10", "9-1", "8-4", "9-4", "N (10-8)"],
+          ["R", "W", "1-11", "1-9", "9-6", "8-5", "8-4"],
+          ["W", "1-9", "1-9", "9-4", "9-1", "8-5", "8-4"]
+        ]
+      },
+      group3: {
+        name: "3組 (14行)",
+        totalRows: 14,
+        data: [
+          ["N (10-8)", "R", "W", "9-5", "9-5", "1-11", "2-10"],
+          ["W", "9-6", "8-5", "9-5", "1-10", "1-10", "W"],
+          ["9-6", "2-10", "1-11", "N (10-8)", "R", "W", "9-4"],
+          ["9-4", "9-5", "8-4", "9-1", "8-5", "9-5", "W"],
+          ["1-10", "N (10-8)", "R", "W", "8-4", "8-5", "9-5"],
+          ["9-5", "3-11", "3-11", "W", "8-4", "9-5", "9-1"],
+          ["4-11", "1-11", "N (10-8)", "R", "W", "9-6", "9-5"],
+          ["9-6", "8-1", "9-4", "3-11", "1-11", "W", "8-1"],
+          ["8-4", "9-6", "10-5", "1-11", "N (10-8)", "R", "W"],
+          ["2-11", "3-10", "9-1", "9-6", "8-4", "9-4", "W"],
+          ["9-5", "9-4", "9-6", "W", "1-11", "N (10-8)", "R"],
+          ["W", "8-4", "9-4", "9-5", "9-4", "8-4", "4-10"],
+          ["1-10", "W", "9-4", "9-4", "10-5", "9-1", "N (10-8)"],
+          ["R", "W", "8-4", "8-4", "9-6", "1-10", "1-11"]
+        ]
+      },
+      group4: {
+        name: "4組 (5行)",
+        totalRows: 5,
+        data: [
+          ["8-1", "9-4", "9-5", "8-4", "W", "4-11", "1-10"],
+          ["9-5", "9-5", "9-5", "2-10", "9-1", "W", "8-4"],
+          ["9-4", "8-1", "W", "8-4", "9-5", "1-11", "5-11"],
+          ["10-5", "9-1", "1-11", "5-11", "W", "9-6", "9-5"],
+          ["8-4", "10-5", "9-6", "1-11", "4-10", "9-1", "W"]
+        ]
+      }
+    };
+
+    // 成員預設配置
+    let membersState = {
+      sasa: { group: 'group2', currentRow: 1 },
+      kit: { group: 'group3', currentRow: 1 },
+      sister: { group: 'group4', currentRow: 1 }
+    };
+
+    // 取得今天星期幾 (0是週日, 1是週一 ... 6是週六)
+    function getTodayDayIndex() {
+      const day = new Date().getDay();
+      return day === 0 ? 6 : day - 1; // 轉為 0=MON, 6=SUN
+    }
+
+    const todayIndex = getTodayDayIndex();
+
+    // 渲染 UI
+    function renderApp() {
+      const container = document.getElementById('app');
+      container.innerHTML = '';
+
+      const memberNames = { sasa: 'sasa', kit: 'kit', sister: '姐姐' };
+
+      Object.keys(membersState).forEach(id => {
+        const member = membersState[id];
+        const roster = ROSTERS[member.group];
+
+        let html = `
+          <div class="person-card">
+            <div class="person-header">
+              <div class="person-name">${memberNames[id]}</div>
+              <div class="controls">
+                <label>更期組別：</label>
+                <select onchange="updateMember('${id}', 'group', this.value)">
+                  <option value="group2" ${member.group === 'group2' ? 'selected' : ''}>2組 (12行)</option>
+                  <option value="group3" ${member.group === 'group3' ? 'selected' : ''}>3組 (14行)</option>
+                  <option value="group4" ${member.group === 'group4' ? 'selected' : ''}>4組 (5行)</option>
+                </select>
+                
+                <label>本週處於：</label>
+                <select onchange="updateMember('${id}', 'currentRow', parseInt(this.value))">
+        `;
+
+        for (let i = 1; i <= roster.totalRows; i++) {
+          html += `<option value="${i}" ${member.currentRow === i ? 'selected' : ''}>第 ${i} 行</option>`;
+        }
+
+        html += `
+                </select>
+              </div>
+            </div>
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>行數</th>
+                    <th>MON</th><th>TUE</th><th>WED</th><th>THU</th><th>FRI</th><th>SAT</th><th>SUN</th>
+                  </tr>
+                </thead>
+                <tbody>
+        `;
+
+        roster.data.forEach((row, idx) => {
+          const rowNum = idx + 1;
+          const isActiveRow = rowNum === member.currentRow;
+          html += `<tr class="${isActiveRow ? 'row-active' : ''}">`;
+          html += `<td><b>第 ${rowNum} 行</b></td>`;
+
+          row.forEach((shift, dayIdx) => {
+            const isToday = isActiveRow && dayIdx === todayIndex;
+            let classList = [];
+            if (isToday) classList.push('cell-today');
+            if (shift === 'W' || shift === 'R') classList.push('shift-off');
+            if (shift.startsWith('N')) classList.push('shift-night');
+
+            html += `<td class="${classList.join(' ')}">${shift}</td>`;
+          });
+
+          html += `</tr>`;
+        });
+
+        html += `
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `;
+
+        container.innerHTML += html;
+      });
+    }
+
+    // 更新並同步到 Firebase
+    window.updateMember = async (id, key, value) => {
+      membersState[id][key] = value;
+      if (key === 'group') {
+        membersState[id].currentRow = 1; // 切換組別時重置為第 1 行
+      }
+      renderApp();
+      
+      // 存入 Firebase
+      try {
+        await setDoc(doc(db, "roster_config", "current"), membersState);
+      } catch (e) {
+        console.error("Firebase 同步失敗:", e);
+      }
+    };
+
+    // 即時監聽 Firebase 資料庫變化
+    onSnapshot(doc(db, "roster_config", "current"), (docSnap) => {
+      if (docSnap.exists()) {
+        membersState = docSnap.data();
+        renderApp();
+      } else {
+        renderApp();
+      }
+    });
+
+  </script>
+</head>
+<body>
+
+  <h1>三人輪班更期對照系統</h1>
+  <div class="status-bar">
+    💡 選擇每個人「本週處於第幾行」，系統會即時用 <span style="background-color: var(--today-highlight); padding: 2px 6px; border-radius: 4px; font-weight: bold;">黃框+★星號</span> 標示今日班次。
+  </div>
+
+  <div id="app">載入中...</div>
+
+</body>
+</html>
