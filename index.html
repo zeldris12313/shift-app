@@ -126,15 +126,26 @@
     .controls {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       flex-wrap: wrap;
+      font-size: 0.85rem;
     }
     select, input[type="number"], input[type="date"] {
-      padding: 6px 8px;
+      padding: 5px 8px;
       border-radius: 6px;
       border: 1px solid #ccc;
       font-size: 0.85rem;
       background: #fdfdfd;
+    }
+
+    .custom-today-box {
+      background: #e3f2fd;
+      border: 1px dashed #3498db;
+      padding: 4px 8px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
     .calc-box {
@@ -144,18 +155,22 @@
       margin-bottom: 12px;
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
       flex-wrap: wrap;
       font-size: 0.85rem;
     }
-    .calc-box button {
+    .calc-box button, .controls button {
       background: var(--accent-color);
       color: white;
       border: none;
-      padding: 6px 12px;
+      padding: 5px 10px;
       border-radius: 6px;
       cursor: pointer;
       font-weight: bold;
+      font-size: 0.8rem;
+    }
+    .btn-reset {
+      background: #e74c3c !important;
     }
     .calc-result {
       background: #eef2f7;
@@ -290,33 +305,44 @@
     };
 
     let membersState = {
-      sasa: { group: 'group2', currentRow: 1, calcDays: 0, calcDate: '', resultText: '' },
-      kit: { group: 'group3', currentRow: 1, calcDays: 0, calcDate: '', resultText: '' },
-      sister: { group: 'group4', currentRow: 1, calcDays: 0, calcDate: '', resultText: '' }
+      sasa: { group: 'group2', currentRow: 1, customToday: '', calcDays: 0, calcDate: '', resultText: '' },
+      kit: { group: 'group3', currentRow: 1, customToday: '', calcDays: 0, calcDate: '', resultText: '' },
+      sister: { group: 'group4', currentRow: 1, customToday: '', calcDays: 0, calcDate: '', resultText: '' }
     };
 
     let matchFilter = {
-      type: 'all', // 'all', 'off', 'early'
+      type: 'all',
       daysLimit: 30
     };
 
-    function getTodayIndex() {
-      const day = new Date().getDay();
+    const dayNames = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
+
+    // 取得指定成員的「今日」日期物件（考慮自訂今日）
+    function getMemberBaseDate(member) {
+      if (member.customToday) {
+        const parts = member.customToday.split('-');
+        return new Date(parts[0], parts[1] - 1, parts[2]);
+      }
+      return new Date();
+    }
+
+    // 取得指定成員「今日」落在星期幾 (0: MON, ..., 6: SUN)
+    function getMemberTodayIndex(member) {
+      const baseDate = getMemberBaseDate(member);
+      const day = baseDate.getDay();
       return day === 0 ? 6 : day - 1;
     }
 
-    const todayIndex = getTodayIndex();
-    const dayNames = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
-
-    function calculateFutureShift(baseRow, totalRows, addDays) {
-      const todayIdx = getTodayIndex();
+    function calculateFutureShiftForMember(member, addDays) {
+      const roster = ROSTERS[member.group];
+      const todayIdx = getMemberTodayIndex(member);
       const totalDayOffset = todayIdx + addDays;
       let targetDayIdx = totalDayOffset % 7;
       if (targetDayIdx < 0) targetDayIdx += 7;
 
       const weekOffset = Math.floor(totalDayOffset / 7);
-      let targetRow = ((baseRow - 1 + weekOffset) % totalRows) + 1;
-      if (targetRow <= 0) targetRow += totalRows;
+      let targetRow = ((member.currentRow - 1 + weekOffset) % roster.totalRows) + 1;
+      if (targetRow <= 0) targetRow += roster.totalRows;
 
       return { targetRow, targetDayIdx };
     }
@@ -332,23 +358,26 @@
     // 計算未來共同假期與早班食飯日
     function findCommonMatches() {
       const matches = [];
-      const today = new Date();
+      const realToday = new Date();
 
       for (let offset = 0; offset < matchFilter.daysLimit; offset++) {
         const currentDate = new Date();
-        currentDate.setDate(today.getDate() + offset);
+        currentDate.setDate(realToday.getDate() + offset);
 
-        const dateStr = `${currentDate.getMonth() + 1}月${currentDate.getDate()}日 (${dayNames[(todayIndex + offset) % 7]})`;
+        const realDayIdx = currentDate.getDay() === 0 ? 6 : currentDate.getDay() - 1;
+        const dateStr = `${currentDate.getMonth() + 1}月${currentDate.getDate()}日 (${dayNames[realDayIdx]})`;
 
         const dayShifts = {};
         Object.keys(membersState).forEach(id => {
           const m = membersState[id];
-          const roster = ROSTERS[m.group];
-          const pos = calculateFutureShift(m.currentRow, roster.totalRows, offset);
-          dayShifts[id] = roster.data[pos.targetRow - 1][pos.targetDayIdx];
+          const mBaseDate = getMemberBaseDate(m);
+          
+          // 計算真實當天相對於該成員「假設今日」相差的天數
+          const diffDays = Math.round((currentDate - mBaseDate) / (1000 * 60 * 60 * 24));
+          const pos = calculateFutureShiftForMember(m, diffDays);
+          dayShifts[id] = ROSTERS[m.group].data[pos.targetRow - 1][pos.targetDayIdx];
         });
 
-        // 分析類別
         const offMembers = Object.keys(dayShifts).filter(id => isOffShift(dayShifts[id]));
         const earlyMembers = Object.keys(dayShifts).filter(id => isEarlyShift(dayShifts[id]));
         const freeOrEarlyMembers = Object.keys(dayShifts).filter(id => isOffShift(dayShifts[id]) || isEarlyShift(dayShifts[id]));
@@ -369,7 +398,7 @@
             matchCount = freeOrEarlyMembers.length;
             matchReason = `🍔 適合約食飯/早班 (${freeOrEarlyMembers.map(n => getMemberName(n)).join('、')})`;
           }
-        } else { // 'all'
+        } else {
           if (offMembers.length >= 2) {
             isMatch = true;
             matchCount = offMembers.length;
@@ -459,8 +488,10 @@
 
         let targetPos = null;
         if (member.calcDays !== undefined && member.calcDays !== 0) {
-          targetPos = calculateFutureShift(member.currentRow, roster.totalRows, member.calcDays);
+          targetPos = calculateFutureShiftForMember(member, member.calcDays);
         }
+
+        const todayIdx = getMemberTodayIndex(member);
 
         let html = `
           <div class="person-card">
@@ -484,6 +515,12 @@
 
         html += `
                 </select>
+
+                <div class="custom-today-box">
+                  <label style="color:#2980b9; font-weight:bold;">📅 假設今日係：</label>
+                  <input type="date" id="custom_today_${id}" value="${member.customToday || ''}" onchange="setCustomToday('${id}', this.value)">
+                  ${member.customToday ? `<button class="btn-reset" onclick="resetCustomToday('${id}')">↺ 還原今日</button>` : ''}
+                </div>
               </div>
             </div>
 
@@ -499,7 +536,7 @@
               <input type="date" id="date_input_${id}" value="${member.calcDate || ''}">
               <button onclick="calcByDate('${id}')">按日期推算</button>
               
-              ${member.calcDays ? `<button style="background:#e74c3c;" onclick="resetCalc('${id}')">清除推算</button>` : ''}
+              ${member.calcDays ? `<button class="btn-reset" onclick="resetCalc('${id}')">清除推算</button>` : ''}
             </div>
 
             ${member.resultText ? `<div class="calc-result">💡 <b>推算結果：</b> ${member.resultText}</div>` : ''}
@@ -522,7 +559,7 @@
           html += `<td><b>第 ${rowNum} 行</b></td>`;
 
           row.forEach((shift, dayIdx) => {
-            const isToday = isActiveRow && dayIdx === todayIndex;
+            const isToday = isActiveRow && dayIdx === todayIdx;
             const isTarget = targetPos && rowNum === targetPos.targetRow && dayIdx === targetPos.targetDayIdx;
 
             let classList = [];
@@ -553,13 +590,31 @@
       renderApp();
     };
 
+    window.setCustomToday = (id, value) => {
+      membersState[id].customToday = value;
+      // 重置計算
+      membersState[id].calcDays = 0;
+      membersState[id].calcDate = '';
+      membersState[id].resultText = '';
+      saveAndRender();
+    };
+
+    window.resetCustomToday = (id) => {
+      membersState[id].customToday = '';
+      membersState[id].calcDays = 0;
+      membersState[id].calcDate = '';
+      membersState[id].resultText = '';
+      saveAndRender();
+    };
+
     window.calcByDays = (id) => {
       const input = document.getElementById(`days_input_${id}`);
       const days = parseInt(input.value);
       if (isNaN(days)) return;
 
-      const roster = ROSTERS[membersState[id].group];
-      const res = calculateFutureShift(membersState[id].currentRow, roster.totalRows, days);
+      const member = membersState[id];
+      const roster = ROSTERS[member.group];
+      const res = calculateFutureShiftForMember(member, days);
       const shift = roster.data[res.targetRow - 1][res.targetDayIdx];
 
       membersState[id].calcDays = days;
@@ -573,22 +628,25 @@
       const dateInput = document.getElementById(`date_input_${id}`).value;
       if (!dateInput) return;
 
-      const targetDate = new Date(dateInput);
-      const today = new Date();
+      const member = membersState[id];
+      const baseDate = getMemberBaseDate(member);
       
-      today.setHours(0,0,0,0);
+      const parts = dateInput.split('-');
+      const targetDate = new Date(parts[0], parts[1] - 1, parts[2]);
+
+      baseDate.setHours(0,0,0,0);
       targetDate.setHours(0,0,0,0);
 
-      const diffTime = targetDate - today;
+      const diffTime = targetDate - baseDate;
       const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
 
-      const roster = ROSTERS[membersState[id].group];
-      const res = calculateFutureShift(membersState[id].currentRow, roster.totalRows, diffDays);
+      const roster = ROSTERS[member.group];
+      const res = calculateFutureShiftForMember(member, diffDays);
       const shift = roster.data[res.targetRow - 1][res.targetDayIdx];
 
       membersState[id].calcDays = diffDays;
       membersState[id].calcDate = dateInput;
-      membersState[id].resultText = `日期 ${dateInput}（${diffDays >= 0 ? diffDays + ' 天後' : Math.abs(diffDays) + ' 天前'}，第 ${res.targetRow} 行 ${dayNames[res.targetDayIdx]}）班次為：<b style="color:#d63031;font-size:1.1rem;">${shift}</b>`;
+      membersState[id].resultText = `日期 ${dateInput}（相對假設今日 ${diffDays >= 0 ? diffDays + ' 天後' : Math.abs(diffDays) + ' 天前'}，第 ${res.targetRow} 行 ${dayNames[res.targetDayIdx]}）班次為：<b style="color:#d63031;font-size:1.1rem;">${shift}</b>`;
 
       saveAndRender();
     };
