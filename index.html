@@ -724,11 +724,17 @@
 
     onSnapshot(doc(db, "roster_config", "current"), (docSnap) => {
       if (docSnap.exists()) {
-        membersState = docSnap.data();
-        renderApp();
-      } else {
-        renderApp();
+        const dbData = docSnap.data();
+        // 確保將舊資料與預設的 colleague 卡片合併，避免舊資料覆蓋新欄位
+        membersState = { ...membersState, ...dbData };
+        
+        // 如果資料庫內尚未存在 colleague 欄位，自動補上並更新至 Firebase
+        if (!dbData.colleague) {
+          saveAndRender();
+          return;
+        }
       }
+      renderApp();
     });
 
   </script>
