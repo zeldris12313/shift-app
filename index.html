@@ -180,19 +180,41 @@
       background: #e74c3c !important;
     }
 
-    /* 大假接替推算盒 */
+    /* 大假銜接預測盒 */
     .leave-connect-box {
       background: #fff3e0;
       border: 1px solid #ffe0b2;
       border-radius: 8px;
-      padding: 10px 12px;
+      padding: 12px;
       margin-bottom: 12px;
       font-size: 0.85rem;
     }
     .leave-connect-title {
       font-weight: bold;
       color: #e67e22;
-      margin-bottom: 6px;
+      margin-bottom: 8px;
+      font-size: 0.95rem;
+    }
+
+    .connect-table-preview {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 8px 0;
+    }
+    .connect-item {
+      background: white;
+      border: 1px solid #ffcc80;
+      border-radius: 6px;
+      padding: 6px 10px;
+      text-align: center;
+      min-width: 90px;
+      flex-shrink: 0;
+    }
+    .connect-item.highlight-item {
+      background: #ffe0b2;
+      border-color: #e67e22;
+      font-weight: bold;
     }
 
     .calc-result {
@@ -231,7 +253,7 @@
       font-weight: bold;
     }
     .cell-today::after {
-      content: " ★今日";
+      content: " ★基準日";
       font-size: 0.65rem;
       color: #d63031;
       display: block;
@@ -243,7 +265,7 @@
       font-weight: bold;
     }
     .cell-target::after {
-      content: " 🎯推算日";
+      content: " 🎯大假最後日";
       font-size: 0.65rem;
       color: #fff;
       display: block;
@@ -331,7 +353,7 @@
       sasa: { group: 'group2', currentRow: 1, customToday: '', calcDays: 0, calcDate: '', resultText: '' },
       kit: { group: 'group3', currentRow: 1, customToday: '', calcDays: 0, calcDate: '', resultText: '' },
       sister: { group: 'group4', currentRow: 1, customToday: '', calcDays: 0, calcDate: '', resultText: '' },
-      colleague: { group: 'group2', currentRow: 1, customToday: '', calcDays: 0, calcDate: '', resultText: '', leaveWeeks: 1 }
+      colleague: { group: 'group2', currentRow: 1, customToday: '', calcDays: 0, calcDate: '', resultText: '', calcWeeks: 0 }
     };
 
     let matchFilter = {
@@ -389,7 +411,6 @@
         const dateStr = `${currentDate.getMonth() + 1}月${currentDate.getDate()}日 (${dayNames[realDayIdx]})`;
 
         const dayShifts = {};
-        // 僅計算三人（不包含臨時同事）
         ['sasa', 'kit', 'sister'].forEach(id => {
           const m = membersState[id];
           const mBaseDate = getMemberBaseDate(m);
@@ -445,7 +466,7 @@
     }
 
     function getMemberName(id) {
-      const names = { sasa: 'sasa', kit: 'kit', sister: '姐姐', colleague: '🔍 臨時/同事更期比對' };
+      const names = { sasa: 'sasa', kit: 'kit', sister: '姐姐', colleague: '🔍 臨時/同事大假接替比對卡' };
       return names[id] || id;
     }
 
@@ -526,7 +547,7 @@
                   <option value="group4" ${member.group === 'group4' ? 'selected' : ''}>4組 (5行)</option>
                 </select>
                 
-                <label>目前/基準處於：</label>
+                <label>基準日當天處於：</label>
                 <select onchange="updateMember('${id}', 'currentRow', parseInt(this.value))">
         `;
 
@@ -538,7 +559,7 @@
                 </select>
 
                 <div class="custom-today-box">
-                  <label style="color:#2980b9; font-weight:bold;">📅 基準/大假前日期：</label>
+                  <label style="color:#2980b9; font-weight:bold;">📅 基準日期 (例如 1月1日)：</label>
                   <input type="date" id="custom_today_${id}" value="${member.customToday || ''}" onchange="setCustomToday('${id}', this.value)">
                   ${member.customToday ? `<button class="btn-reset" onclick="resetCustomToday('${id}')">↺ 還原今日</button>` : ''}
                 </div>
@@ -546,30 +567,38 @@
             </div>
         `;
 
-        // 如果是同事卡片，加入「大假接替預測器」
+        // 如果是同事卡片，加入大假銜接專用對照卡
         if (isColleague) {
-          const leaveWeeks = member.leaveWeeks || 1;
-          const nextRow = (member.currentRow % roster.totalRows) + 1;
-          const nextRowAfterLeave = ((member.currentRow - 1 + leaveWeeks) % roster.totalRows) + 1;
+          const colleagueEndRow = targetPos ? targetPos.targetRow : member.currentRow;
+          const myNextRow = (colleagueEndRow % roster.totalRows) + 1;
 
           html += `
             <div class="leave-connect-box">
-              <div class="leave-connect-title">💡 大假銜接 (換行) 一眼對照預測：</div>
-              <div style="display:flex; gap:15px; align-items:center; flex-wrap:wrap;">
-                <label>同事放大假週數：
-                  <select onchange="updateMember('colleague', 'leaveWeeks', parseInt(this.value))">
-                    <option value="1" ${leaveWeeks === 1 ? 'selected' : ''}>放假 1 週</option>
-                    <option value="2" ${leaveWeeks === 2 ? 'selected' : ''}>放假 2 週</option>
-                    <option value="3" ${leaveWeeks === 3 ? 'selected' : ''}>放假 3 週</option>
-                    <option value="4" ${leaveWeeks === 4 ? 'selected' : ''}>放假 4 週</option>
-                  </select>
-                </label>
-                
-                <div>
-                  👉 若同事在<b>第 ${member.currentRow} 行</b>放假，你放完假回來接替時：<br>
-                  • 若同事只放 1 週假：你銜接的最佳行數係 ➡️ <b style="color:#27ae60; font-size:1.05rem;">第 ${nextRow} 行</b><br>
-                  • 若同事放 ${leaveWeeks} 週假：同事復工當週應入 ➡️ <b style="color:#2980b9; font-size:1.05rem;">第 ${nextRowAfterLeave} 行</b> (你可以揀此行無縫銜接！)
-                </div>
+              <div class="leave-connect-title">💡 【大假無縫銜接】對照預測面板：</div>
+              <div style="margin-bottom:8px; line-height:1.5;">
+                • 若同事大假<b>最後一日</b>行緊：<b style="color:#d63031; font-size:1.05rem;">第 ${colleagueEndRow} 行</b><br>
+                👉 你放完假回來接替，應該選擇：<b style="color:#27ae60; font-size:1.1rem; text-decoration:underline;">第 ${myNextRow} 行</b> （剛好順推下一行無縫接替！）
+              </div>
+
+              <div style="font-weight:bold; margin-top:10px; color:#555;">一覽睇哂：所有行數接替對照表 (${roster.name})：</div>
+              <div class="connect-table-preview">
+          `;
+
+          for (let r = 1; r <= roster.totalRows; r++) {
+            const nextR = (r % roster.totalRows) + 1;
+            const isMatch = r === colleagueEndRow;
+            html += `
+              <div class="connect-item ${isMatch ? 'highlight-item' : ''}">
+                <div style="font-size:0.75rem; color:#777;">同事最後行</div>
+                <div style="font-size:0.95rem;"><b>第 ${r} 行</b></div>
+                <div style="font-size:0.75rem; color:#e67e22; margin:2px 0;">⬇️ 銜接</div>
+                <div style="font-size:0.75rem; color:#777;">你應入</div>
+                <div style="font-size:0.95rem; color:#27ae60;"><b>第 ${nextR} 行</b></div>
+              </div>
+            `;
+          }
+
+          html += `
               </div>
             </div>
           `;
@@ -577,14 +606,20 @@
 
         html += `
             <div class="calc-box">
-              <span><b>🔍 更期推算：</b></span>
+              <span><b>🔍 推算同事「大假最後一日」處於第幾行：</b></span>
+              <label>相隔週數：</label>
+              <input type="number" id="weeks_input_${id}" placeholder="如 6 週" style="width:75px;" value="${member.calcWeeks || ''}">
+              <button onclick="calcByWeeks('${id}')">按週數推算</button>
+              
+              <span style="color:#ccc;">|</span>
+
               <label>相隔日數：</label>
-              <input type="number" id="days_input_${id}" placeholder="如 2 或 -3" style="width:70px;" value="${member.calcDays || ''}">
+              <input type="number" id="days_input_${id}" placeholder="如 42 天" style="width:70px;" value="${member.calcDays || ''}">
               <button onclick="calcByDays('${id}')">按日數推算</button>
               
               <span style="color:#ccc;">|</span>
               
-              <label>或 指定日期：</label>
+              <label>指定大假最後日：</label>
               <input type="date" id="date_input_${id}" value="${member.calcDate || ''}">
               <button onclick="calcByDate('${id}')">按日期推算</button>
               
@@ -645,6 +680,7 @@
     window.setCustomToday = (id, value) => {
       membersState[id].customToday = value;
       membersState[id].calcDays = 0;
+      membersState[id].calcWeeks = 0;
       membersState[id].calcDate = '';
       membersState[id].resultText = '';
       saveAndRender();
@@ -653,9 +689,20 @@
     window.resetCustomToday = (id) => {
       membersState[id].customToday = '';
       membersState[id].calcDays = 0;
+      membersState[id].calcWeeks = 0;
       membersState[id].calcDate = '';
       membersState[id].resultText = '';
       saveAndRender();
+    };
+
+    window.calcByWeeks = (id) => {
+      const input = document.getElementById(`weeks_input_${id}`);
+      const weeks = parseInt(input.value);
+      if (isNaN(weeks)) return;
+
+      const days = weeks * 7;
+      membersState[id].calcWeeks = weeks;
+      executeCalcDays(id, days, `${weeks} 週後`);
     };
 
     window.calcByDays = (id) => {
@@ -663,17 +710,27 @@
       const days = parseInt(input.value);
       if (isNaN(days)) return;
 
+      membersState[id].calcWeeks = 0;
+      executeCalcDays(id, days, `${days >= 0 ? days + ' 天後' : Math.abs(days) + ' 天前'}`);
+    };
+
+    function executeCalcDays(id, days, labelText) {
       const member = membersState[id];
       const roster = ROSTERS[member.group];
       const res = calculateFutureShiftForMember(member, days);
       const shift = roster.data[res.targetRow - 1][res.targetDayIdx];
+      const nextRow = (res.targetRow % roster.totalRows) + 1;
 
       membersState[id].calcDays = days;
       membersState[id].calcDate = '';
-      membersState[id].resultText = `${days >= 0 ? days + ' 天後' : Math.abs(days) + ' 天前'}（第 ${res.targetRow} 行 ${dayNames[res.targetDayIdx]}）班次為：<b style="color:#d63031;font-size:1.1rem;">${shift}</b>`;
       
+      let resText = `${labelText}（第 ${res.targetRow} 行 ${dayNames[res.targetDayIdx]}）班次為：<b style="color:#d63031;font-size:1.1rem;">${shift}</b>`;
+      if (id === 'colleague') {
+        resText += ` ➔ <b style="color:#27ae60; font-size:1.05rem;">你需要接替第 ${nextRow} 行！</b>`;
+      }
+      membersState[id].resultText = resText;
       saveAndRender();
-    };
+    }
 
     window.calcByDate = (id) => {
       const dateInput = document.getElementById(`date_input_${id}`).value;
@@ -691,19 +748,13 @@
       const diffTime = targetDate - baseDate;
       const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
 
-      const roster = ROSTERS[member.group];
-      const res = calculateFutureShiftForMember(member, diffDays);
-      const shift = roster.data[res.targetRow - 1][res.targetDayIdx];
-
-      membersState[id].calcDays = diffDays;
-      membersState[id].calcDate = dateInput;
-      membersState[id].resultText = `日期 ${dateInput}（相對基準日 ${diffDays >= 0 ? diffDays + ' 天後' : Math.abs(diffDays) + ' 天前'}，第 ${res.targetRow} 行 ${dayNames[res.targetDayIdx]}）班次為：<b style="color:#d63031;font-size:1.1rem;">${shift}</b>`;
-
-      saveAndRender();
+      membersState[id].calcWeeks = 0;
+      executeCalcDays(id, diffDays, `日期 ${dateInput}`);
     };
 
     window.resetCalc = (id) => {
       membersState[id].calcDays = 0;
+      membersState[id].calcWeeks = 0;
       membersState[id].calcDate = '';
       membersState[id].resultText = '';
       saveAndRender();
@@ -725,10 +776,7 @@
     onSnapshot(doc(db, "roster_config", "current"), (docSnap) => {
       if (docSnap.exists()) {
         const dbData = docSnap.data();
-        // 確保將舊資料與預設的 colleague 卡片合併，避免舊資料覆蓋新欄位
         membersState = { ...membersState, ...dbData };
-        
-        // 如果資料庫內尚未存在 colleague 欄位，自動補上並更新至 Firebase
         if (!dbData.colleague) {
           saveAndRender();
           return;
