@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>更期大假銜接與推算工具</title>
+  <title>更期大假銜接與推算工具 (Week週期版)</title>
   <style>
     :root {
       --primary-color: #2c3e50;
@@ -75,8 +75,9 @@
       cursor: pointer;
       text-decoration: underline;
     }
+
     .container {
-      max-width: 980px;
+      max-width: 1000px;
       margin: 0 auto;
       background: white;
       border-radius: 12px;
@@ -103,11 +104,13 @@
       border-radius: 4px;
       cursor: pointer;
     }
+
+    /* 我目前的定位卡片 */
     .my-status-card {
       background: #eef7fc;
       border: 1.5px solid #3498db;
       border-radius: 8px;
-      padding: 10px 14px;
+      padding: 12px 15px;
       margin-bottom: 15px;
       display: flex;
       align-items: center;
@@ -115,30 +118,32 @@
       flex-wrap: wrap;
       gap: 10px;
     }
+
+    /* 同事推算卡片 */
     .colleagues-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 10px;
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+      gap: 12px;
       margin-bottom: 12px;
     }
     .colleague-card {
       background: #f8f9fa;
       border: 1px solid #e0e0e0;
       border-radius: 8px;
-      padding: 10px;
+      padding: 12px;
       border-top: 4px solid #3498db;
     }
     .colleague-card:nth-child(2) { border-top-color: #9b59b6; }
     .colleague-card:nth-child(3) { border-top-color: #e67e22; }
     .colleague-title {
       font-weight: bold;
-      margin-bottom: 6px;
+      margin-bottom: 8px;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
     .field-row {
-      margin-bottom: 5px;
+      margin-bottom: 6px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -150,6 +155,7 @@
       border: 1px solid #ccc;
       font-size: 0.85rem;
     }
+
     .result-alert {
       background: #fff8e1;
       border-left: 5px solid #ffa000;
@@ -159,6 +165,8 @@
       font-size: 0.9rem;
       line-height: 1.6;
     }
+
+    /* 完整大更期表 */
     .big-roster-section {
       background: #ffffff;
       border: 2px solid #2980b9;
@@ -181,9 +189,7 @@
       font-weight: bold;
       color: #2980b9;
     }
-    .table-container {
-      overflow-x: auto;
-    }
+    .table-container { overflow-x: auto; }
     table {
       width: 100%;
       border-collapse: collapse;
@@ -212,6 +218,7 @@
       font-size: 0.72rem;
       display: inline-block;
       margin-top: 3px;
+      line-height: 1.2;
     }
     .my-tag {
       background: #f39c12;
@@ -228,31 +235,22 @@
       font-weight: bold;
     }
     .cell-today::after {
-      content: " ★我今日";
+      content: " ★基準日";
       font-size: 0.65rem;
       color: #d63031;
       display: block;
     }
-    .cell-target {
-      background-color: #a29bfe !important;
-      color: white !important;
-      border: 2px solid #6c5ce7 !important;
-      font-weight: bold;
-    }
-    .cell-target::after {
-      content: " 🎯推算日";
-      font-size: 0.65rem;
-      color: #fff;
-      display: block;
-    }
     .shift-off { background-color: var(--off-bg); color: #d63031; }
     .shift-night { background-color: var(--night-bg); }
+
     .section-divider {
       border: 0;
       height: 2px;
       background: linear-gradient(to right, #ccc, #e67e22, #ccc);
       margin: 30px 0 20px;
     }
+
+    /* 底部獨立查更 */
     .solo-roster-box {
       background: #fdfdfd;
       border: 1px solid #ddd;
@@ -353,6 +351,7 @@
     let currentUser = null;
     let savedRecords = [];
 
+    // ----------------- 班表資料 -----------------
     const ROSTERS = {
       group2: {
         name: "2組 (12行)",
@@ -407,21 +406,78 @@
 
     const dayNames = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 
+    // ----------------- 公司專用週曆計算器 (週一至週日無縫滾動) -----------------
+    // 錨點：2026年 Week 2 星期一 為 2026-01-05
+    const ANCHOR_DATE = new Date(2026, 0, 5); // 2026-01-05
+    const ANCHOR_YEAR = 2026;
+    const ANCHOR_WEEK = 2;
+
+    // 將任何日期轉化為唯一的「絕對週序號 (Absolute Week Index)」
+    function getAbsoluteWeekIndex(dateObj) {
+      const d = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
+      const day = d.getDay();
+      const diffToMon = day === 0 ? -6 : 1 - day;
+      const monday = new Date(d);
+      monday.setDate(d.getDate() + diffToMon);
+      
+      const diffMs = monday.getTime() - ANCHOR_DATE.getTime();
+      const diffWeeks = Math.round(diffMs / (7 * 24 * 60 * 60 * 1000));
+      return diffWeeks;
+    }
+
+    // 根據絕對週序號，取得該週的 (年份, Week幾, 週一日期, 週日日期)
+    function getWeekInfoFromAbsIndex(absIndex) {
+      const monday = new Date(ANCHOR_DATE);
+      monday.setDate(ANCHOR_DATE.getDate() + absIndex * 7);
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+
+      // 年份判定：取週四所在的年份（符合年首年尾接軌）
+      const thurs = new Date(monday);
+      thurs.setDate(monday.getDate() + 3);
+      const year = thurs.getFullYear();
+
+      // 計算該年 Week 1 週一的絕對週序號
+      // 該年 1 月 4 日所在的那一週必為 Week 1
+      const jan4 = new Date(year, 0, 4);
+      const jan4Abs = getAbsoluteWeekIndex(jan4);
+      const weekNum = absIndex - jan4Abs + 1;
+
+      return {
+        year,
+        weekNum,
+        absIndex,
+        monday,
+        sunday,
+        label: `${year} 年 Week ${weekNum} (${monday.getMonth()+1}/${monday.getDate()} - ${sunday.getMonth()+1}/${sunday.getDate()})`
+      };
+    }
+
+    // 根據某年 Week X 取得絕對週序號
+    function getAbsIndexFromYearWeek(year, weekNum) {
+      const jan4 = new Date(year, 0, 4);
+      const jan4Abs = getAbsoluteWeekIndex(jan4);
+      return jan4Abs + (weekNum - 1);
+    }
+
+    // ----------------- 我目前的狀態 -----------------
     let myStatus = {
       group: 'group2',
       currentRow: 1,
-      customDate: ''
+      date: new Date().toISOString().split('T')[0]
     };
 
+    // 同事狀態 (支援選 Week)
     let colleagues = [
-      { id: 1, name: "同事 A", group: "group2", baseRow: 1, weeks: 6, enabled: true },
-      { id: 2, name: "同事 B", group: "group2", baseRow: 4, weeks: 6, enabled: true },
-      { id: 3, name: "同事 C", group: "group3", baseRow: 2, weeks: 6, enabled: false }
+      { id: 1, name: "同事 A", group: "group2", baseRow: 1, targetYear: 2026, targetWeek: 51, enabled: true },
+      { id: 2, name: "同事 B", group: "group2", baseRow: 4, targetYear: 2026, targetWeek: 51, enabled: true },
+      { id: 3, name: "同事 C", group: "group3", baseRow: 2, targetYear: 2026, targetWeek: 51, enabled: false }
     ];
 
     let middleRosterGroup = "group2";
     let currentCandidates = [];
 
+    // 底部查更狀態
     let soloState = {
       group: 'group2',
       currentRow: 1,
@@ -431,17 +487,6 @@
       resultText: ''
     };
 
-    function getTodayIndex(customDateStr) {
-      if (customDateStr) {
-        const parts = customDateStr.split('-');
-        const d = new Date(parts[0], parts[1] - 1, parts[2]);
-        const day = d.getDay();
-        return day === 0 ? 6 : day - 1;
-      }
-      const day = new Date().getDay();
-      return day === 0 ? 6 : day - 1;
-    }
-
     onAuthStateChanged(auth, async (user) => {
       if (user) {
         currentUser = user;
@@ -450,7 +495,7 @@
         document.getElementById("userLabel").innerText = user.email || "已登入用戶";
         loadUserRecords();
         initMyStatusUI();
-        initInputs();
+        initColleaguesUI();
         window.calculateAll();
         renderSoloRoster();
       } else {
@@ -496,11 +541,12 @@
 
     window.userLogout = () => signOut(auth);
 
-    // ----------------- 我自己更期 -----------------
+    // ----------------- 我目前的定位設定 -----------------
     function initMyStatusUI() {
-      const groupSelect = document.getElementById("myGroupSelect");
-      groupSelect.value = myStatus.group;
+      document.getElementById("myDateInput").value = myStatus.date;
+      document.getElementById("myGroupSelect").value = myStatus.group;
       updateMyRowSelect();
+      updateMyWeekLabel();
     }
 
     function updateMyRowSelect() {
@@ -510,6 +556,14 @@
       for (let r = 1; r <= maxR; r++) {
         rowSelect.innerHTML += `<option value="${r}" ${r === myStatus.currentRow ? 'selected' : ''}>第 ${r} 行</option>`;
       }
+    }
+
+    function updateMyWeekLabel() {
+      const parts = myStatus.date.split('-');
+      const d = new Date(parts[0], parts[1] - 1, parts[2]);
+      const abs = getAbsoluteWeekIndex(d);
+      const info = getWeekInfoFromAbsIndex(abs);
+      document.getElementById("myWeekLabel").innerHTML = `📍 相當於：<b>${info.year} 年 Week ${info.weekNum}</b> <span style="color:#777; font-size:0.8rem;">(${info.monday.getMonth()+1}/${info.monday.getDate()} - ${info.sunday.getMonth()+1}/${info.sunday.getDate()})</span>`;
     }
 
     window.updateMyGroup = (g) => {
@@ -524,13 +578,15 @@
       window.calculateAll();
     };
 
-    window.updateMyCustomDate = (val) => {
-      myStatus.customDate = val;
-      renderBigRoster();
+    window.updateMyDate = (val) => {
+      if (!val) return;
+      myStatus.date = val;
+      updateMyWeekLabel();
+      window.calculateAll();
     };
 
-    // ----------------- 同事輸入 -----------------
-    function initInputs() {
+    // ----------------- 同事大假推算設定 (以 Week 為主) -----------------
+    function initColleaguesUI() {
       const container = document.getElementById("colleaguesList");
       container.innerHTML = "";
 
@@ -539,6 +595,12 @@
         const maxR = ROSTERS[c.group].totalRows;
         for (let r = 1; r <= maxR; r++) {
           rowOptions += `<option value="${r}" ${r === c.baseRow ? 'selected' : ''}>第 ${r} 行</option>`;
+        }
+
+        // 產生 Week 1 至 53 的下拉選單
+        let weekOptions = "";
+        for (let w = 1; w <= 53; w++) {
+          weekOptions += `<option value="${w}" ${w === c.targetWeek ? 'selected' : ''}>Week ${w}</option>`;
         }
 
         container.innerHTML += `
@@ -564,9 +626,19 @@
               </select>
             </div>
             <div class="field-row">
-              <span>幾多週後放大假：</span>
-              <input type="number" value="${c.weeks}" style="width:65px;" oninput="updateColleague(${idx}, 'weeks', parseFloat(this.value)||0)">
+              <span style="color:#d35400; font-weight:bold;">放哪一週大假：</span>
+              <div style="display:flex; gap:4px;">
+                <select onchange="updateColleague(${idx}, 'targetYear', parseInt(this.value))">
+                  <option value="2026" ${c.targetYear===2026?'selected':''}>2026年</option>
+                  <option value="2027" ${c.targetYear===2027?'selected':''}>2027年</option>
+                  <option value="2028" ${c.targetYear===2028?'selected':''}>2028年</option>
+                </select>
+                <select onchange="updateColleague(${idx}, 'targetWeek', parseInt(this.value))">
+                  ${weekOptions}
+                </select>
+              </div>
             </div>
+            <div id="colleagueDateSpan_${idx}" style="font-size:0.75rem; color:#7f8c8d; text-align:right; margin-top:3px;"></div>
           </div>
         `;
       });
@@ -580,7 +652,7 @@
     window.updateColleagueGroup = (idx, val) => {
       colleagues[idx].group = val;
       colleagues[idx].baseRow = 1;
-      initInputs();
+      initColleaguesUI();
       window.calculateAll();
     };
 
@@ -588,6 +660,21 @@
       const activeList = colleagues.filter(c => c.enabled);
       const summaryText = document.getElementById("summaryText");
       currentCandidates = [];
+
+      // 取得我自己目前的絕對週序號
+      const myParts = myStatus.date.split('-');
+      const myD = new Date(myParts[0], myParts[1] - 1, myParts[2]);
+      const myAbsWeek = getAbsoluteWeekIndex(myD);
+
+      // 更新每位同事的日期說明
+      colleagues.forEach((c, idx) => {
+        const span = document.getElementById(`colleagueDateSpan_${idx}`);
+        if (span) {
+          const targetAbs = getAbsIndexFromYearWeek(c.targetYear, c.targetWeek);
+          const info = getWeekInfoFromAbsIndex(targetAbs);
+          span.innerText = `📅 該週為: ${info.monday.getMonth()+1}/${info.monday.getDate()} - ${info.sunday.getMonth()+1}/${info.sunday.getDate()}`;
+        }
+      });
 
       if (activeList.length === 0) {
         summaryText.innerHTML = "請至少勾選一位同事進行推算。";
@@ -597,14 +684,20 @@
 
       const results = activeList.map(c => {
         const roster = ROSTERS[c.group];
-        const offset = Math.floor(c.weeks);
-        let endRow = ((c.baseRow - 1 + offset) % roster.totalRows) + 1;
+        const targetAbs = getAbsIndexFromYearWeek(c.targetYear, c.targetWeek);
+        // 相差週數 (自動精確相減)
+        const diffWeeks = targetAbs - myAbsWeek;
+
+        let endRow = ((c.baseRow - 1 + diffWeeks) % roster.totalRows) + 1;
         if (endRow <= 0) endRow += roster.totalRows;
+        // 同事大假後釋出的可入位行數
         const myNextRow = (endRow % roster.totalRows) + 1;
 
         return {
           name: c.name,
-          weeks: c.weeks,
+          targetYear: c.targetYear,
+          targetWeek: c.targetWeek,
+          diffWeeks,
           group: c.group,
           groupName: roster.name,
           endRow,
@@ -616,35 +709,36 @@
         group: r.group,
         row: r.myNextRow,
         name: r.name,
-        endRow: r.endRow,
-        weeks: r.weeks
+        targetWeekLabel: `${r.targetYear} W${r.targetWeek}`
       }));
 
+      // 自動將大表組別換到第一個同事的組別
       if (results.length > 0) {
         middleRosterGroup = results[0].group;
         document.getElementById("middleGroupSelect").value = middleRosterGroup;
       }
 
-      const weeksArr = results.map(r => r.weeks);
-      const isSameWeek = weeksArr.length > 1 && weeksArr.every(w => w === weeksArr[0]);
+      // 檢查是否同週放假
+      const weekLabels = results.map(r => `${r.targetYear}-W${r.targetWeek}`);
+      const isSameWeek = weekLabels.length > 1 && weekLabels.every(w => w === weekLabels[0]);
 
       let html = "";
       if (isSameWeek) {
-        html += `🔥 <b>【同週放大假提示】</b>：以下同事均在 <b>${weeksArr[0]} 週後</b> 同時放大假！騰出以下 <b>${results.length} 個選擇</b> 可供你接替入位：<br>`;
+        html += `🔥 <b>【同週放大假提示】</b>：以下同事均在 <b>${results[0].targetYear} 年 Week ${results[0].targetWeek}</b>（相隔 ${results[0].diffWeeks} 週後）放大假！騰出以下 <b>${results.length} 個選擇</b> 可供你接替入位：<br>`;
       } else {
-        html += `💡 <b>推算分析</b>：以下是各位同事推算出的最後行數與對應可入位的行數：<br>`;
+        html += `💡 <b>大假推算分析</b>：<br>`;
       }
 
       results.forEach((r, idx) => {
-        html += `• <b>【選擇 ${idx + 1}】</b> 接替 <b>${r.name}</b>（佢第 ${r.weeks} 週最後一日行緊第 ${r.endRow} 行）➔ <b>你可接替入位：<span style="color:#27ae60; font-size:1.05rem; text-decoration:underline;">${r.groupName} 第 ${r.myNextRow} 行</span></b><br>`;
+        html += `• <b>【選擇 ${idx + 1}】接替 ${r.name}</b>：由你現時定位起計相差 <b>${r.diffWeeks} 週</b>，同事在 <b>${r.targetYear} 年 Week ${r.targetWeek}</b> 大假最後一行行緊第 ${r.endRow} 行 ➔ <b>你可接替入位：<span style="color:#27ae60; font-size:1.1rem; text-decoration:underline;">${r.groupName} 第 ${r.myNextRow} 行</span></b><br>`;
       });
 
-      html += `<span style="color:#2980b9; font-weight:bold;">⬇️ 下方完整更期月曆大表已將上述可選行數整行標記為綠色【★可揀入位】！</span>`;
+      html += `<span style="color:#2980b9; font-weight:bold;">⬇️️ 下方完整更期月曆大表已將可選行數整行標記為綠色【★可揀入位】！</span>`;
       summaryText.innerHTML = html;
       renderBigRoster();
     };
 
-    // ----------------- 中間大表 -----------------
+    // ----------------- 中間大更期表 -----------------
     window.changeMiddleGroup = (val) => {
       middleRosterGroup = val;
       renderBigRoster();
@@ -653,7 +747,12 @@
     function renderBigRoster() {
       const roster = ROSTERS[middleRosterGroup];
       const table = document.getElementById("bigRosterTable");
-      const todayIdx = getTodayIndex(myStatus.customDate);
+
+      // 取得基準日的星期幾
+      const parts = myStatus.date.split('-');
+      const d = new Date(parts[0], parts[1] - 1, parts[2]);
+      const day = d.getDay();
+      const todayIdx = day === 0 ? 6 : day - 1;
       
       let html = `
         <thead>
@@ -682,8 +781,8 @@
           labelHtml += `<br><span class="my-tag">★我目前處於</span>`;
         }
         if (isTarget) {
-          const names = matched.map(m => `接替 ${m.name}`).join('、');
-          labelHtml += `<br><span class="choice-tag">★可揀入位<br>(${names})</span>`;
+          const names = matched.map(m => `接替 ${m.name} (${m.targetWeekLabel})`).join('<br>');
+          labelHtml += `<br><span class="choice-tag">★可揀入位<br>${names}</span>`;
         }
         html += `<td>${labelHtml}</td>`;
 
@@ -703,7 +802,7 @@
       table.innerHTML = html;
     }
 
-    // ----------------- 底部通用查更 -----------------
+    // ----------------- 底部通用獨立查更器 -----------------
     function getSoloBaseDate() {
       if (soloState.customToday) {
         const parts = soloState.customToday.split('-');
@@ -760,7 +859,7 @@
 
           let classList = [];
           if (isToday) classList.push('cell-today');
-          if (isTarget) classList.push('cell-target');
+          if (isTarget) classList.push('shift-night');
           if (shift === 'W' || shift === 'R') classList.push('shift-off');
           if (shift.startsWith('N')) classList.push('shift-night');
 
@@ -837,9 +936,10 @@
       renderSoloRoster();
     };
 
+    // ----------------- 雲端歷史紀錄 -----------------
     window.saveCurrentCalc = async () => {
       if (!currentUser) return;
-      const title = document.getElementById("recordTitleInput").value.trim() || "多同事大假推算";
+      const title = document.getElementById("recordTitleInput").value.trim() || "Week大假推算";
       const summary = document.getElementById("summaryText").innerText;
 
       const newRec = {
@@ -930,18 +1030,19 @@
         <label>本週處於：</label>
         <select id="myRowSelect" onchange="updateMyRow(this.value)"></select>
         <label>基準日期：</label>
-        <input type="date" onchange="updateMyCustomDate(this.value)">
+        <input type="date" id="myDateInput" onchange="updateMyDate(this.value)">
       </div>
+      <div id="myWeekLabel" style="font-size:0.85rem; color:#2c3e50; width:100%; margin-top:4px;"></div>
     </div>
 
     <!-- 同事大假推算 -->
-    <h1 style="margin: 0 0 10px 0; font-size:1.25rem; color:var(--primary-color);">👥 多同事大假重疊推算</h1>
+    <h1 style="margin: 0 0 10px 0; font-size:1.25rem; color:var(--primary-color);">👥 多同事大假重疊推算 (直接選Week)</h1>
     <div class="colleagues-grid" id="colleaguesList"></div>
     
     <!-- 分析結果摘要與儲存 -->
     <div class="result-alert" id="summaryText">載入分析中...</div>
     <div style="display:flex; gap:8px; align-items:center; margin-bottom:15px; flex-wrap:wrap;">
-      <input type="text" id="recordTitleInput" placeholder="輸入備忘標題 (例如: 6月同同事撞假選位)" style="flex:1; min-width:180px; padding:6px;">
+      <input type="text" id="recordTitleInput" placeholder="輸入備忘標題 (例如: Week 51 頂位選擇)" style="flex:1; min-width:180px; padding:6px;">
       <button class="btn-save-record" onclick="saveCurrentCalc()">💾 儲存此推算結果</button>
     </div>
 
