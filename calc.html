@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>更期大假銜接與推算工具 (含一年更期導出)</title>
+  <title>更期大假銜接與推算工具 (含月曆格式年表)</title>
   <style>
     :root {
       --primary-color: #2c3e50;
@@ -77,7 +77,7 @@
     }
 
     .container {
-      max-width: 1000px;
+      max-width: 1050px;
       margin: 0 auto;
       background: white;
       border-radius: 12px;
@@ -178,6 +178,37 @@
       margin-bottom: 15px;
       font-size: 0.9rem;
       line-height: 1.6;
+    }
+    .option-card-row {
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      padding: 8px 12px;
+      margin-top: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .btn-apply-yp {
+      background: #27ae60;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: bold;
+    }
+    .btn-copy-code {
+      background: #34495e;
+      color: white;
+      border: none;
+      padding: 5px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.75rem;
     }
 
     /* 完整大更期表 */
@@ -295,9 +326,8 @@
       flex-shrink: 0;
       font-weight: bold;
     }
-    .btn-del-record:hover { background: #d63031; }
 
-    /* 未來一年更期摺疊區塊 */
+    /* 未來一年更期月曆格局 */
     .year-preview-box {
       background: #fcfcfc;
       border: 2px solid #16a085;
@@ -334,6 +364,68 @@
       cursor: pointer;
       font-weight: bold;
       font-size: 0.85rem;
+    }
+
+    /* 月曆網格 (Calendar Layout) */
+    .cal-grid-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+      gap: 15px;
+      margin-top: 15px;
+    }
+    .month-card {
+      background: white;
+      border: 1px solid #bdc3c7;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.04);
+    }
+    .month-header {
+      background: #16a085;
+      color: white;
+      text-align: center;
+      padding: 6px;
+      font-weight: bold;
+      font-size: 0.95rem;
+    }
+    .month-cal-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.78rem;
+    }
+    .month-cal-table th {
+      background: #f8f9fa;
+      padding: 5px 2px;
+      font-size: 0.72rem;
+      color: #555;
+    }
+    .month-cal-table td {
+      padding: 4px 1px;
+      height: 48px;
+      vertical-align: top;
+      border: 1px solid #f1f2f6;
+    }
+    .cal-date-num {
+      font-size: 0.72rem;
+      font-weight: bold;
+      color: #7f8c8d;
+      margin-bottom: 2px;
+    }
+    .cal-shift-text {
+      font-size: 0.8rem;
+      font-weight: bold;
+      border-radius: 3px;
+      padding: 1px 2px;
+      line-height: 1.1;
+    }
+    .cal-week-tag {
+      background: #eef2f7;
+      font-size: 0.65rem;
+      color: #2980b9;
+      padding: 2px 1px;
+      border-right: 1px solid #ddd;
+      width: 48px;
+      vertical-align: middle;
     }
 
     /* 底部獨立查更 */
@@ -476,8 +568,6 @@
     };
 
     const dayNames = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
-
-    // 錨點：2026年 Week 2 星期一 為 2026-01-05
     const ANCHOR_DATE = new Date(2026, 0, 5);
 
     function getAbsoluteWeekIndex(dateObj) {
@@ -526,7 +616,7 @@
     const todayStr = `${todayObj.getFullYear()}-${String(todayObj.getMonth()+1).padStart(2,'0')}-${String(todayObj.getDate()).padStart(2,'0')}`;
     const todayAbsWeek = getAbsoluteWeekIndex(todayObj);
 
-    // ----------------- 我目前的狀態 -----------------
+    // ----------------- 狀態 -----------------
     let myStatus = {
       group: 'group2',
       currentRow: 1,
@@ -544,7 +634,7 @@
     let middleRosterGroup = "group2";
     let currentCandidates = [];
 
-    // 未來一年更期產生的基準
+    // 未來一年月曆設定
     let yearPreviewConfig = {
       group: 'group2',
       startRow: 1,
@@ -808,25 +898,26 @@
         }
       });
 
+      // 產生我自己的帶入代碼
+      const myRetAbs = myTargetAbs + 1;
+      const myRetInfo = getWeekInfoFromAbsIndex(myRetAbs);
+      const myParamCode = `${myStatus.group}|${myReturnRow}|${myRetInfo.year}|${myRetInfo.weekNum}`;
+
       let myInfoHtml = `
-        <div style="background:#eaf2f8; padding:8px 10px; border-radius:6px; margin-bottom:8px; border-left:4px solid #2980b9;">
-          👤 <b>你的大假推算</b>：你在 <b>${myStatus.leaveYear} 年 Week ${myStatus.leaveWeek}</b> 放大假（相隔今日 ${myDiffWeeks} 週，放假那一週行緊第 ${myLeaveRow} 行）➔ <b>放完大假回來上班應入：<span style="color:#d35400; font-size:1.05rem; font-weight:bold;">第 ${myReturnRow} 行</span></b>。
+        <div class="option-card-row" style="background:#eaf2f8; border-left:4px solid #2980b9;">
+          <div>
+            👤 <b>你放完大假原位復工</b>：你在 <b>${myStatus.leaveYear} 年 Week ${myStatus.leaveWeek}</b> 放大假 ➔ <b>回來上班應入：<span style="color:#d35400; font-weight:bold;">第 ${myReturnRow} 行</span></b> (${myRetInfo.year} Week ${myRetInfo.weekNum} 起)
+          </div>
+          <div style="display:flex; gap:6px;">
+            <button class="btn-apply-yp" onclick="applyToYearPreview('${myStatus.group}', ${myReturnRow}, ${myRetInfo.year}, ${myRetInfo.weekNum})">👉 帶入年表</button>
+            <button class="btn-copy-code" onclick="copyParamCode('${myParamCode}')">複製參數</button>
+          </div>
         </div>
       `;
 
-      // 預設將未來一年更期設定為你自己放完大假入位的行數與週數
-      yearPreviewConfig.group = myStatus.group;
-      yearPreviewConfig.startRow = myReturnRow;
-      const nextWeekAbs = myTargetAbs + 1;
-      const nextWeekInfo = getWeekInfoFromAbsIndex(nextWeekAbs);
-      yearPreviewConfig.startYear = nextWeekInfo.year;
-      yearPreviewConfig.startWeek = nextWeekInfo.weekNum;
-
       if (activeList.length === 0) {
-        summaryText.innerHTML = myInfoHtml + "請勾選同事以對照大假空缺。";
+        summaryText.innerHTML = myInfoHtml + "<div style='margin-top:6px; color:#666;'>請勾選同事以對照大假接替入位空缺。</div>";
         renderBigRoster();
-        updateYearPreviewControls();
-        renderYearPreviewTable();
         return;
       }
 
@@ -838,6 +929,8 @@
         let endRow = ((c.baseRow - 1 + diffWeeks) % roster.totalRows) + 1;
         if (endRow <= 0) endRow += roster.totalRows;
         const myNextRow = (endRow % roster.totalRows) + 1;
+        const returnAbs = targetAbs + 1;
+        const returnInfo = getWeekInfoFromAbsIndex(returnAbs);
 
         return {
           name: c.name,
@@ -848,7 +941,9 @@
           group: c.group,
           groupName: roster.name,
           endRow,
-          myNextRow
+          myNextRow,
+          returnYear: returnInfo.year,
+          returnWeek: returnInfo.weekNum
         };
       });
 
@@ -863,25 +958,27 @@
       if (results.length > 0) {
         middleRosterGroup = results[0].group;
         document.getElementById("middleGroupSelect").value = middleRosterGroup;
-        // 如果有同事，優先將未來一年更期對準第一位同事騰出的入位行數
-        yearPreviewConfig.group = results[0].group;
-        yearPreviewConfig.startRow = results[0].myNextRow;
-        const colleagueReturnAbs = results[0].targetAbs + 1;
-        const colRetInfo = getWeekInfoFromAbsIndex(colleagueReturnAbs);
-        yearPreviewConfig.startYear = colRetInfo.year;
-        yearPreviewConfig.startWeek = colRetInfo.weekNum;
       }
 
       let html = myInfoHtml;
       results.forEach((r, idx) => {
-        html += `• <b>【選擇 ${idx + 1}】接替 ${r.name}</b>：同事在 <b>${r.targetYear} 年 Week ${r.targetWeek}</b> 放大假（最後一行行緊第 ${r.endRow} 行）➔ <b>你放完假可接替入位：<span style="color:#27ae60; font-size:1.1rem; text-decoration:underline; font-weight:bold;">${r.groupName} 第 ${r.myNextRow} 行</span></b><br>`;
+        const paramCode = `${r.group}|${r.myNextRow}|${r.returnYear}|${r.returnWeek}`;
+        html += `
+          <div class="option-card-row">
+            <div>
+              • <b>【選擇 ${idx + 1}】接替 ${r.name}</b>：同事在 ${r.targetYear} 年 Week ${r.targetWeek} 放大假 ➔ <b>你可接替入位：<span style="color:#27ae60; font-size:1.05rem; font-weight:bold; text-decoration:underline;">${r.groupName} 第 ${r.myNextRow} 行</span></b> (由 ${r.returnYear} Week ${r.returnWeek} 起)
+            </div>
+            <div style="display:flex; gap:6px;">
+              <button class="btn-apply-yp" onclick="applyToYearPreview('${r.group}', ${r.myNextRow}, ${r.returnYear}, ${r.returnWeek})">👉 帶入年表</button>
+              <button class="btn-copy-code" onclick="copyParamCode('${paramCode}')">複製參數</button>
+            </div>
+          </div>
+        `;
       });
 
-      html += `<span style="color:#2980b9; font-weight:bold;">⬇ 下方大更期表已將接替行數整行標記為綠色【★可揀入位】！</span>`;
+      html += `<div style="color:#2980b9; font-weight:bold; margin-top:8px;">⬇ 下方大更期表已整行標記為綠色【★可揀入位】，點擊「👉 帶入年表」即可直接排出全年月曆！</div>`;
       summaryText.innerHTML = html;
       renderBigRoster();
-      updateYearPreviewControls();
-      renderYearPreviewTable();
     };
 
     // ----------------- 中間大表 -----------------
@@ -945,7 +1042,53 @@
       table.innerHTML = html;
     }
 
-    // ----------------- 未來一年更期生成器 (預設摺疊) -----------------
+    // ----------------- 一鍵帶入與貼上年表核心 -----------------
+    window.applyToYearPreview = (group, startRow, startYear, startWeek) => {
+      yearPreviewConfig.group = group;
+      yearPreviewConfig.startRow = startRow;
+      yearPreviewConfig.startYear = startYear;
+      yearPreviewConfig.startWeek = startWeek;
+      
+      // 更新控制項
+      document.getElementById("ypGroupSelect").value = group;
+      updateYpRowSelect();
+      document.getElementById("ypRowSelect").value = startRow;
+      document.getElementById("ypYearSelect").value = startYear;
+      document.getElementById("ypWeekSelect").value = startWeek;
+
+      // 如果未展開，自動展開
+      if (!isYearPreviewOpen) {
+        window.toggleYearPreview();
+      } else {
+        renderYearCalendarGrid();
+      }
+
+      // 滾動至年表
+      document.getElementById("yearPreviewAnchor").scrollIntoView({ behavior: 'smooth' });
+    };
+
+    window.copyParamCode = (code) => {
+      navigator.clipboard.writeText(code).then(() => {
+        alert("已複製推算參數：\n" + code + "\n\n你可以到下方年表「貼上推算結果」框內貼上並排表！");
+      });
+    };
+
+    window.pasteCodeToYearPreview = () => {
+      const code = document.getElementById("ypPasteInput").value.trim();
+      if (!code) {
+        alert("請先在框內貼上推算參數 (格式: group2|4|2026|52)");
+        return;
+      }
+      const parts = code.split('|');
+      if (parts.length !== 4) {
+        alert("參數格式不正確，請點擊推算結果右邊的「複製參數」");
+        return;
+      }
+      applyToYearPreview(parts[0], parseInt(parts[1]), parseInt(parts[2]), parseInt(parts[3]));
+      document.getElementById("ypPasteInput").value = "";
+    };
+
+    // ----------------- 未來一年更期月曆生成器 -----------------
     let isYearPreviewOpen = false;
     window.toggleYearPreview = () => {
       isYearPreviewOpen = !isYearPreviewOpen;
@@ -953,20 +1096,13 @@
       const btn = document.getElementById("toggleYearBtn");
       if (isYearPreviewOpen) {
         content.style.display = "block";
-        btn.innerText = "▲ 收起一年更期";
-        renderYearPreviewTable();
+        btn.innerText = "▲ 收起全年月曆";
+        renderYearCalendarGrid();
       } else {
         content.style.display = "none";
-        btn.innerText = "▼ 展開一年更期";
+        btn.innerText = "▼ 展開全年月曆";
       }
     };
-
-    function updateYearPreviewControls() {
-      document.getElementById("ypGroupSelect").value = yearPreviewConfig.group;
-      updateYpRowSelect();
-      document.getElementById("ypYearSelect").value = yearPreviewConfig.startYear;
-      document.getElementById("ypWeekSelect").value = yearPreviewConfig.startWeek;
-    }
 
     function updateYpRowSelect() {
       const select = document.getElementById("ypRowSelect");
@@ -983,66 +1119,154 @@
       yearPreviewConfig.startRow = parseInt(document.getElementById("ypRowSelect").value);
       yearPreviewConfig.startYear = parseInt(document.getElementById("ypYearSelect").value);
       yearPreviewConfig.startWeek = parseInt(document.getElementById("ypWeekSelect").value);
-      renderYearPreviewTable();
+      renderYearCalendarGrid();
     };
 
-    let generatedYearData = [];
+    let generatedYearWeeks = [];
 
-    function renderYearPreviewTable() {
+    // 真正的「月曆格局（Calendar Grid）」生成邏輯
+    function renderYearCalendarGrid() {
       const startAbs = getAbsIndexFromYearWeek(yearPreviewConfig.startYear, yearPreviewConfig.startWeek);
       const roster = ROSTERS[yearPreviewConfig.group];
-      const table = document.getElementById("yearPreviewTable");
-      generatedYearData = [];
+      const container = document.getElementById("yearCalendarGrid");
+      container.innerHTML = "";
+      generatedYearWeeks = [];
 
-      let html = `<thead><tr><th>週數 (Week)</th><th>日期範圍</th><th>更期行數</th><th>MON</th><th>TUE</th><th>WED</th><th>THU</th><th>FRI</th><th>SAT</th><th>SUN</th></tr></thead><tbody>`;
-
+      // 1. 先計算連續 52 週的全部日期與對應班次
+      const weekList = [];
       for (let i = 0; i < 52; i++) {
         const abs = startAbs + i;
         const info = getWeekInfoFromAbsIndex(abs);
-        
-        // 循序滾動行數
         let rowNum = ((yearPreviewConfig.startRow - 1 + i) % roster.totalRows) + 1;
         if (rowNum <= 0) rowNum += roster.totalRows;
         const shifts = roster.data[rowNum - 1];
 
-        const dateRangeStr = `${info.monday.getMonth()+1}/${info.monday.getDate()} - ${info.sunday.getMonth()+1}/${info.sunday.getDate()}`;
-        generatedYearData.push({
-          weekLabel: `${info.year} W${info.weekNum}`,
-          dateRange: dateRangeStr,
+        // 該週 7 天
+        const days = [];
+        for (let d = 0; d < 7; d++) {
+          const curDate = new Date(info.monday);
+          curDate.setDate(info.monday.getDate() + d);
+          days.push({
+            dateObj: curDate,
+            dayNum: curDate.getDate(),
+            month: curDate.getMonth() + 1,
+            year: curDate.getFullYear(),
+            shift: shifts[d]
+          });
+        }
+
+        weekList.push({
+          weekInfo: info,
           rowNum,
-          shifts
+          shifts,
+          days
         });
-
-        html += `<tr>`;
-        html += `<td><b>${info.year} Week ${info.weekNum}</b></td>`;
-        html += `<td style="font-size:0.8rem; color:#555;">${dateRangeStr}</td>`;
-        html += `<td><b style="color:#2980b9;">第 ${rowNum} 行</b></td>`;
-        shifts.forEach(shift => {
-          let cls = '';
-          if (shift === 'W' || shift === 'R') cls = 'shift-off';
-          if (shift.startsWith('N')) cls = 'shift-night';
-          html += `<td class="${cls}">${shift}</td>`;
-        });
-        html += `</tr>`;
       }
+      generatedYearWeeks = weekList;
 
-      html += `</tbody>`;
-      table.innerHTML = html;
+      // 2. 按「月份」分組聚合成 12 個月份月曆卡片
+      // 找出涉及到的所有 年-月
+      const monthMap = new Map();
+      weekList.forEach(w => {
+        w.days.forEach(d => {
+          const key = `${d.year}-${String(d.month).padStart(2,'0')}`;
+          if (!monthMap.has(key)) {
+            monthMap.set(key, { year: d.year, month: d.month, daysInMonth: [] });
+          }
+          monthMap.get(key).daysInMonth.push({
+            ...d,
+            weekNum: w.weekInfo.weekNum,
+            rowNum: w.rowNum
+          });
+        });
+      });
+
+      // 渲染每個月份卡片
+      monthMap.forEach((mObj, key) => {
+        const monthCard = document.createElement("div");
+        monthCard.className = "month-card";
+        
+        let cardHtml = `<div class="month-header">${mObj.year} 年 ${mObj.month} 月</div>`;
+        cardHtml += `
+          <table class="month-cal-table">
+            <thead>
+              <tr>
+                <th style="width:36px;">週/行</th>
+                <th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六</th><th>日</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+
+        // 整理這個月份的每週
+        // 取得該月 1 號
+        const firstDate = new Date(mObj.year, mObj.month - 1, 1);
+        const lastDate = new Date(mObj.year, mObj.month, 0);
+
+        // 找出該月橫跨的所有週次
+        const firstAbs = getAbsoluteWeekIndex(firstDate);
+        const lastAbs = getAbsoluteWeekIndex(lastDate);
+
+        for (let wAbs = firstAbs; wAbs <= lastAbs; wAbs++) {
+          const wMatched = weekList.find(w => w.weekInfo.absIndex === wAbs);
+          const wInfo = getWeekInfoFromAbsIndex(wAbs);
+
+          cardHtml += `<tr>`;
+          // 週次與行數標籤
+          if (wMatched) {
+            cardHtml += `<td class="cal-week-tag">W${wMatched.weekInfo.weekNum}<br><b style="color:#d35400;">R${wMatched.rowNum}</b></td>`;
+          } else {
+            cardHtml += `<td class="cal-week-tag">W${wInfo.weekNum}<br>-</td>`;
+          }
+
+          // 星期一至星期日 7 格
+          for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
+            const cellDate = new Date(wInfo.monday);
+            cellDate.setDate(wInfo.monday.getDate() + dayOffset);
+            
+            // 是否在當前月份內
+            if (cellDate.getMonth() + 1 === mObj.month) {
+              let shiftDisplay = "";
+              let shiftClass = "";
+              if (wMatched) {
+                const s = wMatched.shifts[dayOffset];
+                shiftDisplay = s;
+                if (s === 'W' || s === 'R') shiftClass = 'shift-off';
+                else if (s && s.startsWith('N')) shiftClass = 'shift-night';
+              }
+
+              cardHtml += `
+                <td>
+                  <div class="cal-date-num">${cellDate.getDate()}</div>
+                  <div class="cal-shift-text ${shiftClass}">${shiftDisplay || '-'}</div>
+                </td>
+              `;
+            } else {
+              // 非本月留灰白
+              cardHtml += `<td style="background:#fcfcfc; color:#ddd;"><div class="cal-date-num" style="color:#e0e0e0;">${cellDate.getDate()}</div></td>`;
+            }
+          }
+          cardHtml += `</tr>`;
+        }
+
+        cardHtml += `</tbody></table>`;
+        monthCard.innerHTML = cardHtml;
+        container.appendChild(monthCard);
+      });
     }
 
-    // 一鍵複製一年更期
+    // 複製 52 週更期文字
     window.copyYearRosterText = () => {
-      if (generatedYearData.length === 0) return;
-      let text = `【${ROSTERS[yearPreviewConfig.group].name} 入位後未來 52 週更期表】\n起點：第 ${yearPreviewConfig.startRow} 行 (${yearPreviewConfig.startYear} Week ${yearPreviewConfig.startWeek})\n\n`;
-      text += `週數\t日期範圍\t行數\tMON\tTUE\tWED\tTHU\tFRI\tSAT\tSUN\n`;
-      generatedYearData.forEach(item => {
-        text += `${item.weekLabel}\t${item.dateRange}\t第${item.rowNum}行\t${item.shifts.join('\t')}\n`;
+      if (generatedYearWeeks.length === 0) return;
+      let text = `【${ROSTERS[yearPreviewConfig.group].name} 未來 52 週更期表】\n起點：第 ${yearPreviewConfig.startRow} 行 (${yearPreviewConfig.startYear} Week ${yearPreviewConfig.startWeek} 起)\n\n`;
+      text += `週數\t日期\t更期行數\tMON\tTUE\tWED\tTHU\tFRI\tSAT\tSUN\n`;
+      generatedYearWeeks.forEach(w => {
+        const dateRangeStr = `${w.weekInfo.monday.getMonth()+1}/${w.weekInfo.monday.getDate()} - ${w.weekInfo.sunday.getMonth()+1}/${w.weekInfo.sunday.getDate()}`;
+        text += `W${w.weekInfo.weekNum}\t${dateRangeStr}\t第${w.rowNum}行\t${w.shifts.join('\t')}\n`;
       });
 
       navigator.clipboard.writeText(text).then(() => {
-        alert("已成功複製 52 週更期文字到剪貼簿！可直接貼上到備忘錄或 Excel。");
-      }).catch(err => {
-        alert("複製失敗，請手動選取複製: " + err);
+        alert("已成功複製 52 週更期文字到剪貼簿！可直接貼上到 WhatsApp 或 Excel。");
       });
     };
 
@@ -1180,14 +1404,14 @@
       renderSoloRoster();
     };
 
-    // ----------------- 雲端歷史紀錄 (穩定刪除修復) -----------------
+    // ----------------- 雲端歷史紀錄 -----------------
     window.saveCurrentCalc = async () => {
       if (!currentUser) return;
       const title = document.getElementById("recordTitleInput").value.trim() || "大假推算紀錄";
       const summary = document.getElementById("summaryText").innerText;
 
       const newRec = {
-        id: "rec_" + Date.now() + "_" + Math.random().toString(36).substr(2, 5),
+        id: "rec_" + Date.now(),
         title,
         desc: summary,
         date: new Date().toLocaleDateString()
@@ -1287,7 +1511,6 @@
       </div>
       
       <div class="step-grid">
-        <!-- 步驟 1: 組別 -->
         <div class="step-box">
           <span class="step-title">① 我的組別</span>
           <select id="myGroupSelect" onchange="updateMyGroup(this.value)" style="width:100%;">
@@ -1297,19 +1520,16 @@
           </select>
         </div>
 
-        <!-- 步驟 2: 今日在哪一行 -->
         <div class="step-box">
           <span class="step-title">② 今日我正處於</span>
           <select id="myRowSelect" onchange="updateMyRow(this.value)" style="width:100%;"></select>
         </div>
 
-        <!-- 步驟 3: 幾月幾日放假 (小日曆) -->
         <div class="step-box">
           <span class="step-title">③ 幾號開始放假 (小日曆)</span>
           <input type="date" id="myLeaveDateInput" onchange="onMyLeaveDateChange(this.value)" style="width:90%;">
         </div>
 
-        <!-- 步驟 4: 或直接揀 Week 幾 -->
         <div class="step-box">
           <span class="step-title">④ 或選放哪一週大假</span>
           <div style="display:flex; gap:4px;">
@@ -1357,47 +1577,54 @@
       </div>
     </div>
 
-    <!-- 雲端個人備忘記錄 (修復刪除功能) -->
+    <!-- 雲端個人備忘記錄 -->
     <div class="records-box">
       <div style="font-weight:bold; color:var(--primary-color); margin-bottom:8px;">📁 我的雲端推算歷史備忘：</div>
       <div id="recordsList">載入中...</div>
     </div>
 
-    <!-- ★ 新增：未來一年更期預覽 (預設摺疊) ★ -->
-    <div class="year-preview-box">
+    <!-- ★ 入位後未來一年全年月曆 (月曆形式呈現) ★ -->
+    <div class="year-preview-box" id="yearPreviewAnchor">
       <div class="year-preview-header" onclick="toggleYearPreview()">
         <div style="font-size:1.05rem; font-weight:bold; color:#16a085;">
-          📅 入位後未來一年（52週）更期預覽
-          <span style="font-size:0.75rem; color:#7f8c8d; font-weight:normal;">(點擊展開/收起)</span>
+          📅 入位後未來一年實體月曆 (點擊展開/收起)
         </div>
-        <button class="btn-toggle-year" id="toggleYearBtn" type="button">▼ 展開一年更期</button>
+        <button class="btn-toggle-year" id="toggleYearBtn" type="button">▼ 展開全年月曆</button>
       </div>
 
-      <!-- 摺疊內容區塊 (預設 display:none) -->
       <div id="yearPreviewContent" style="display:none; margin-top:15px; border-top:1px solid #e0e0e0; padding-top:12px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px; background:#e8f8f5; padding:10px; border-radius:6px;">
-          <div style="font-size:0.85rem; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-            <b>起點設定：</b>
-            <select id="ypGroupSelect" onchange="onYpConfigChange()">
-              <option value="group2">2組 (12行)</option>
-              <option value="group3">3組 (14行)</option>
-              <option value="group4">4組 (5行)</option>
-            </select>
-            <select id="ypRowSelect" onchange="onYpConfigChange()"></select>
-            <span>從：</span>
-            <select id="ypYearSelect" onchange="onYpConfigChange()">
-              <option value="2026">2026年</option>
-              <option value="2027">2027年</option>
-              <option value="2028">2028年</option>
-            </select>
-            <select id="ypWeekSelect" onchange="onYpConfigChange()"></select>
+        
+        <!-- 頂部：貼上推算結果參數列 -->
+        <div style="background:#e8f8f5; padding:10px 12px; border-radius:6px; margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+          <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; font-size:0.85rem;">
+            <b>貼上推算結果參數：</b>
+            <input type="text" id="ypPasteInput" placeholder="貼上參數 (如 group2|4|2026|52)" style="width:200px; padding:4px 6px;">
+            <button class="btn-apply-yp" onclick="pasteCodeToYearPreview()">套用並排表</button>
           </div>
-          <button class="btn-copy-year" onclick="copyYearRosterText()">📋 一鍵複製 52 週更期文字</button>
+          <button class="btn-copy-year" onclick="copyYearRosterText()">📋 一鍵複製 52 週文字更期</button>
         </div>
 
-        <div class="table-container" style="max-height: 480px; overflow-y: auto;">
-          <table id="yearPreviewTable"></table>
+        <!-- 手動微調起點 -->
+        <div style="font-size:0.85rem; display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
+          <b>或手動調整起點：</b>
+          <select id="ypGroupSelect" onchange="onYpConfigChange()">
+            <option value="group2">2組 (12行)</option>
+            <option value="group3">3組 (14行)</option>
+            <option value="group4">4組 (5行)</option>
+          </select>
+          <select id="ypRowSelect" onchange="onYpConfigChange()"></select>
+          <span>從：</span>
+          <select id="ypYearSelect" onchange="onYpConfigChange()">
+            <option value="2026">2026年</option>
+            <option value="2027">2027年</option>
+            <option value="2028">2028年</option>
+          </select>
+          <select id="ypWeekSelect" onchange="onYpConfigChange()"></select>
         </div>
+
+        <!-- 真正月曆卡片容器 (12個月獨立月曆格局) -->
+        <div class="cal-grid-container" id="yearCalendarGrid"></div>
+
       </div>
     </div>
 
