@@ -3,13 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>多同事大假接替與可揀入位推算工具</title>
+  <title>多同事大假接替與更期推算工具</title>
   <style>
     :root {
       --primary-color: #2c3e50;
       --accent-color: #e67e22;
       --highlight: #27ae60;
-      --alert-bg: #e8f8f5;
+      --off-bg: #ffeaa7;
+      --night-bg: #dfe6e9;
+      --today-highlight: #fdcb6e;
+      --calc-highlight: #a29bfe;
     }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -74,7 +77,7 @@
 
     /* 主應用區域 */
     .container {
-      max-width: 900px;
+      max-width: 950px;
       margin: 0 auto;
       background: white;
       border-radius: 12px;
@@ -102,18 +105,18 @@
       cursor: pointer;
     }
 
-    /* 多同事輸入卡片 */
+    /* 同事輸入卡片 */
     .colleagues-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 15px;
-      margin-bottom: 20px;
+      gap: 12px;
+      margin-bottom: 15px;
     }
     .colleague-card {
       background: #f8f9fa;
       border: 1px solid #e0e0e0;
       border-radius: 8px;
-      padding: 15px;
+      padding: 12px;
       border-top: 4px solid #3498db;
     }
     .colleague-card:nth-child(2) { border-top-color: #9b59b6; }
@@ -121,26 +124,26 @@
     
     .colleague-title {
       font-weight: bold;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
     .field-row {
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       font-size: 0.85rem;
     }
-    select, input[type="number"], input[type="text"] {
+    select, input[type="number"], input[type="text"], input[type="date"] {
       padding: 5px 8px;
       border-radius: 6px;
       border: 1px solid #ccc;
       font-size: 0.85rem;
     }
 
-    /* 分析與可選入位結果面板 */
+    /* 分析與選擇結果 */
     .result-panel {
       background: #fff8e1;
       border: 2px solid #ffe082;
@@ -149,25 +152,25 @@
       margin-bottom: 20px;
     }
     .result-title {
-      font-size: 1.1rem;
+      font-size: 1.05rem;
       font-weight: bold;
       color: #d35400;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
     .options-container {
       display: flex;
       flex-wrap: wrap;
-      gap: 12px;
+      gap: 10px;
       margin-top: 10px;
     }
     .option-card {
       background: white;
       border: 2px solid #27ae60;
       border-radius: 8px;
-      padding: 10px 14px;
+      padding: 10px 12px;
       flex: 1;
-      min-width: 220px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      min-width: 200px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
     .option-tag {
       background: #27ae60;
@@ -178,21 +181,98 @@
       font-weight: bold;
     }
 
-    /* 雲端保存紀錄 */
-    .records-box {
-      background: #f1f2f6;
-      border-radius: 8px;
-      padding: 12px;
-      margin-top: 20px;
+    /* 表格與樣式 */
+    .table-container {
+      overflow-x: auto;
+      margin-top: 10px;
+      margin-bottom: 20px;
     }
-    .record-item {
-      background: white;
-      padding: 10px 12px;
-      margin-bottom: 8px;
-      border-radius: 6px;
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: center;
       font-size: 0.85rem;
-      border-left: 4px solid var(--accent-color);
     }
+    th, td {
+      padding: 7px 4px;
+      border: 1px solid #e0e0e0;
+    }
+    th { background: #f1f2f6; color: #57606f; }
+    .row-highlight {
+      background: #e8f8f5;
+      font-weight: bold;
+    }
+    .cell-today {
+      background-color: var(--today-highlight) !important;
+      border: 2px solid #e1701a !important;
+      font-weight: bold;
+    }
+    .cell-today::after {
+      content: " ★基準";
+      font-size: 0.65rem;
+      color: #d63031;
+      display: block;
+    }
+    .cell-target {
+      background-color: var(--calc-highlight) !important;
+      color: white !important;
+      border: 2px solid #6c5ce7 !important;
+      font-weight: bold;
+    }
+    .cell-target::after {
+      content: " 🎯推算日";
+      font-size: 0.65rem;
+      color: #fff;
+      display: block;
+    }
+    .shift-off { background-color: var(--off-bg); color: #d63031; }
+    .shift-night { background-color: var(--night-bg); }
+
+    /* 分隔線 */
+    .section-divider {
+      border: 0;
+      height: 2px;
+      background: linear-gradient(to right, #e0e0e0, #3498db, #e0e0e0);
+      margin: 30px 0 25px;
+    }
+
+    /* 底部獨立查更器 */
+    .solo-roster-box {
+      background: #fafafa;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 15px;
+    }
+    .solo-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .calc-box {
+      background: #eef2f7;
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      font-size: 0.85rem;
+    }
+    .calc-box button {
+      background: #3498db;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 0.8rem;
+    }
+    .btn-reset { background: #e74c3c !important; }
     .btn-save-record {
       background: var(--highlight);
       color: white;
@@ -202,6 +282,22 @@
       font-size: 0.85rem;
       cursor: pointer;
       font-weight: bold;
+    }
+
+    /* 歷史記錄 */
+    .records-box {
+      background: #f1f2f6;
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 20px;
+    }
+    .record-item {
+      background: white;
+      padding: 8px 12px;
+      margin-bottom: 6px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      border-left: 4px solid var(--accent-color);
     }
   </style>
 
@@ -242,6 +338,76 @@
     let currentUser = null;
     let savedRecords = [];
 
+    const ROSTERS = {
+      group2: {
+        name: "2組 (12行)",
+        totalRows: 12,
+        data: [
+          ["N (10-8)", "R", "W", "1-11", "1-9", "9-6", "9-4"],
+          ["9-5", "N (10-8)", "R", "W", "1-11", "1-9", "9-5"],
+          ["9-5", "9-5", "1-9", "9-5", "9-5", "9-1", "W"],
+          ["8-4", "9-5", "N (10-8)", "R", "W", "1-11", "1-9"],
+          ["9-6", "8-4", "9-4", "N (10-8)", "R", "W", "1-11"],
+          ["1-9", "9-6", "8-4", "9-5", "4-11", "W", "9-1"],
+          ["3-11", "9-5", "9-6", "9-6", "N (10-8)", "R", "W"],
+          ["8-4", "8-4", "8-4", "8-4", "8-4", "9-1", "W"],
+          ["1-11", "1-9", "W", "8-5", "9-4", "N (10-8)", "R"],
+          ["W", "1-11", "5-10", "9-1", "8-4", "9-4", "N (10-8)"],
+          ["R", "W", "1-11", "1-9", "9-6", "8-5", "8-4"],
+          ["W", "1-11", "1-9", "9-4", "9-1", "8-5", "8-4"]
+        ]
+      },
+      group3: {
+        name: "3組 (14行)",
+        totalRows: 14,
+        data: [
+          ["N (10-8)", "R", "W", "9-5", "9-5", "1-11", "2-10"],
+          ["W", "9-6", "8-5", "9-5", "1-10", "1-10", "W"],
+          ["9-6", "2-10", "1-11", "N (10-8)", "R", "W", "9-4"],
+          ["9-4", "9-5", "8-4", "9-1", "8-5", "9-5", "W"],
+          ["1-10", "N (10-8)", "R", "W", "8-4", "8-5", "9-5"],
+          ["9-5", "3-11", "3-11", "W", "8-4", "9-5", "9-1"],
+          ["4-11", "1-11", "N (10-8)", "R", "W", "9-6", "9-5"],
+          ["9-6", "8-1", "9-4", "3-11", "1-11", "W", "8-1"],
+          ["8-4", "9-6", "10-5", "1-11", "N (10-8)", "R", "W"],
+          ["2-11", "3-10", "9-1", "9-6", "8-4", "9-4", "W"],
+          ["9-5", "9-4", "9-6", "W", "1-11", "N (10-8)", "R"],
+          ["W", "8-4", "9-4", "9-5", "9-4", "8-4", "4-10"],
+          ["1-10", "W", "9-4", "9-4", "10-5", "9-1", "N (10-8)"],
+          ["R", "W", "8-4", "8-4", "9-6", "1-10", "1-11"]
+        ]
+      },
+      group4: {
+        name: "4組 (5行)",
+        totalRows: 5,
+        data: [
+          ["8-1", "9-4", "9-5", "8-4", "W", "4-11", "1-10"],
+          ["9-5", "9-5", "9-5", "2-10", "9-1", "W", "8-4"],
+          ["9-4", "8-1", "W", "8-4", "9-5", "1-11", "5-11"],
+          ["10-5", "9-1", "1-11", "5-11", "W", "9-6", "9-5"],
+          ["8-4", "10-5", "9-6", "1-11", "4-10", "9-1", "W"]
+        ]
+      }
+    };
+
+    const dayNames = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
+
+    let colleagues = [
+      { id: 1, name: "同事 A", group: "group2", baseRow: 1, weeks: 6, enabled: true },
+      { id: 2, name: "同事 B", group: "group2", baseRow: 4, weeks: 6, enabled: true },
+      { id: 3, name: "同事 C", group: "group3", baseRow: 2, weeks: 6, enabled: false }
+    ];
+
+    // 底部通用查更狀態
+    let soloState = {
+      group: 'group2',
+      currentRow: 1,
+      customToday: '',
+      calcDays: 0,
+      calcDate: '',
+      resultText: ''
+    };
+
     onAuthStateChanged(auth, async (user) => {
       if (user) {
         currentUser = user;
@@ -251,6 +417,7 @@
         loadUserRecords();
         initInputs();
         window.calculateAll();
+        renderSoloRoster();
       } else {
         currentUser = null;
         document.getElementById("authPanel").style.display = "block";
@@ -294,19 +461,7 @@
 
     window.userLogout = () => signOut(auth);
 
-    // ----------------- 多同事推算核心 -----------------
-    const ROSTERS = {
-      group2: { name: "2組 (12行)", totalRows: 12 },
-      group3: { name: "3組 (14行)", totalRows: 14 },
-      group4: { name: "4組 (5行)", totalRows: 5 }
-    };
-
-    let colleagues = [
-      { id: 1, name: "同事 A", group: "group2", baseRow: 1, weeks: 6, enabled: true },
-      { id: 2, name: "同事 B", group: "group2", baseRow: 4, weeks: 6, enabled: true },
-      { id: 3, name: "同事 C", group: "group3", baseRow: 2, weeks: 6, enabled: false }
-    ];
-
+    // ----------------- 上部：多同事分析邏輯 -----------------
     function initInputs() {
       const container = document.getElementById("colleaguesList");
       container.innerHTML = "";
@@ -336,7 +491,7 @@
             </div>
             <div class="field-row">
               <span>基準行數：</span>
-              <select id="rowSelect_${idx}" onchange="updateColleague(${idx}, 'baseRow', parseInt(this.value))">
+              <select onchange="updateColleague(${idx}, 'baseRow', parseInt(this.value))">
                 ${rowOptions}
               </select>
             </div>
@@ -369,10 +524,10 @@
 
       if (activeList.length === 0) {
         summaryText.innerHTML = "請至少勾選一位同事進行推算。";
+        document.getElementById("optionsRosterTable").innerHTML = "";
         return;
       }
 
-      // 分析每位同事的結果
       const results = activeList.map(c => {
         const roster = ROSTERS[c.group];
         const offset = Math.floor(c.weeks);
@@ -383,44 +538,201 @@
         return {
           name: c.name,
           weeks: c.weeks,
+          group: c.group,
           groupName: roster.name,
           endRow,
           myNextRow
         };
       });
 
-      // 檢查是否同週放假
       const weeksArr = results.map(r => r.weeks);
       const isSameWeek = weeksArr.length > 1 && weeksArr.every(w => w === weeksArr[0]);
 
-      let summaryHtml = "";
       if (isSameWeek) {
-        summaryHtml = `🔥 <b>【多位同事同週放大假】</b>：以下同事均在 <b>${weeksArr[0]} 週後</b> 放大假！他們將同時騰出空位，你可以從以下 <b>${results.length} 個選擇</b> 中自由挑選一個最佳行數接替：`;
+        summaryText.innerHTML = `🔥 <b>【同週放大假提示】</b>：以下同事均在 <b>${weeksArr[0]} 週後</b> 同時放大假！騰出以下 <b>${results.length} 個選擇</b> 可供你接替入位：`;
       } else {
-        summaryHtml = `💡 <b>個別推算分析</b>：以下是每位同事大假最後一週的行數與你對應的可揀接替行數：`;
+        summaryText.innerHTML = `💡 <b>個別推算分析</b>：以下是各位同事推算出的最後行數與對應可入位的行數：`;
       }
-      summaryText.innerHTML = summaryHtml;
 
-      // 渲染可選方案
       results.forEach((r, i) => {
         resContainer.innerHTML += `
           <div class="option-card">
-            <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-              <span class="option-tag">選擇 ${i + 1}（接替 ${r.name}）</span>
-              <span style="font-size:0.8rem; color:#777;">${r.groupName}</span>
+            <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+              <span class="option-tag">選擇 ${i + 1}：接替 ${r.name}</span>
+              <span style="font-size:0.75rem; color:#777;">${r.groupName}</span>
             </div>
-            <div style="font-size:0.85rem; color:#555; margin-bottom:6px;">
-              • ${r.name} 在 ${r.weeks} 週後大假最後一日行緊：<b>第 ${r.endRow} 行</b>
-            </div>
-            <div style="font-size:1rem; color:#27ae60; font-weight:bold;">
-              👉 你可接替入位：<span style="font-size:1.2rem; text-decoration:underline;">第 ${r.myNextRow} 行</span>
+            <div style="font-size:0.85rem; color:#555;">• ${r.name} 在 ${r.weeks} 週後大假最後一日行緊：第 ${r.endRow} 行</div>
+            <div style="font-size:1.05rem; color:#27ae60; font-weight:bold; margin-top:4px;">
+              👉 你可接替入位：<span style="text-decoration:underline;">第 ${r.myNextRow} 行</span>
             </div>
           </div>
         `;
       });
+
+      renderOptionsRoster(results);
     };
 
-    // 儲存推算記錄
+    // 渲染「可入位選擇」對照的班表預覽
+    function renderOptionsRoster(results) {
+      const table = document.getElementById("optionsRosterTable");
+      let html = `<thead><tr><th>可揀選擇</th><th>組別與行數</th><th>MON</th><th>TUE</th><th>WED</th><th>THU</th><th>FRI</th><th>SAT</th><th>SUN</th></tr></thead><tbody>`;
+
+      results.forEach((r, idx) => {
+        const roster = ROSTERS[r.group];
+        const rowShifts = roster.data[r.myNextRow - 1];
+        html += `<tr class="row-highlight">`;
+        html += `<td><span class="option-tag">選擇 ${idx + 1}</span></td>`;
+        html += `<td><b>${r.groupName}<br>第 ${r.myNextRow} 行</b></td>`;
+        rowShifts.forEach(shift => {
+          let cls = '';
+          if (shift === 'W' || shift === 'R') cls = 'shift-off';
+          if (shift.startsWith('N')) cls = 'shift-night';
+          html += `<td class="${cls}">${shift}</td>`;
+        });
+        html += `</tr>`;
+      });
+
+      html += `</tbody>`;
+      table.innerHTML = html;
+    }
+
+    // ----------------- 下部：通用獨立更期月曆 -----------------
+    function getSoloBaseDate() {
+      if (soloState.customToday) {
+        const parts = soloState.customToday.split('-');
+        return new Date(parts[0], parts[1] - 1, parts[2]);
+      }
+      return new Date();
+    }
+
+    function getSoloTodayIndex() {
+      const day = getSoloBaseDate().getDay();
+      return day === 0 ? 6 : day - 1;
+    }
+
+    function calculateSoloShift(addDays) {
+      const roster = ROSTERS[soloState.group];
+      const todayIdx = getSoloTodayIndex();
+      const totalDayOffset = todayIdx + addDays;
+      let targetDayIdx = totalDayOffset % 7;
+      if (targetDayIdx < 0) targetDayIdx += 7;
+
+      const weekOffset = Math.floor(totalDayOffset / 7);
+      let targetRow = ((soloState.currentRow - 1 + weekOffset) % roster.totalRows) + 1;
+      if (targetRow <= 0) targetRow += roster.totalRows;
+
+      return { targetRow, targetDayIdx };
+    }
+
+    function renderSoloRoster() {
+      const roster = ROSTERS[soloState.group];
+      
+      // 更新行數下拉選單
+      const rowSelect = document.getElementById("soloRowSelect");
+      rowSelect.innerHTML = "";
+      for (let i = 1; i <= roster.totalRows; i++) {
+        rowSelect.innerHTML += `<option value="${i}" ${soloState.currentRow === i ? 'selected' : ''}>第 ${i} 行</option>`;
+      }
+
+      let targetPos = null;
+      if (soloState.calcDays !== 0) {
+        targetPos = calculateSoloShift(soloState.calcDays);
+      }
+
+      const todayIdx = getSoloTodayIndex();
+      const table = document.getElementById("soloRosterTable");
+      let html = `<thead><tr><th>行數</th><th>MON</th><th>TUE</th><th>WED</th><th>THU</th><th>FRI</th><th>SAT</th><th>SUN</th></tr></thead><tbody>`;
+
+      roster.data.forEach((row, idx) => {
+        const rowNum = idx + 1;
+        const isActiveRow = rowNum === soloState.currentRow;
+        html += `<tr class="${isActiveRow ? 'row-highlight' : ''}">`;
+        html += `<td><b>第 ${rowNum} 行</b></td>`;
+
+        row.forEach((shift, dayIdx) => {
+          const isToday = isActiveRow && dayIdx === todayIdx;
+          const isTarget = targetPos && rowNum === targetPos.targetRow && dayIdx === targetPos.targetDayIdx;
+
+          let classList = [];
+          if (isToday) classList.push('cell-today');
+          if (isTarget) classList.push('cell-target');
+          if (shift === 'W' || shift === 'R') classList.push('shift-off');
+          if (shift.startsWith('N')) classList.push('shift-night');
+
+          html += `<td class="${classList.join(' ')}">${shift}</td>`;
+        });
+        html += `</tr>`;
+      });
+
+      html += `</tbody>`;
+      table.innerHTML = html;
+    }
+
+    window.updateSoloGroup = (g) => {
+      soloState.group = g;
+      soloState.currentRow = 1;
+      soloState.calcDays = 0;
+      soloState.resultText = '';
+      document.getElementById("soloResult").innerText = '';
+      renderSoloRoster();
+    };
+
+    window.updateSoloRow = (r) => {
+      soloState.currentRow = parseInt(r);
+      renderSoloRoster();
+    };
+
+    window.setSoloCustomToday = (val) => {
+      soloState.customToday = val;
+      soloState.calcDays = 0;
+      soloState.resultText = '';
+      document.getElementById("soloResult").innerText = '';
+      renderSoloRoster();
+    };
+
+    window.resetSoloCustomToday = () => {
+      soloState.customToday = '';
+      document.getElementById("soloCustomTodayInput").value = '';
+      soloState.calcDays = 0;
+      soloState.resultText = '';
+      document.getElementById("soloResult").innerText = '';
+      renderSoloRoster();
+    };
+
+    window.calcSoloByDays = () => {
+      const days = parseInt(document.getElementById("soloDaysInput").value);
+      if (isNaN(days)) return;
+      soloState.calcDays = days;
+      const res = calculateSoloShift(days);
+      const shift = ROSTERS[soloState.group].data[res.targetRow - 1][res.targetDayIdx];
+      document.getElementById("soloResult").innerHTML = `💡 推算結果：<b>${days >= 0 ? days + ' 天後' : Math.abs(days) + ' 天前'}</b> 落在 <b>第 ${res.targetRow} 行 ${dayNames[res.targetDayIdx]}</b>，班次為：<b style="color:#d63031; font-size:1.1rem;">${shift}</b>`;
+      renderSoloRoster();
+    };
+
+    window.calcSoloByDate = () => {
+      const dateInput = document.getElementById("soloDateInput").value;
+      if (!dateInput) return;
+      const baseDate = getSoloBaseDate();
+      const parts = dateInput.split('-');
+      const targetDate = new Date(parts[0], parts[1] - 1, parts[2]);
+      baseDate.setHours(0,0,0,0);
+      targetDate.setHours(0,0,0,0);
+      const diffDays = Math.round((targetDate - baseDate) / (1000 * 60 * 60 * 24));
+      
+      soloState.calcDays = diffDays;
+      const res = calculateSoloShift(diffDays);
+      const shift = ROSTERS[soloState.group].data[res.targetRow - 1][res.targetDayIdx];
+      document.getElementById("soloResult").innerHTML = `💡 推算結果：日期 <b>${dateInput}</b> 落在 <b>第 ${res.targetRow} 行 ${dayNames[res.targetDayIdx]}</b>，班次為：<b style="color:#d63031; font-size:1.1rem;">${shift}</b>`;
+      renderSoloRoster();
+    };
+
+    window.resetSoloCalc = () => {
+      soloState.calcDays = 0;
+      document.getElementById("soloResult").innerText = '';
+      renderSoloRoster();
+    };
+
+    // ----------------- 雲端歷史紀錄 -----------------
     window.saveCurrentCalc = async () => {
       if (!currentUser) return;
       const title = document.getElementById("recordTitleInput").value.trim() || "多同事大假推算";
@@ -493,36 +805,84 @@
     <div class="auth-toggle" id="toggleBtn" onclick="toggleAuthMode()">未有帳號？點此免費註冊</div>
   </div>
 
-  <!-- 2. 主推算工具面板 -->
+  <!-- 2. 主面板 -->
   <div class="container" id="appPanel" style="display:none;">
     <div class="top-bar">
       <div>👤 目前用戶：<b id="userLabel" style="color:var(--highlight);"></b></div>
       <button class="btn-logout" onclick="userLogout()">登出帳號</button>
     </div>
 
-    <h1 style="margin: 5px 0 15px 0; font-size:1.3rem;">多同事大假重疊與可揀入位推算工具</h1>
-
-    <!-- 同事輸入區 -->
+    <!-- 上半部：多同事大假重疊推算 -->
+    <h1 style="margin: 0 0 15px 0; font-size:1.3rem; color:var(--primary-color);">👥 多同事大假重疊與可揀入位推算</h1>
+    
     <div class="colleagues-grid" id="colleaguesList"></div>
 
-    <!-- 綜合分析與選擇面板 -->
     <div class="result-panel">
-      <div class="result-title">🎯 銜接分析與可揀入位結果：</div>
+      <div class="result-title">🎯 銜接分析結果：</div>
       <div id="summaryText" style="line-height:1.5;"></div>
       <div class="options-container" id="optionsList"></div>
 
-      <!-- 儲存紀錄 -->
-      <div style="margin-top: 15px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-        <input type="text" id="recordTitleInput" placeholder="輸入備註 (例如: 6月同呀明、阿強撞假選位)" style="flex:1; min-width:200px; padding:7px;">
+      <!-- 可揀入位的班表月曆並排預覽 -->
+      <div style="font-weight:bold; margin-top:15px; color:#444;">📋 可選行數之班次月曆預覽（返緊咩一覽無遺）：</div>
+      <div class="table-container">
+        <table id="optionsRosterTable"></table>
+      </div>
+
+      <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+        <input type="text" id="recordTitleInput" placeholder="輸入備註 (例如: 6月同呀明阿強撞假選位)" style="flex:1; min-width:200px; padding:7px;">
         <button class="btn-save-record" onclick="saveCurrentCalc()">💾 儲存此推算結果</button>
       </div>
     </div>
 
-    <!-- 歷史紀錄 -->
     <div class="records-box">
       <div style="font-weight:bold; color:var(--primary-color); margin-bottom:8px;">📁 我的雲端推算歷史備忘：</div>
       <div id="recordsList">載入中...</div>
     </div>
+
+    <!-- 分隔線 -->
+    <hr class="section-divider">
+
+    <!-- 下半部：靈活通用更期表 (無人名，查更專用) -->
+    <div class="solo-roster-box">
+      <div class="solo-header">
+        <h2 style="margin:0; font-size:1.15rem; color:#2c3e50;">📅 獨立更期月曆與快速查更器（無人名）</h2>
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; font-size:0.85rem;">
+          <label>組別：</label>
+          <select onchange="updateSoloGroup(this.value)">
+            <option value="group2">2組 (12行)</option>
+            <option value="group3">3組 (14行)</option>
+            <option value="group4">4組 (5行)</option>
+          </select>
+
+          <label>本週處於：</label>
+          <select id="soloRowSelect" onchange="updateSoloRow(this.value)"></select>
+
+          <label style="color:#2980b9; font-weight:bold;">基準日：</label>
+          <input type="date" id="soloCustomTodayInput" onchange="setSoloCustomToday(this.value)">
+          <button class="btn-reset" style="color:white; border:none; padding:4px 8px; border-radius:4px; font-size:0.8rem; cursor:pointer;" onclick="resetSoloCustomToday()">↺ 今日</button>
+        </div>
+      </div>
+
+      <!-- 推算工具條 -->
+      <div class="calc-box">
+        <span><b>🔍 數日子推算：</b></span>
+        <label>相隔日數：</label>
+        <input type="number" id="soloDaysInput" placeholder="如 2 或 -3" style="width:65px;">
+        <button onclick="calcSoloByDays()">按日數算</button>
+        <span style="color:#ccc;">|</span>
+        <label>指定日期：</label>
+        <input type="date" id="soloDateInput">
+        <button onclick="calcSoloByDate()">按日期算</button>
+        <button class="btn-reset" onclick="resetSoloCalc()">清除標記</button>
+      </div>
+
+      <div id="soloResult" style="margin-bottom:8px; font-size:0.9rem;"></div>
+
+      <div class="table-container">
+        <table id="soloRosterTable"></table>
+      </div>
+    </div>
+
   </div>
 
 </body>
