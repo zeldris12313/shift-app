@@ -3,12 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>更期大假銜接與推算工具 (需登入)</title>
+  <title>多同事大假接替與可揀入位推算工具</title>
   <style>
     :root {
       --primary-color: #2c3e50;
       --accent-color: #e67e22;
       --highlight: #27ae60;
+      --alert-bg: #e8f8f5;
     }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -27,7 +28,6 @@
       border-top: 5px solid var(--accent-color);
       text-align: center;
     }
-    .auth-container h2 { margin-top: 0; color: var(--primary-color); }
     .auth-container input {
       width: 90%;
       padding: 10px;
@@ -74,7 +74,7 @@
 
     /* 主應用區域 */
     .container {
-      max-width: 800px;
+      max-width: 900px;
       margin: 0 auto;
       background: white;
       border-radius: 12px;
@@ -102,73 +102,83 @@
       cursor: pointer;
     }
 
-    .form-group {
-      margin-bottom: 15px;
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 10px;
+    /* 多同事輸入卡片 */
+    .colleagues-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    .colleague-card {
       background: #f8f9fa;
-      padding: 12px;
-      border-radius: 8px;
-    }
-    label { font-weight: bold; font-size: 0.9rem; }
-    select, input[type="number"], input[type="date"] {
-      padding: 6px 10px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      font-size: 0.9rem;
-    }
-
-    .result-box {
-      background: #fff3e0;
-      border: 1px solid #ffe0b2;
+      border: 1px solid #e0e0e0;
       border-radius: 8px;
       padding: 15px;
-      margin: 20px 0;
-      line-height: 1.6;
+      border-top: 4px solid #3498db;
+    }
+    .colleague-card:nth-child(2) { border-top-color: #9b59b6; }
+    .colleague-card:nth-child(3) { border-top-color: #e67e22; }
+    
+    .colleague-title {
+      font-weight: bold;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .field-row {
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.85rem;
+    }
+    select, input[type="number"], input[type="text"] {
+      padding: 5px 8px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 0.85rem;
+    }
+
+    /* 分析與可選入位結果面板 */
+    .result-panel {
+      background: #fff8e1;
+      border: 2px solid #ffe082;
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 20px;
     }
     .result-title {
       font-size: 1.1rem;
       font-weight: bold;
       color: #d35400;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
     }
-    .highlight-text {
-      color: var(--highlight);
-      font-size: 1.25rem;
-      font-weight: bold;
-      text-decoration: underline;
-    }
-
-    /* 一覽對照表 */
-    .table-title {
-      font-weight: bold;
-      margin: 15px 0 8px;
-      color: #555;
-    }
-    .connect-preview {
+    .options-container {
       display: flex;
-      gap: 8px;
-      overflow-x: auto;
-      padding: 10px 0;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 10px;
     }
-    .connect-item {
-      background: #fafafa;
-      border: 1px solid #e0e0e0;
-      border-radius: 6px;
-      padding: 8px 10px;
-      text-align: center;
-      min-width: 90px;
-      flex-shrink: 0;
+    .option-card {
+      background: white;
+      border: 2px solid #27ae60;
+      border-radius: 8px;
+      padding: 10px 14px;
+      flex: 1;
+      min-width: 220px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     }
-    .connect-item.active {
-      background: #ffe0b2;
-      border-color: #e67e22;
+    .option-tag {
+      background: #27ae60;
+      color: white;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.75rem;
       font-weight: bold;
     }
 
-    /* 雲端保存紀錄清單 */
+    /* 雲端保存紀錄 */
     .records-box {
       background: #f1f2f6;
       border-radius: 8px;
@@ -177,13 +187,11 @@
     }
     .record-item {
       background: white;
-      padding: 8px 12px;
-      margin-bottom: 6px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
       border-radius: 6px;
       font-size: 0.85rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      border-left: 4px solid var(--accent-color);
     }
     .btn-save-record {
       background: var(--highlight);
@@ -195,16 +203,9 @@
       cursor: pointer;
       font-weight: bold;
     }
-
-    /* 班表預覽 */
-    .table-container { overflow-x: auto; margin-top: 15px; }
-    table { width: 100%; border-collapse: collapse; text-align: center; font-size: 0.85rem; }
-    th, td { padding: 6px 4px; border: 1px solid #e0e0e0; }
-    th { background: #f1f2f6; }
-    .cell-off { background: #ffeaa7; color: #d63031; }
   </style>
 
-  <!-- Firebase App & Auth & Firestore SDK -->
+  <!-- Firebase SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
     import { 
@@ -241,7 +242,6 @@
     let currentUser = null;
     let savedRecords = [];
 
-    // 監聽登入狀態
     onAuthStateChanged(auth, async (user) => {
       if (user) {
         currentUser = user;
@@ -249,7 +249,8 @@
         document.getElementById("appPanel").style.display = "block";
         document.getElementById("userLabel").innerText = user.email || "已登入用戶";
         loadUserRecords();
-        window.calculate();
+        initInputs();
+        window.calculateAll();
       } else {
         currentUser = null;
         document.getElementById("authPanel").style.display = "block";
@@ -257,7 +258,6 @@
       }
     });
 
-    // Email 登入/註冊邏輯
     let isRegisterMode = false;
     window.toggleAuthMode = () => {
       isRegisterMode = !isRegisterMode;
@@ -272,12 +272,7 @@
       const pass = document.getElementById("authPassword").value;
       const msgBox = document.getElementById("authMsg");
       msgBox.innerText = "";
-
-      if (!email || !pass) {
-        msgBox.innerText = "請輸入完整 Email 及密碼";
-        return;
-      }
-
+      if (!email || !pass) { msgBox.innerText = "請輸入完整 Email 及密碼"; return; }
       try {
         if (isRegisterMode) {
           await createUserWithEmailAndPassword(auth, email, pass);
@@ -285,11 +280,10 @@
           await signInWithEmailAndPassword(auth, email, pass);
         }
       } catch (e) {
-        msgBox.innerText = "錯誤: " + e.message;
+        msgBox.innerText = "登入失敗: " + e.message;
       }
     };
 
-    // Google 一鍵登入
     window.loginWithGoogle = async () => {
       try {
         await signInWithPopup(auth, googleProvider);
@@ -298,40 +292,149 @@
       }
     };
 
-    window.userLogout = () => {
-      signOut(auth);
+    window.userLogout = () => signOut(auth);
+
+    // ----------------- 多同事推算核心 -----------------
+    const ROSTERS = {
+      group2: { name: "2組 (12行)", totalRows: 12 },
+      group3: { name: "3組 (14行)", totalRows: 14 },
+      group4: { name: "4組 (5行)", totalRows: 5 }
     };
 
-    // 載入該用家在 Firestore 的私人推算紀錄
-    async function loadUserRecords() {
-      if (!currentUser) return;
-      try {
-        const snap = await getDoc(doc(db, "user_records", currentUser.uid));
-        if (snap.exists() && snap.data().records) {
-          savedRecords = snap.data().records;
-        } else {
-          savedRecords = [];
+    let colleagues = [
+      { id: 1, name: "同事 A", group: "group2", baseRow: 1, weeks: 6, enabled: true },
+      { id: 2, name: "同事 B", group: "group2", baseRow: 4, weeks: 6, enabled: true },
+      { id: 3, name: "同事 C", group: "group3", baseRow: 2, weeks: 6, enabled: false }
+    ];
+
+    function initInputs() {
+      const container = document.getElementById("colleaguesList");
+      container.innerHTML = "";
+
+      colleagues.forEach((c, idx) => {
+        let rowOptions = "";
+        const maxR = ROSTERS[c.group].totalRows;
+        for (let r = 1; r <= maxR; r++) {
+          rowOptions += `<option value="${r}" ${r === c.baseRow ? 'selected' : ''}>第 ${r} 行</option>`;
         }
-        renderRecords();
-      } catch (e) {
-        console.error(e);
-      }
+
+        container.innerHTML += `
+          <div class="colleague-card">
+            <div class="colleague-title">
+              <input type="text" value="${c.name}" onchange="updateColleague(${idx}, 'name', this.value)" style="width:110px; font-weight:bold;">
+              <label style="font-size:0.8rem; cursor:pointer;">
+                <input type="checkbox" ${c.enabled ? 'checked' : ''} onchange="updateColleague(${idx}, 'enabled', this.checked)"> 加入計算
+              </label>
+            </div>
+            <div class="field-row">
+              <span>所屬組別：</span>
+              <select onchange="updateColleagueGroup(${idx}, this.value)">
+                <option value="group2" ${c.group==='group2'?'selected':''}>2組 (12行)</option>
+                <option value="group3" ${c.group==='group3'?'selected':''}>3組 (14行)</option>
+                <option value="group4" ${c.group==='group4'?'selected':''}>4組 (5行)</option>
+              </select>
+            </div>
+            <div class="field-row">
+              <span>基準行數：</span>
+              <select id="rowSelect_${idx}" onchange="updateColleague(${idx}, 'baseRow', parseInt(this.value))">
+                ${rowOptions}
+              </select>
+            </div>
+            <div class="field-row">
+              <span>幾多週後放大假：</span>
+              <input type="number" value="${c.weeks}" style="width:65px;" oninput="updateColleague(${idx}, 'weeks', parseFloat(this.value)||0)">
+            </div>
+          </div>
+        `;
+      });
     }
 
-    // 儲存當前推算結果
+    window.updateColleague = (idx, key, val) => {
+      colleagues[idx][key] = val;
+      window.calculateAll();
+    };
+
+    window.updateColleagueGroup = (idx, val) => {
+      colleagues[idx].group = val;
+      colleagues[idx].baseRow = 1;
+      initInputs();
+      window.calculateAll();
+    };
+
+    window.calculateAll = () => {
+      const activeList = colleagues.filter(c => c.enabled);
+      const resContainer = document.getElementById("optionsList");
+      const summaryText = document.getElementById("summaryText");
+      resContainer.innerHTML = "";
+
+      if (activeList.length === 0) {
+        summaryText.innerHTML = "請至少勾選一位同事進行推算。";
+        return;
+      }
+
+      // 分析每位同事的結果
+      const results = activeList.map(c => {
+        const roster = ROSTERS[c.group];
+        const offset = Math.floor(c.weeks);
+        let endRow = ((c.baseRow - 1 + offset) % roster.totalRows) + 1;
+        if (endRow <= 0) endRow += roster.totalRows;
+        const myNextRow = (endRow % roster.totalRows) + 1;
+
+        return {
+          name: c.name,
+          weeks: c.weeks,
+          groupName: roster.name,
+          endRow,
+          myNextRow
+        };
+      });
+
+      // 檢查是否同週放假
+      const weeksArr = results.map(r => r.weeks);
+      const isSameWeek = weeksArr.length > 1 && weeksArr.every(w => w === weeksArr[0]);
+
+      let summaryHtml = "";
+      if (isSameWeek) {
+        summaryHtml = `🔥 <b>【多位同事同週放大假】</b>：以下同事均在 <b>${weeksArr[0]} 週後</b> 放大假！他們將同時騰出空位，你可以從以下 <b>${results.length} 個選擇</b> 中自由挑選一個最佳行數接替：`;
+      } else {
+        summaryHtml = `💡 <b>個別推算分析</b>：以下是每位同事大假最後一週的行數與你對應的可揀接替行數：`;
+      }
+      summaryText.innerHTML = summaryHtml;
+
+      // 渲染可選方案
+      results.forEach((r, i) => {
+        resContainer.innerHTML += `
+          <div class="option-card">
+            <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+              <span class="option-tag">選擇 ${i + 1}（接替 ${r.name}）</span>
+              <span style="font-size:0.8rem; color:#777;">${r.groupName}</span>
+            </div>
+            <div style="font-size:0.85rem; color:#555; margin-bottom:6px;">
+              • ${r.name} 在 ${r.weeks} 週後大假最後一日行緊：<b>第 ${r.endRow} 行</b>
+            </div>
+            <div style="font-size:1rem; color:#27ae60; font-weight:bold;">
+              👉 你可接替入位：<span style="font-size:1.2rem; text-decoration:underline;">第 ${r.myNextRow} 行</span>
+            </div>
+          </div>
+        `;
+      });
+    };
+
+    // 儲存推算記錄
     window.saveCurrentCalc = async () => {
       if (!currentUser) return;
-      const desc = document.getElementById("resultContent").innerText;
-      const title = document.getElementById("recordTitleInput").value.trim() || "未命名推算";
-      
+      const title = document.getElementById("recordTitleInput").value.trim() || "多同事大假推算";
+      const summary = document.getElementById("summaryText").innerText;
+      const options = Array.from(document.querySelectorAll(".option-card")).map(el => el.innerText.replace(/\n/g, ' ')).join(' | ');
+
       const newRec = {
         title,
-        desc,
+        desc: summary + " ➔ " + options,
         date: new Date().toLocaleDateString()
       };
 
       savedRecords.unshift(newRec);
-      if (savedRecords.length > 5) savedRecords.pop(); // 保持最多 5 條記錄
+      if (savedRecords.length > 5) savedRecords.pop();
 
       try {
         await setDoc(doc(db, "user_records", currentUser.uid), { records: savedRecords });
@@ -343,6 +446,19 @@
       }
     };
 
+    async function loadUserRecords() {
+      if (!currentUser) return;
+      try {
+        const snap = await getDoc(doc(db, "user_records", currentUser.uid));
+        if (snap.exists() && snap.data().records) {
+          savedRecords = snap.data().records;
+        } else {
+          savedRecords = [];
+        }
+        renderRecords();
+      } catch (e) { console.error(e); }
+    }
+
     function renderRecords() {
       const box = document.getElementById("recordsList");
       box.innerHTML = "";
@@ -350,170 +466,20 @@
         box.innerHTML = `<div style="color:#7f8c8d; font-size:0.85rem;">暫無儲存紀錄。</div>`;
         return;
       }
-      savedRecords.forEach((rec, idx) => {
+      savedRecords.forEach((rec) => {
         box.innerHTML += `
           <div class="record-item">
-            <div>
-              <b>${rec.title}</b> (${rec.date})<br>
-              <span style="color:#555;">${rec.desc}</span>
-            </div>
+            <b>${rec.title}</b> (${rec.date})<br>
+            <span style="color:#555;">${rec.desc}</span>
           </div>
         `;
       });
     }
-
-    // ----------------- 班表演算法 -----------------
-    const ROSTERS = {
-      group2: {
-        name: "2組 (12行)",
-        totalRows: 12,
-        data: [
-          ["N (10-8)", "R", "W", "1-11", "1-9", "9-6", "9-4"],
-          ["9-5", "N (10-8)", "R", "W", "1-11", "1-9", "9-5"],
-          ["9-5", "9-5", "1-9", "9-5", "9-5", "9-1", "W"],
-          ["8-4", "9-5", "N (10-8)", "R", "W", "1-11", "1-9"],
-          ["9-6", "8-4", "9-4", "N (10-8)", "R", "W", "1-11"],
-          ["1-9", "9-6", "8-4", "9-5", "4-11", "W", "9-1"],
-          ["3-11", "9-5", "9-6", "9-6", "N (10-8)", "R", "W"],
-          ["8-4", "8-4", "8-4", "8-4", "8-4", "9-1", "W"],
-          ["1-11", "1-9", "W", "8-5", "9-4", "N (10-8)", "R"],
-          ["W", "1-11", "5-10", "9-1", "8-4", "9-4", "N (10-8)"],
-          ["R", "W", "1-11", "1-9", "9-6", "8-5", "8-4"],
-          ["W", "1-11", "1-9", "9-4", "9-1", "8-5", "8-4"]
-        ]
-      },
-      group3: {
-        name: "3組 (14行)",
-        totalRows: 14,
-        data: [
-          ["N (10-8)", "R", "W", "9-5", "9-5", "1-11", "2-10"],
-          ["W", "9-6", "8-5", "9-5", "1-10", "1-10", "W"],
-          ["9-6", "2-10", "1-11", "N (10-8)", "R", "W", "9-4"],
-          ["9-4", "9-5", "8-4", "9-1", "8-5", "9-5", "W"],
-          ["1-10", "N (10-8)", "R", "W", "8-4", "8-5", "9-5"],
-          ["9-5", "3-11", "3-11", "W", "8-4", "9-5", "9-1"],
-          ["4-11", "1-11", "N (10-8)", "R", "W", "9-6", "9-5"],
-          ["9-6", "8-1", "9-4", "3-11", "1-11", "W", "8-1"],
-          ["8-4", "9-6", "10-5", "1-11", "N (10-8)", "R", "W"],
-          ["2-11", "3-10", "9-1", "9-6", "8-4", "9-4", "W"],
-          ["9-5", "9-4", "9-6", "W", "1-11", "N (10-8)", "R"],
-          ["W", "8-4", "9-4", "9-5", "9-4", "8-4", "4-10"],
-          ["1-10", "W", "9-4", "9-4", "10-5", "9-1", "N (10-8)"],
-          ["R", "W", "8-4", "8-4", "9-6", "1-10", "1-11"]
-        ]
-      },
-      group4: {
-        name: "4組 (5行)",
-        totalRows: 5,
-        data: [
-          ["8-1", "9-4", "9-5", "8-4", "W", "4-11", "1-10"],
-          ["9-5", "9-5", "9-5", "2-10", "9-1", "W", "8-4"],
-          ["9-4", "8-1", "W", "8-4", "9-5", "1-11", "5-11"],
-          ["10-5", "9-1", "1-11", "5-11", "W", "9-6", "9-5"],
-          ["8-4", "10-5", "9-6", "1-11", "4-10", "9-1", "W"]
-        ]
-      }
-    };
-
-    window.populateRowSelect = () => {
-      const groupKey = document.getElementById('groupSelect').value;
-      const roster = ROSTERS[groupKey];
-      const select = document.getElementById('baseRowSelect');
-      const prevVal = parseInt(select.value) || 1;
-      select.innerHTML = '';
-      for (let i = 1; i <= roster.totalRows; i++) {
-        select.innerHTML += `<option value="${i}" ${i === prevVal ? 'selected' : ''}>第 ${i} 行</option>`;
-      }
-    };
-
-    window.calcByDaysInput = () => {
-      const days = parseInt(document.getElementById('daysInput').value);
-      if (!isNaN(days)) {
-        document.getElementById('weeksInput').value = (days / 7).toFixed(1);
-      }
-      window.calculate();
-    };
-
-    window.calculate = () => {
-      populateRowSelectIfNeeded();
-      const groupKey = document.getElementById('groupSelect').value;
-      const roster = ROSTERS[groupKey];
-      const baseRow = parseInt(document.getElementById('baseRowSelect').value);
-      const weeks = parseFloat(document.getElementById('weeksInput').value) || 0;
-
-      const weekOffset = Math.floor(weeks);
-      let targetRow = ((baseRow - 1 + weekOffset) % roster.totalRows) + 1;
-      if (targetRow <= 0) targetRow += roster.totalRows;
-
-      const myNextRow = (targetRow % roster.totalRows) + 1;
-
-      const content = document.getElementById('resultContent');
-      if (weeks > 0) {
-        content.innerHTML = `
-          • 同事在 <b>${weeks} 週後</b>（大假前/最後一週）會行緊：<b style="color:#d63031; font-size:1.1rem;">第 ${targetRow} 行</b><br>
-          👉 你放完大假回來要無縫銜接接替佢，必須選擇 ➡️ <span class="highlight-text">第 ${myNextRow} 行</span>！
-        `;
-      } else {
-        content.innerHTML = `請在上方輸入「相隔幾多週」（例如 6 週）推算未來大假行數。`;
-      }
-
-      renderConnectPreview(roster, targetRow);
-      renderTable(roster, targetRow);
-    };
-
-    function renderConnectPreview(roster, targetRow) {
-      const box = document.getElementById('connectPreview');
-      box.innerHTML = '';
-      for (let r = 1; r <= roster.totalRows; r++) {
-        const nextR = (r % roster.totalRows) + 1;
-        const isMatch = r === targetRow;
-        box.innerHTML += `
-          <div class="connect-item ${isMatch ? 'active' : ''}">
-            <div style="font-size:0.75rem; color:#777;">同事最後行</div>
-            <div><b>第 ${r} 行</b></div>
-            <div style="font-size:0.75rem; color:#e67e22; margin:2px 0;">⬇️ 銜接</div>
-            <div style="font-size:0.75rem; color:#777;">你應接入</div>
-            <div style="color:var(--highlight);"><b>第 ${nextR} 行</b></div>
-          </div>
-        `;
-      }
-    }
-
-    function renderTable(roster, targetRow) {
-      const table = document.getElementById('rosterTable');
-      let html = `<thead><tr><th>行數</th><th>MON</th><th>TUE</th><th>WED</th><th>THU</th><th>FRI</th><th>SAT</th><th>SUN</th></tr></thead><tbody>`;
-      roster.data.forEach((row, idx) => {
-        const rowNum = idx + 1;
-        const isTarget = rowNum === targetRow;
-        html += `<tr style="${isTarget ? 'background:#fff8e1; font-weight:bold;' : ''}">`;
-        html += `<td><b>第 ${rowNum} 行 ${isTarget ? '🎯' : ''}</b></td>`;
-        row.forEach(shift => {
-          let cls = '';
-          if (shift === 'W' || shift === 'R') cls = 'cell-off';
-          html += `<td class="${cls}">${shift}</td>`;
-        });
-        html += `</tr>`;
-      });
-      html += `</tbody>`;
-      table.innerHTML = html;
-    }
-
-    let lastGroup = '';
-    function populateRowSelectIfNeeded() {
-      const currentGroup = document.getElementById('groupSelect').value;
-      if (lastGroup !== currentGroup) {
-        window.populateRowSelect();
-        lastGroup = currentGroup;
-      }
-    }
-
-    const today = new Date();
-    document.getElementById('baseDateInput').value = today.toISOString().split('T')[0];
   </script>
 </head>
 <body>
 
-  <!-- 1. 登入/註冊面板 -->
+  <!-- 1. 登入面板 -->
   <div class="auth-container" id="authPanel">
     <h2 id="authTitle">🔒 登入推算系統</h2>
     <input type="email" id="authEmail" placeholder="電子郵件 (Email)">
@@ -527,65 +493,35 @@
     <div class="auth-toggle" id="toggleBtn" onclick="toggleAuthMode()">未有帳號？點此免費註冊</div>
   </div>
 
-  <!-- 2. 主推算工具面板 (登入後顯示) -->
+  <!-- 2. 主推算工具面板 -->
   <div class="container" id="appPanel" style="display:none;">
     <div class="top-bar">
       <div>👤 目前用戶：<b id="userLabel" style="color:var(--highlight);"></b></div>
       <button class="btn-logout" onclick="userLogout()">登出帳號</button>
     </div>
 
-    <h1 style="margin: 5px 0 20px 0;">更期大假銜接與入位推算工具</h1>
+    <h1 style="margin: 5px 0 15px 0; font-size:1.3rem;">多同事大假重疊與可揀入位推算工具</h1>
 
-    <div class="form-group">
-      <label>組別：</label>
-      <select id="groupSelect" onchange="calculate()">
-        <option value="group2">2組 (12行)</option>
-        <option value="group3">3組 (14行)</option>
-        <option value="group4">4組 (5行)</option>
-      </select>
+    <!-- 同事輸入區 -->
+    <div class="colleagues-grid" id="colleaguesList"></div>
 
-      <label>同事基準處於：</label>
-      <select id="baseRowSelect" onchange="calculate()"></select>
+    <!-- 綜合分析與選擇面板 -->
+    <div class="result-panel">
+      <div class="result-title">🎯 銜接分析與可揀入位結果：</div>
+      <div id="summaryText" style="line-height:1.5;"></div>
+      <div class="options-container" id="optionsList"></div>
 
-      <label>基準日期：</label>
-      <input type="date" id="baseDateInput" onchange="calculate()">
-    </div>
-
-    <div class="form-group">
-      <label>同事幾多週後放大假？</label>
-      <input type="number" id="weeksInput" placeholder="如 6" style="width: 70px;" oninput="calculate()">
-      <span>週後</span>
-
-      <span style="color:#aaa; margin: 0 5px;">或</span>
-
-      <label>相隔日數：</label>
-      <input type="number" id="daysInput" placeholder="如 42" style="width: 70px;" oninput="calcByDaysInput()">
-      <span>天</span>
-    </div>
-
-    <div class="result-box">
-      <div class="result-title">💡 銜接分析結果：</div>
-      <div id="resultContent">請輸入相隔週數或日數進行推算...</div>
-      
-      <!-- 保存記錄功能 -->
-      <div style="margin-top: 12px; display:flex; gap:8px; align-items:center;">
-        <input type="text" id="recordTitleInput" placeholder="備註名稱 (例如: 幫呀明頂位)" style="flex:1; padding:6px;">
-        <button class="btn-save-record" onclick="saveCurrentCalc()">💾 儲存此推算到個人紀錄</button>
+      <!-- 儲存紀錄 -->
+      <div style="margin-top: 15px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+        <input type="text" id="recordTitleInput" placeholder="輸入備註 (例如: 6月同呀明、阿強撞假選位)" style="flex:1; min-width:200px; padding:7px;">
+        <button class="btn-save-record" onclick="saveCurrentCalc()">💾 儲存此推算結果</button>
       </div>
     </div>
 
-    <!-- 個人儲存記錄區塊 -->
+    <!-- 歷史紀錄 -->
     <div class="records-box">
       <div style="font-weight:bold; color:var(--primary-color); margin-bottom:8px;">📁 我的雲端推算歷史備忘：</div>
       <div id="recordsList">載入中...</div>
-    </div>
-
-    <div class="table-title">📌 該組別全行數【無縫銜接一覽對照表】：</div>
-    <div class="connect-preview" id="connectPreview"></div>
-
-    <div class="table-container">
-      <div class="table-title">📋 基準組別班表參考：</div>
-      <table id="rosterTable"></table>
     </div>
   </div>
 
