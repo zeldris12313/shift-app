@@ -114,4 +114,1608 @@
       margin-bottom: 15px;
     }
     .step-grid {
-      display:
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .step-box {
+      background: white;
+      border: 1px solid #cfe2f3;
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 0.85rem;
+    }
+    .step-title {
+      font-weight: bold;
+      color: #2980b9;
+      margin-bottom: 5px;
+      display: block;
+    }
+
+    /* 同事推算卡片 */
+    .colleagues-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .colleague-card {
+      background: #f8f9fa;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 12px;
+      border-top: 4px solid #3498db;
+    }
+    .colleague-card:nth-child(2) { border-top-color: #9b59b6; }
+    .colleague-card:nth-child(3) { border-top-color: #e67e22; }
+    .colleague-title {
+      font-weight: bold;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .field-row {
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.85rem;
+    }
+    select, input[type="number"], input[type="text"], input[type="date"] {
+      padding: 4px 8px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 0.85rem;
+    }
+
+    .result-alert {
+      background: #fff8e1;
+      border-left: 5px solid #ffa000;
+      border-radius: 6px;
+      padding: 12px 14px;
+      margin-bottom: 15px;
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+    .option-card-row {
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      padding: 10px 14px;
+      margin-top: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      border-left: 5px solid #27ae60;
+    }
+    .btn-apply-yp {
+      background: #27ae60;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: bold;
+    }
+    .btn-copy-code {
+      background: #34495e;
+      color: white;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.8rem;
+    }
+
+    /* 完整大更期表 */
+    .big-roster-section {
+      background: #ffffff;
+      border: 2px solid #2980b9;
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+    .big-roster-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 10px;
+      border-bottom: 2px solid #ecf0f1;
+      padding-bottom: 8px;
+    }
+    .big-roster-title {
+      font-size: 1.15rem;
+      font-weight: bold;
+      color: #2980b9;
+    }
+    .table-container { overflow-x: auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: center;
+      font-size: 0.85rem;
+    }
+    th, td {
+      padding: 7px 4px;
+      border: 1px solid #e0e0e0;
+    }
+    th { background: #f1f2f6; color: #57606f; }
+    .row-my-current {
+      background-color: #fff9db !important;
+      border-left: 5px solid #f39c12 !important;
+    }
+    .row-highlight-choice {
+      background-color: var(--target-row-bg) !important;
+      border-left: 5px solid var(--target-row-border) !important;
+      font-weight: bold;
+    }
+    .choice-tag {
+      background: #27ae60;
+      color: white;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      display: inline-block;
+      margin-top: 3px;
+      line-height: 1.2;
+    }
+    .my-tag {
+      background: #f39c12;
+      color: white;
+      padding: 2px 5px;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      display: inline-block;
+      margin-top: 2px;
+    }
+    .cell-today {
+      background-color: var(--today-highlight) !important;
+      border: 2px solid #e1701a !important;
+      font-weight: bold;
+    }
+    .cell-today::after {
+      content: " ★今日";
+      font-size: 0.65rem;
+      color: #d63031;
+      display: block;
+    }
+    .shift-off { background-color: var(--off-bg); color: #d63031; }
+    .shift-night { background-color: var(--night-bg); }
+
+    .section-divider {
+      border: 0;
+      height: 2px;
+      background: linear-gradient(to right, #ccc, #e67e22, #ccc);
+      margin: 30px 0 20px;
+    }
+
+    /* 雲端歷史紀錄 */
+    .records-box {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 15px;
+      border: 1px solid #eee;
+    }
+    .record-item {
+      background: white;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      border-left: 4px solid var(--accent-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+    .btn-del-record {
+      background: #ff7675;
+      color: white;
+      border: none;
+      padding: 5px 9px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.75rem;
+      flex-shrink: 0;
+      font-weight: bold;
+    }
+
+    /* 未來一年更期月曆格局 */
+    .year-preview-box {
+      background: #fcfcfc;
+      border: 2px solid #16a085;
+      border-radius: 10px;
+      padding: 15px;
+      margin-top: 20px;
+      margin-bottom: 20px;
+    }
+    .year-preview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .btn-toggle-year {
+      background: #16a085;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 0.85rem;
+    }
+
+    /* 月曆分頁導航條 (左右翻頁) */
+    .cal-nav-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #e8f8f5;
+      padding: 8px 12px;
+      border-radius: 8px;
+      margin: 12px 0;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .cal-nav-btn {
+      background: #16a085;
+      color: white;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 0.9rem;
+    }
+    .cal-nav-btn:disabled {
+      background: #bdc3c7;
+      cursor: not-allowed;
+    }
+    .cal-nav-title {
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: #16a085;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* 單月月曆卡片容器 (置中放大) */
+    .single-month-container {
+      max-width: 580px;
+      margin: 0 auto;
+    }
+    .month-card {
+      background: white;
+      border: 2px solid #16a085;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.06);
+    }
+    .month-header {
+      background: #16a085;
+      color: white;
+      text-align: center;
+      padding: 8px;
+      font-weight: bold;
+      font-size: 1.1rem;
+    }
+    .month-cal-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+    .month-cal-table th {
+      background: #f8f9fa;
+      padding: 6px 2px;
+      font-size: 0.8rem;
+      color: #555;
+    }
+    .month-cal-table td {
+      padding: 5px 2px;
+      height: 54px;
+      vertical-align: top;
+      border: 1px solid #f1f2f6;
+    }
+    .cal-date-num {
+      font-size: 0.75rem;
+      font-weight: bold;
+      color: #7f8c8d;
+      margin-bottom: 2px;
+    }
+    .cal-shift-text {
+      font-size: 0.85rem;
+      font-weight: bold;
+      border-radius: 4px;
+      padding: 2px 2px;
+      line-height: 1.1;
+    }
+    .cal-week-tag {
+      background: #eef2f7;
+      font-size: 0.7rem;
+      color: #2980b9;
+      padding: 2px 2px;
+      border-right: 1px solid #ddd;
+      width: 55px;
+      vertical-align: middle;
+      line-height: 1.3;
+    }
+
+    /* 底部獨立查更 */
+    .solo-roster-box {
+      background: #fdfdfd;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 15px;
+    }
+    .solo-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .calc-box {
+      background: #f1f2f6;
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      font-size: 0.85rem;
+    }
+    .calc-box button {
+      background: #3498db;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 0.8rem;
+    }
+    .btn-reset { background: #e74c3c !important; }
+    .btn-save-record {
+      background: var(--highlight);
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      font-weight: bold;
+    }
+  </style>
+
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+    import { 
+      getAuth, 
+      signInWithEmailAndPassword, 
+      createUserWithEmailAndPassword, 
+      signInWithPopup, 
+      GoogleAuthProvider, 
+      onAuthStateChanged, 
+      signOut 
+    } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+    import { 
+      getFirestore, 
+      doc, 
+      setDoc, 
+      getDoc 
+    } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBR6sSm99LLA7k7x6bzqMRsKHP7lBLNnnM",
+      authDomain: "three-mum.firebaseapp.com",
+      projectId: "three-mum",
+      storageBucket: "three-mum.firebasestorage.app",
+      messagingSenderId: "759414785710",
+      appId: "1:759414785710:web:6ae6f93040be6325898f3f",
+      measurementId: "G-QFKQMNB71B"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const googleProvider = new GoogleAuthProvider();
+
+    let currentUser = null;
+    let savedRecords = [];
+
+    // ----------------- 班表資料 -----------------
+    const ROSTERS = {
+      group2: {
+        name: "2組 (12行)",
+        totalRows: 12,
+        data: [
+          ["N (10-8)", "R", "W", "1-11", "1-9", "9-6", "9-4"],
+          ["9-5", "N (10-8)", "R", "W", "1-11", "1-9", "9-5"],
+          ["9-5", "9-5", "1-9", "9-5", "9-5", "9-1", "W"],
+          ["8-4", "9-5", "N (10-8)", "R", "W", "1-11", "1-9"],
+          ["9-6", "8-4", "9-4", "N (10-8)", "R", "W", "1-11"],
+          ["1-9", "9-6", "8-4", "9-5", "4-11", "W", "9-1"],
+          ["3-11", "9-5", "9-6", "9-6", "N (10-8)", "R", "W"],
+          ["8-4", "8-4", "8-4", "8-4", "8-4", "9-1", "W"],
+          ["1-11", "1-9", "W", "8-5", "9-4", "N (10-8)", "R"],
+          ["W", "1-11", "5-10", "9-1", "8-4", "9-4", "N (10-8)"],
+          ["R", "W", "1-11", "1-9", "9-6", "8-5", "8-4"],
+          ["W", "1-11", "1-9", "9-4", "9-1", "8-5", "8-4"]
+        ]
+      },
+      group3: {
+        name: "3組 (14行)",
+        totalRows: 14,
+        data: [
+          ["N (10-8)", "R", "W", "9-5", "9-5", "1-11", "2-10"],
+          ["W", "9-6", "8-5", "9-5", "1-10", "1-10", "W"],
+          ["9-6", "2-10", "1-11", "N (10-8)", "R", "W", "9-4"],
+          ["9-4", "9-5", "8-4", "9-1", "8-5", "9-5", "W"],
+          ["1-10", "N (10-8)", "R", "W", "8-4", "8-5", "9-5"],
+          ["9-5", "3-11", "3-11", "W", "8-4", "9-5", "9-1"],
+          ["4-11", "1-11", "N (10-8)", "R", "W", "9-6", "9-5"],
+          ["9-6", "8-1", "9-4", "3-11", "1-11", "W", "8-1"],
+          ["8-4", "9-6", "10-5", "1-11", "N (10-8)", "R", "W"],
+          ["2-11", "3-10", "9-1", "9-6", "8-4", "9-4", "W"],
+          ["9-5", "9-4", "9-6", "W", "1-11", "N (10-8)", "R"],
+          ["W", "8-4", "9-4", "9-5", "9-4", "8-4", "4-10"],
+          ["1-10", "W", "9-4", "9-4", "10-5", "9-1", "N (10-8)"],
+          ["R", "W", "8-4", "8-4", "9-6", "1-10", "1-11"]
+        ]
+      },
+      group4: {
+        name: "4組 (5行)",
+        totalRows: 5,
+        data: [
+          ["8-1", "9-4", "9-5", "8-4", "W", "4-11", "1-10"],
+          ["9-5", "9-5", "9-5", "2-10", "9-1", "W", "8-4"],
+          ["9-4", "8-1", "W", "8-4", "9-5", "1-11", "5-11"],
+          ["10-5", "9-1", "1-11", "5-11", "W", "9-6", "9-5"],
+          ["8-4", "10-5", "9-6", "1-11", "4-10", "9-1", "W"]
+        ]
+      }
+    };
+
+    const dayNames = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
+    const ANCHOR_DATE = new Date(2026, 0, 5); // 2026-01-05 (Week 2 Monday)
+
+    function getAbsoluteWeekIndex(dateObj) {
+      const d = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
+      const day = d.getDay();
+      const diffToMon = day === 0 ? -6 : 1 - day;
+      const monday = new Date(d);
+      monday.setDate(d.getDate() + diffToMon);
+      
+      const diffMs = monday.getTime() - ANCHOR_DATE.getTime();
+      return Math.round(diffMs / (7 * 24 * 60 * 60 * 1000));
+    }
+
+    function getWeekInfoFromAbsIndex(absIndex) {
+      const monday = new Date(ANCHOR_DATE);
+      monday.setDate(ANCHOR_DATE.getDate() + absIndex * 7);
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+
+      const thurs = new Date(monday);
+      thurs.setDate(monday.getDate() + 3);
+      const year = thurs.getFullYear();
+
+      const jan4 = new Date(year, 0, 4);
+      const jan4Abs = getAbsoluteWeekIndex(jan4);
+      const weekNum = absIndex - jan4Abs + 1;
+
+      return {
+        year,
+        weekNum,
+        absIndex,
+        monday,
+        sunday,
+        monStr: `${monday.getFullYear()}-${String(monday.getMonth()+1).padStart(2,'0')}-${String(monday.getDate()).padStart(2,'0')}`,
+        label: `${year} 年 Week ${weekNum} (${monday.getMonth()+1}/${monday.getDate()} - ${sunday.getMonth()+1}/${sunday.getDate()})`
+      };
+    }
+
+    function getAbsIndexFromYearWeek(year, weekNum) {
+      const jan4 = new Date(year, 0, 4);
+      const jan4Abs = getAbsoluteWeekIndex(jan4);
+      return jan4Abs + (weekNum - 1);
+    }
+
+    const todayObj = new Date();
+    const todayAbsWeek = getAbsoluteWeekIndex(todayObj);
+
+    // ----------------- 狀態 -----------------
+    let myStatus = {
+      group: 'group3',
+      currentRow: 14,
+      leaveDate: "2026-10-26",
+      leaveYear: 2026,
+      leaveWeek: 44
+    };
+
+    let colleagues = [
+      { id: 1, name: "同事 A", group: "group3", baseRow: 3, targetYear: 2026, targetWeek: 45, leaveDate: "2026-11-02", enabled: true },
+      { id: 2, name: "同事 B", group: "group2", baseRow: 1, targetYear: 2026, targetWeek: 45, leaveDate: "2026-11-02", enabled: true },
+      { id: 3, name: "同事 C", group: "group4", baseRow: 1, targetYear: 2026, targetWeek: 45, leaveDate: "2026-11-02", enabled: false }
+    ];
+
+    let middleRosterGroup = "group3";
+    let currentCandidates = [];
+
+    // 未來一年月曆設定
+    let yearPreviewConfig = {
+      group: 'group3',
+      startRow: 7,
+      startYear: 2026,
+      startWeek: 45
+    };
+
+    let currentMonthPageIndex = 0;
+    let allGeneratedMonths = [];
+
+    let soloState = {
+      group: 'group2',
+      currentRow: 1,
+      customToday: '',
+      calcDays: 0,
+      calcDate: '',
+      resultText: ''
+    };
+
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        currentUser = user;
+        document.getElementById("authPanel").style.display = "none";
+        document.getElementById("appPanel").style.display = "block";
+        document.getElementById("userLabel").innerText = user.email || "已登入用戶";
+        loadUserRecords();
+        initYpWeekSelect();
+        initMyStatusUI();
+        initColleaguesUI();
+        window.calculateAll();
+        renderSoloRoster();
+      } else {
+        currentUser = null;
+        document.getElementById("authPanel").style.display = "block";
+        document.getElementById("appPanel").style.display = "none";
+      }
+    });
+
+    let isRegisterMode = false;
+    window.toggleAuthMode = () => {
+      isRegisterMode = !isRegisterMode;
+      document.getElementById("authTitle").innerText = isRegisterMode ? "📝 註冊帳號" : "🔒 登入推算系統";
+      document.getElementById("submitAuthBtn").innerText = isRegisterMode ? "立即註冊" : "登入";
+      document.getElementById("toggleBtn").innerText = isRegisterMode ? "已有帳號？點此登入" : "未有帳號？點此免費註冊";
+      document.getElementById("authMsg").innerText = "";
+    };
+
+    window.submitEmailAuth = async () => {
+      const email = document.getElementById("authEmail").value.trim();
+      const pass = document.getElementById("authPassword").value;
+      const msgBox = document.getElementById("authMsg");
+      msgBox.innerText = "";
+      if (!email || !pass) { msgBox.innerText = "請輸入完整 Email 及密碼"; return; }
+      try {
+        if (isRegisterMode) {
+          await createUserWithEmailAndPassword(auth, email, pass);
+        } else {
+          await signInWithEmailAndPassword(auth, email, pass);
+        }
+      } catch (e) {
+        msgBox.innerText = "登入失敗: " + e.message;
+      }
+    };
+
+    window.loginWithGoogle = async () => {
+      try {
+        await signInWithPopup(auth, googleProvider);
+      } catch (e) {
+        document.getElementById("authMsg").innerText = "Google 登入失敗: " + e.message;
+      }
+    };
+
+    window.userLogout = () => signOut(auth);
+
+    function initYpWeekSelect() {
+      const ypWeekSelect = document.getElementById("ypWeekSelect");
+      if (!ypWeekSelect) return;
+      ypWeekSelect.innerHTML = "";
+      for (let w = 1; w <= 53; w++) {
+        ypWeekSelect.innerHTML += `<option value="${w}">Week ${w}</option>`;
+      }
+    }
+
+    // ----------------- 我目前的定位 UI -----------------
+    function initMyStatusUI() {
+      document.getElementById("myGroupSelect").value = myStatus.group;
+      updateMyRowSelect();
+
+      const weekSelect = document.getElementById("myLeaveWeekSelect");
+      weekSelect.innerHTML = "";
+      for (let w = 1; w <= 53; w++) {
+        weekSelect.innerHTML += `<option value="${w}" ${w === myStatus.leaveWeek ? 'selected' : ''}>Week ${w}</option>`;
+      }
+      document.getElementById("myLeaveYearSelect").value = myStatus.leaveYear;
+      document.getElementById("myLeaveDateInput").value = myStatus.leaveDate;
+      syncMyLeaveWeekFromDate(myStatus.leaveDate);
+    }
+
+    function updateMyRowSelect() {
+      const rowSelect = document.getElementById("myRowSelect");
+      const maxR = ROSTERS[myStatus.group].totalRows;
+      rowSelect.innerHTML = "";
+      for (let r = 1; r <= maxR; r++) {
+        rowSelect.innerHTML += `<option value="${r}" ${r === myStatus.currentRow ? 'selected' : ''}>第 ${r} 行</option>`;
+      }
+    }
+
+    window.updateMyGroup = (g) => {
+      myStatus.group = g;
+      myStatus.currentRow = 1;
+      updateMyRowSelect();
+      window.calculateAll();
+    };
+
+    window.updateMyRow = (r) => {
+      myStatus.currentRow = parseInt(r);
+      window.calculateAll();
+    };
+
+    window.onMyLeaveDateChange = (val) => {
+      if (!val) return;
+      myStatus.leaveDate = val;
+      syncMyLeaveWeekFromDate(val);
+      window.calculateAll();
+    };
+
+    function syncMyLeaveWeekFromDate(dateStr) {
+      const parts = dateStr.split('-');
+      const d = new Date(parts[0], parts[1] - 1, parts[2]);
+      const abs = getAbsoluteWeekIndex(d);
+      const info = getWeekInfoFromAbsIndex(abs);
+      myStatus.leaveYear = info.year;
+      myStatus.leaveWeek = info.weekNum;
+      document.getElementById("myLeaveYearSelect").value = info.year;
+      document.getElementById("myLeaveWeekSelect").value = info.weekNum;
+      document.getElementById("myWeekTip").innerText = `📅 相當於：${info.year} 年 Week ${info.weekNum} (${info.monday.getMonth()+1}/${info.monday.getDate()} - ${info.sunday.getMonth()+1}/${info.sunday.getDate()})`;
+    }
+
+    window.onMyLeaveWeekChange = () => {
+      myStatus.leaveYear = parseInt(document.getElementById("myLeaveYearSelect").value);
+      myStatus.leaveWeek = parseInt(document.getElementById("myLeaveWeekSelect").value);
+      const abs = getAbsIndexFromYearWeek(myStatus.leaveYear, myStatus.leaveWeek);
+      const info = getWeekInfoFromAbsIndex(abs);
+      myStatus.leaveDate = info.monStr;
+      document.getElementById("myLeaveDateInput").value = info.monStr;
+      document.getElementById("myWeekTip").innerText = `📅 相當於：${info.year} 年 Week ${info.weekNum} (${info.monday.getMonth()+1}/${info.monday.getDate()} - ${info.sunday.getMonth()+1}/${info.sunday.getDate()})`;
+      window.calculateAll();
+    };
+
+    // ----------------- 同事 UI -----------------
+    function initColleaguesUI() {
+      const container = document.getElementById("colleaguesList");
+      container.innerHTML = "";
+
+      colleagues.forEach((c, idx) => {
+        let rowOptions = "";
+        const maxR = ROSTERS[c.group].totalRows;
+        for (let r = 1; r <= maxR; r++) {
+          rowOptions += `<option value="${r}" ${r === c.baseRow ? 'selected' : ''}>第 ${r} 行</option>`;
+        }
+
+        let weekOptions = "";
+        for (let w = 1; w <= 53; w++) {
+          weekOptions += `<option value="${w}" ${w === c.targetWeek ? 'selected' : ''}>Week ${w}</option>`;
+        }
+
+        container.innerHTML += `
+          <div class="colleague-card">
+            <div class="colleague-title">
+              <input type="text" value="${c.name}" onchange="updateColleague(${idx}, 'name', this.value)" style="width:110px; font-weight:bold;">
+              <label style="font-size:0.8rem; cursor:pointer;">
+                <input type="checkbox" ${c.enabled ? 'checked' : ''} onchange="updateColleague(${idx}, 'enabled', this.checked)"> 加入計算
+              </label>
+            </div>
+            <div class="field-row">
+              <span>所屬組別：</span>
+              <select onchange="updateColleagueGroup(${idx}, this.value)">
+                <option value="group2" ${c.group==='group2'?'selected':''}>2組 (12行)</option>
+                <option value="group3" ${c.group==='group3'?'selected':''}>3組 (14行)</option>
+                <option value="group4" ${c.group==='group4'?'selected':''}>4組 (5行)</option>
+              </select>
+            </div>
+            <div class="field-row">
+              <span>基準行數 (今日)：</span>
+              <select onchange="updateColleague(${idx}, 'baseRow', parseInt(this.value))">
+                ${rowOptions}
+              </select>
+            </div>
+            <div class="field-row">
+              <span style="color:#d35400; font-weight:bold;">放假首日：</span>
+              <input type="date" value="${c.leaveDate}" onchange="onColleagueDateChange(${idx}, this.value)">
+            </div>
+            <div class="field-row">
+              <span style="color:#d35400; font-weight:bold;">或放邊個Week：</span>
+              <div style="display:flex; gap:4px;">
+                <select id="colleagueYear_${idx}" onchange="onColleagueWeekChange(${idx})">
+                  <option value="2026" ${c.targetYear===2026?'selected':''}>2026年</option>
+                  <option value="2027" ${c.targetYear===2027?'selected':''}>2027年</option>
+                  <option value="2028" ${c.targetYear===2028?'selected':''}>2028年</option>
+                </select>
+                <select id="colleagueWeek_${idx}" onchange="onColleagueWeekChange(${idx})">
+                  ${weekOptions}
+                </select>
+              </div>
+            </div>
+            <div id="colleagueTip_${idx}" style="font-size:0.75rem; color:#7f8c8d; text-align:right; margin-top:2px;"></div>
+          </div>
+        `;
+      });
+    }
+
+    window.updateColleague = (idx, key, val) => {
+      colleagues[idx][key] = val;
+      window.calculateAll();
+    };
+
+    window.updateColleagueGroup = (idx, val) => {
+      colleagues[idx].group = val;
+      colleagues[idx].baseRow = 1;
+      initColleaguesUI();
+      window.calculateAll();
+    };
+
+    window.onColleagueDateChange = (idx, val) => {
+      if (!val) return;
+      colleagues[idx].leaveDate = val;
+      const parts = val.split('-');
+      const d = new Date(parts[0], parts[1] - 1, parts[2]);
+      const abs = getAbsoluteWeekIndex(d);
+      const info = getWeekInfoFromAbsIndex(abs);
+      colleagues[idx].targetYear = info.year;
+      colleagues[idx].targetWeek = info.weekNum;
+      
+      const ySelect = document.getElementById(`colleagueYear_${idx}`);
+      const wSelect = document.getElementById(`colleagueWeek_${idx}`);
+      if (ySelect) ySelect.value = info.year;
+      if (wSelect) wSelect.value = info.weekNum;
+      window.calculateAll();
+    };
+
+    window.onColleagueWeekChange = (idx) => {
+      const y = parseInt(document.getElementById(`colleagueYear_${idx}`).value);
+      const w = parseInt(document.getElementById(`colleagueWeek_${idx}`).value);
+      colleagues[idx].targetYear = y;
+      colleagues[idx].targetWeek = w;
+      const abs = getAbsIndexFromYearWeek(y, w);
+      const info = getWeekInfoFromAbsIndex(abs);
+      colleagues[idx].leaveDate = info.monStr;
+      
+      const card = document.querySelectorAll(".colleague-card")[idx];
+      if (card) {
+        const dInput = card.querySelector('input[type="date"]');
+        if (dInput) dInput.value = info.monStr;
+      }
+      window.calculateAll();
+    };
+
+    // ----------------- 推算核心 (徹底修正 2/3/4 組推算) -----------------
+    window.calculateAll = () => {
+      const activeList = colleagues.filter(c => c.enabled);
+      const summaryText = document.getElementById("summaryText");
+      currentCandidates = [];
+
+      // 我自己大假週數提示
+      const myTargetAbs = getAbsIndexFromYearWeek(myStatus.leaveYear, myStatus.leaveWeek);
+      const myDiffWeeks = myTargetAbs - todayAbsWeek;
+      const myRoster = ROSTERS[myStatus.group];
+      let myLeaveRow = ((myStatus.currentRow - 1 + myDiffWeeks) % myRoster.totalRows) + 1;
+      if (myLeaveRow <= 0) myLeaveRow += myRoster.totalRows;
+
+      // 更新每位同事的日期說明
+      colleagues.forEach((c, idx) => {
+        const tip = document.getElementById(`colleagueTip_${idx}`);
+        if (tip) {
+          const abs = getAbsIndexFromYearWeek(c.targetYear, c.targetWeek);
+          const info = getWeekInfoFromAbsIndex(abs);
+          tip.innerText = `📅 ${info.year} W${info.weekNum} (${info.monday.getMonth()+1}/${info.monday.getDate()} - ${info.sunday.getMonth()+1}/${info.sunday.getDate()})`;
+        }
+      });
+
+      let myInfoNotice = `
+        <div style="background:#eaf2f8; padding:8px 12px; border-radius:6px; margin-bottom:10px; border-left:4px solid #2980b9; font-size:0.88rem;">
+          👤 <b>你的大假安排</b>：你在 <b>${myStatus.leaveYear} 年 Week ${myStatus.leaveWeek}</b> 放大假（放假該週原處於第 ${myLeaveRow} 行，更期已交出）。<br>
+          👉 <b>放完大假回來上班日</b>：請在下方挑選接替哪位同事放假騰出的更期行數！
+        </div>
+      `;
+
+      if (activeList.length === 0) {
+        summaryText.innerHTML = myInfoNotice + "<div style='color:#666;'>請勾選同事以推算可揀接替入位的行數。</div>";
+        renderBigRoster();
+        return;
+      }
+
+      const results = activeList.map(c => {
+        const roster = ROSTERS[c.group];
+        const targetAbs = getAbsIndexFromYearWeek(c.targetYear, c.targetWeek);
+        const diffWeeks = targetAbs - todayAbsWeek;
+
+        // ★★★ 核心精準公式：同事喺嗰個 Week 放大假，騰出嘅就係嗰個 Week 輪到嘅行數！★★★
+        let entryRow = ((c.baseRow - 1 + diffWeeks) % roster.totalRows) + 1;
+        if (entryRow <= 0) entryRow += roster.totalRows;
+
+        const entryInfo = getWeekInfoFromAbsIndex(targetAbs);
+
+        return {
+          name: c.name,
+          targetYear: c.targetYear,
+          targetWeek: c.targetWeek,
+          targetAbs,
+          diffWeeks,
+          group: c.group,
+          groupName: roster.name,
+          entryRow,
+          entryYear: entryInfo.year,
+          entryWeek: entryInfo.weekNum,
+          entryMonStr: entryInfo.monStr
+        };
+      });
+
+      currentCandidates = results.map(r => ({
+        group: r.group,
+        row: r.entryRow,
+        name: r.name,
+        targetWeekLabel: `${r.targetYear} W${r.targetWeek}`,
+        targetAbs: r.targetAbs
+      }));
+
+      if (results.length > 0) {
+        middleRosterGroup = results[0].group;
+        document.getElementById("middleGroupSelect").value = middleRosterGroup;
+      }
+
+      let html = myInfoNotice;
+      results.forEach((r, idx) => {
+        const paramCode = `${r.group}|${r.entryRow}|${r.entryYear}|${r.entryWeek}`;
+        html += `
+          <div class="option-card-row">
+            <div>
+              • <b>【可揀選擇 ${idx + 1}】接替 ${r.name}</b>：同事在 <b>${r.targetYear} 年 Week ${r.targetWeek}</b>（${r.entryMonStr}）放大假 ➔ <b>你放完大假回來接替入位：<span style="color:#27ae60; font-size:1.1rem; font-weight:bold; text-decoration:underline;">${r.groupName} 第 ${r.entryRow} 行</span></b>（由 ${r.entryMonStr} 星期一即返該行第 1 日！）
+            </div>
+            <div style="display:flex; gap:6px;">
+              <button class="btn-apply-yp" onclick="applyToYearPreview('${r.group}', ${r.entryRow}, ${r.entryYear}, ${r.entryWeek})">👉 帶入年表</button>
+              <button class="btn-copy-code" onclick="copyParamCode('${paramCode}')">複製參數</button>
+            </div>
+          </div>
+        `;
+      });
+
+      html += `<div style="color:#2980b9; font-weight:bold; margin-top:8px;">⬇ 下方大更期表已將可入位行數標記為綠色【★可揀入位】，點擊「👉 帶入年表」即可直接由 11月2日 起排出全年月曆！</div>`;
+      summaryText.innerHTML = html;
+      renderBigRoster();
+    };
+
+    // ----------------- 中間大表 -----------------
+    window.changeMiddleGroup = (val) => {
+      middleRosterGroup = val;
+      renderBigRoster();
+    };
+
+    function renderBigRoster() {
+      const roster = ROSTERS[middleRosterGroup];
+      const table = document.getElementById("bigRosterTable");
+
+      const todayDay = todayObj.getDay();
+      const todayIdx = todayDay === 0 ? 6 : todayDay - 1;
+      
+      let html = `
+        <thead>
+          <tr>
+            <th style="width: 140px;">更期行數</th>
+            <th>MON</th><th>TUE</th><th>WED</th><th>THU</th><th>FRI</th><th>SAT</th><th>SUN</th>
+          </tr>
+        </thead>
+        <tbody>
+      `;
+
+      roster.data.forEach((row, idx) => {
+        const rowNum = idx + 1;
+        const matched = currentCandidates.filter(c => c.group === middleRosterGroup && c.row === rowNum);
+        const isTarget = matched.length > 0;
+        const isMyCurrent = (myStatus.group === middleRosterGroup && myStatus.currentRow === rowNum);
+
+        let rowClasses = [];
+        if (isTarget) rowClasses.push('row-highlight-choice');
+        else if (isMyCurrent) rowClasses.push('row-my-current');
+
+        html += `<tr class="${rowClasses.join(' ')}">`;
+        
+        let labelHtml = `<b>第 ${rowNum} 行</b>`;
+        if (isMyCurrent) {
+          labelHtml += `<br><span class="my-tag">★我今日處於</span>`;
+        }
+        if (isTarget) {
+          const names = matched.map(m => `接替 ${m.name} (${m.targetWeekLabel})`).join('<br>');
+          labelHtml += `<br><span class="choice-tag">★可揀入位<br>${names}</span>`;
+        }
+        html += `<td>${labelHtml}</td>`;
+
+        row.forEach((shift, dayIdx) => {
+          let cellClasses = [];
+          if (shift === 'W' || shift === 'R') cellClasses.push('shift-off');
+          if (shift.startsWith('N')) cellClasses.push('shift-night');
+          if (isMyCurrent && dayIdx === todayIdx) cellClasses.push('cell-today');
+
+          html += `<td class="${cellClasses.join(' ')}">${shift}</td>`;
+        });
+
+        html += `</tr>`;
+      });
+
+      html += `</tbody>`;
+      table.innerHTML = html;
+    }
+
+    // ----------------- 一鍵帶入與貼上年表核心 -----------------
+    window.applyToYearPreview = (group, startRow, startYear, startWeek) => {
+      yearPreviewConfig.group = group;
+      yearPreviewConfig.startRow = startRow;
+      yearPreviewConfig.startYear = startYear;
+      yearPreviewConfig.startWeek = startWeek;
+      
+      const ypGroupSelect = document.getElementById("ypGroupSelect");
+      if (ypGroupSelect) ypGroupSelect.value = group;
+      updateYpRowSelect();
+      const ypRowSelect = document.getElementById("ypRowSelect");
+      if (ypRowSelect) ypRowSelect.value = startRow;
+      const ypYearSelect = document.getElementById("ypYearSelect");
+      if (ypYearSelect) ypYearSelect.value = startYear;
+      const ypWeekSelect = document.getElementById("ypWeekSelect");
+      if (ypWeekSelect) ypWeekSelect.value = startWeek;
+
+      currentMonthPageIndex = 0;
+
+      if (!isYearPreviewOpen) {
+        window.toggleYearPreview();
+      } else {
+        generateYearCalendarData();
+        renderCurrentMonthPage();
+      }
+
+      const anchor = document.getElementById("yearPreviewAnchor");
+      if (anchor) anchor.scrollIntoView({ behavior: 'smooth' });
+    };
+
+    window.copyParamCode = (code) => {
+      navigator.clipboard.writeText(code).then(() => {
+        alert("已複製推算參數：\n" + code + "\n\n你可以到下方年表「貼上推算結果」框內貼上並排表！");
+      });
+    };
+
+    window.pasteCodeToYearPreview = () => {
+      const code = document.getElementById("ypPasteInput").value.trim();
+      if (!code) {
+        alert("請先在框內貼上推算參數 (格式: group3|7|2026|45)");
+        return;
+      }
+      const parts = code.split('|');
+      if (parts.length !== 4) {
+        alert("參數格式不正確，請點擊推算結果右邊的「複製參數」");
+        return;
+      }
+      applyToYearPreview(parts[0], parseInt(parts[1]), parseInt(parts[2]), parseInt(parts[3]));
+      document.getElementById("ypPasteInput").value = "";
+    };
+
+    // ----------------- 未來一年更期月曆生成器 (分頁版) -----------------
+    let isYearPreviewOpen = false;
+    window.toggleYearPreview = () => {
+      isYearPreviewOpen = !isYearPreviewOpen;
+      const content = document.getElementById("yearPreviewContent");
+      const btn = document.getElementById("toggleYearBtn");
+      if (isYearPreviewOpen) {
+        content.style.display = "block";
+        btn.innerText = "▲ 收起全年月曆";
+        generateYearCalendarData();
+        renderCurrentMonthPage();
+      } else {
+        content.style.display = "none";
+        btn.innerText = "▼ 展開全年月曆";
+      }
+    };
+
+    function updateYpRowSelect() {
+      const select = document.getElementById("ypRowSelect");
+      if (!select) return;
+      const maxR = ROSTERS[yearPreviewConfig.group].totalRows;
+      select.innerHTML = "";
+      for (let r = 1; r <= maxR; r++) {
+        select.innerHTML += `<option value="${r}" ${r === yearPreviewConfig.startRow ? 'selected' : ''}>第 ${r} 行</option>`;
+      }
+    }
+
+    window.onYpConfigChange = () => {
+      yearPreviewConfig.group = document.getElementById("ypGroupSelect").value;
+      updateYpRowSelect();
+      yearPreviewConfig.startRow = parseInt(document.getElementById("ypRowSelect").value);
+      yearPreviewConfig.startYear = parseInt(document.getElementById("ypYearSelect").value);
+      yearPreviewConfig.startWeek = parseInt(document.getElementById("ypWeekSelect").value);
+      currentMonthPageIndex = 0;
+      generateYearCalendarData();
+      renderCurrentMonthPage();
+    };
+
+    function generateYearCalendarData() {
+      const startAbs = getAbsIndexFromYearWeek(yearPreviewConfig.startYear, yearPreviewConfig.startWeek);
+      const roster = ROSTERS[yearPreviewConfig.group];
+      allGeneratedMonths = [];
+
+      const weekList = [];
+      for (let i = 0; i < 52; i++) {
+        const abs = startAbs + i;
+        const info = getWeekInfoFromAbsIndex(abs);
+        let rowNum = ((yearPreviewConfig.startRow - 1 + i) % roster.totalRows) + 1;
+        if (rowNum <= 0) rowNum += roster.totalRows;
+        const shifts = roster.data[rowNum - 1];
+
+        const days = [];
+        for (let d = 0; d < 7; d++) {
+          const curDate = new Date(info.monday);
+          curDate.setDate(info.monday.getDate() + d);
+          days.push({
+            dateObj: curDate,
+            dayNum: curDate.getDate(),
+            month: curDate.getMonth() + 1,
+            year: curDate.getFullYear(),
+            shift: shifts[d]
+          });
+        }
+
+        weekList.push({
+          weekInfo: info,
+          rowNum,
+          shifts,
+          days
+        });
+      }
+
+      const monthMap = new Map();
+      weekList.forEach(w => {
+        w.days.forEach(d => {
+          const key = `${d.year}-${String(d.month).padStart(2,'0')}`;
+          if (!monthMap.has(key)) {
+            monthMap.set(key, { year: d.year, month: d.month, weekList });
+          }
+        });
+      });
+
+      monthMap.forEach((val) => {
+        allGeneratedMonths.push(val);
+      });
+
+      const monthSelect = document.getElementById("calMonthJumpSelect");
+      if (monthSelect) {
+        monthSelect.innerHTML = "";
+        allGeneratedMonths.forEach((m, idx) => {
+          monthSelect.innerHTML += `<option value="${idx}">${m.year} 年 ${m.month} 月</option>`;
+        });
+      }
+    }
+
+    function renderCurrentMonthPage() {
+      if (allGeneratedMonths.length === 0) return;
+      if (currentMonthPageIndex < 0) currentMonthPageIndex = 0;
+      if (currentMonthPageIndex >= allGeneratedMonths.length) currentMonthPageIndex = allGeneratedMonths.length - 1;
+
+      const mObj = allGeneratedMonths[currentMonthPageIndex];
+      const weekList = mObj.weekList;
+      const container = document.getElementById("singleMonthCardContainer");
+
+      const prevBtn = document.getElementById("prevMonthBtn");
+      const nextBtn = document.getElementById("nextMonthBtn");
+      const jumpSelect = document.getElementById("calMonthJumpSelect");
+      const titleText = document.getElementById("calNavTitleText");
+
+      if (prevBtn) prevBtn.disabled = (currentMonthPageIndex === 0);
+      if (nextBtn) nextBtn.disabled = (currentMonthPageIndex === allGeneratedMonths.length - 1);
+      if (jumpSelect) jumpSelect.value = currentMonthPageIndex;
+      if (titleText) titleText.innerText = `${mObj.year} 年 ${mObj.month} 月`;
+
+      const firstDate = new Date(mObj.year, mObj.month - 1, 1);
+      const lastDate = new Date(mObj.year, mObj.month, 0);
+      const firstAbs = getAbsoluteWeekIndex(firstDate);
+      const lastAbs = getAbsoluteWeekIndex(lastDate);
+
+      let cardHtml = `
+        <div class="month-card">
+          <div class="month-header">${mObj.year} 年 ${mObj.month} 月更期月曆</div>
+          <table class="month-cal-table">
+            <thead>
+              <tr>
+                <th style="width:55px;">週 / 行</th>
+                <th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六</th><th>日</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+
+      for (let wAbs = firstAbs; wAbs <= lastAbs; wAbs++) {
+        const wMatched = weekList.find(w => w.weekInfo.absIndex === wAbs);
+        const wInfo = getWeekInfoFromAbsIndex(wAbs);
+
+        cardHtml += `<tr>`;
+        if (wMatched) {
+          cardHtml += `<td class="cal-week-tag">W${wMatched.weekInfo.weekNum}<br><b style="color:#d35400;">第${wMatched.rowNum}行</b></td>`;
+        } else {
+          cardHtml += `<td class="cal-week-tag">W${wInfo.weekNum}<br>-</td>`;
+        }
+
+        for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
+          const cellDate = new Date(wInfo.monday);
+          cellDate.setDate(wInfo.monday.getDate() + dayOffset);
+          
+          if (cellDate.getMonth() + 1 === mObj.month) {
+            let shiftDisplay = "";
+            let shiftClass = "";
+            if (wMatched) {
+              const s = wMatched.shifts[dayOffset];
+              shiftDisplay = s;
+              if (s === 'W' || s === 'R') shiftClass = 'shift-off';
+              else if (s && s.startsWith('N')) shiftClass = 'shift-night';
+            }
+
+            cardHtml += `
+              <td>
+                <div class="cal-date-num">${cellDate.getDate()}</div>
+                <div class="cal-shift-text ${shiftClass}">${shiftDisplay || '-'}</div>
+              </td>
+            `;
+          } else {
+            cardHtml += `<td style="background:#fcfcfc;"><div class="cal-date-num" style="color:#eee;">${cellDate.getDate()}</div></td>`;
+          }
+        }
+        cardHtml += `</tr>`;
+      }
+
+      cardHtml += `</tbody></table></div>`;
+      if (container) container.innerHTML = cardHtml;
+    }
+
+    window.navMonth = (delta) => {
+      currentMonthPageIndex += delta;
+      renderCurrentMonthPage();
+    };
+
+    window.onMonthJumpSelect = (val) => {
+      currentMonthPageIndex = parseInt(val);
+      renderCurrentMonthPage();
+    };
+
+    // ----------------- 底部通用獨立查更器 -----------------
+    function getSoloBaseDate() {
+      if (soloState.customToday) {
+        const parts = soloState.customToday.split('-');
+        return new Date(parts[0], parts[1] - 1, parts[2]);
+      }
+      return new Date();
+    }
+
+    function getSoloTodayIndex() {
+      const day = getSoloBaseDate().getDay();
+      return day === 0 ? 6 : day - 1;
+    }
+
+    function calculateSoloShift(addDays) {
+      const roster = ROSTERS[soloState.group];
+      const todayIdx = getSoloTodayIndex();
+      const totalDayOffset = todayIdx + addDays;
+      let targetDayIdx = totalDayOffset % 7;
+      if (targetDayIdx < 0) targetDayIdx += 7;
+
+      const weekOffset = Math.floor(totalDayOffset / 7);
+      let targetRow = ((soloState.currentRow - 1 + weekOffset) % roster.totalRows) + 1;
+      if (targetRow <= 0) targetRow += roster.totalRows;
+
+      return { targetRow, targetDayIdx };
+    }
+
+    function renderSoloRoster() {
+      const roster = ROSTERS[soloState.group];
+      const rowSelect = document.getElementById("soloRowSelect");
+      if (!rowSelect) return;
+      rowSelect.innerHTML = "";
+      for (let i = 1; i <= roster.totalRows; i++) {
+        rowSelect.innerHTML += `<option value="${i}" ${soloState.currentRow === i ? 'selected' : ''}>第 ${i} 行</option>`;
+      }
+
+      let targetPos = null;
+      if (soloState.calcDays !== 0) {
+        targetPos = calculateSoloShift(soloState.calcDays);
+      }
+
+      const todayIdx = getSoloTodayIndex();
+      const table = document.getElementById("soloRosterTable");
+      if (!table) return;
+      let html = `<thead><tr><th>行數</th><th>MON</th><th>TUE</th><th>WED</th><th>THU</th><th>FRI</th><th>SAT</th><th>SUN</th></tr></thead><tbody>`;
+
+      roster.data.forEach((row, idx) => {
+        const rowNum = idx + 1;
+        const isActiveRow = rowNum === soloState.currentRow;
+        html += `<tr class="${isActiveRow ? 'row-highlight-choice' : ''}">`;
+        html += `<td><b>第 ${rowNum} 行</b></td>`;
+
+        row.forEach((shift, dayIdx) => {
+          const isToday = isActiveRow && dayIdx === todayIdx;
+          const isTarget = targetPos && rowNum === targetPos.targetRow && dayIdx === targetPos.targetDayIdx;
+
+          let classList = [];
+          if (isToday) classList.push('cell-today');
+          if (isTarget) classList.push('shift-night');
+          if (shift === 'W' || shift === 'R') classList.push('shift-off');
+          if (shift.startsWith('N')) classList.push('shift-night');
+
+          html += `<td class="${classList.join(' ')}">${shift}</td>`;
+        });
+        html += `</tr>`;
+      });
+
+      html += `</tbody>`;
+      table.innerHTML = html;
+    }
+
+    window.updateSoloGroup = (g) => {
+      soloState.group = g;
+      soloState.currentRow = 1;
+      soloState.calcDays = 0;
+      soloState.resultText = '';
+      document.getElementById("soloResult").innerText = '';
+      renderSoloRoster();
+    };
+
+    window.updateSoloRow = (r) => {
+      soloState.currentRow = parseInt(r);
+      renderSoloRoster();
+    };
+
+    window.setSoloCustomToday = (val) => {
+      soloState.customToday = val;
+      soloState.calcDays = 0;
+      soloState.resultText = '';
+      document.getElementById("soloResult").innerText = '';
+      renderSoloRoster();
+    };
+
+    window.resetSoloCustomToday = () => {
+      soloState.customToday = '';
+      document.getElementById("soloCustomTodayInput").value = '';
+      soloState.calcDays = 0;
+      soloState.resultText = '';
+      document.getElementById("soloResult").innerText = '';
+      renderSoloRoster();
+    };
+
+    window.calcSoloByDays = () => {
+      const days = parseInt(document.getElementById("soloDaysInput").value);
+      if (isNaN(days)) return;
+      soloState.calcDays = days;
+      const res = calculateSoloShift(days);
+      const shift = ROSTERS[soloState.group].data[res.targetRow - 1][res.targetDayIdx];
+      document.getElementById("soloResult").innerHTML = `💡 推算結果：<b>${days >= 0 ? days + ' 天後' : Math.abs(days) + ' 天前'}</b> 落在 <b>第 ${res.targetRow} 行 ${dayNames[res.targetDayIdx]}</b>，班次為：<b style="color:#d63031; font-size:1.1rem;">${shift}</b>`;
+      renderSoloRoster();
+    };
+
+    window.calcSoloByDate = () => {
+      const dateInput = document.getElementById("soloDateInput").value;
+      if (!dateInput) return;
+      const baseDate = getSoloBaseDate();
+      const parts = dateInput.split('-');
+      const targetDate = new Date(parts[0], parts[1] - 1, parts[2]);
+      baseDate.setHours(0,0,0,0);
+      targetDate.setHours(0,0,0,0);
+      const diffDays = Math.round((targetDate - baseDate) / (1000 * 60 * 60 * 24));
+      
+      soloState.calcDays = diffDays;
+      const res = calculateSoloShift(diffDays);
+      const shift = ROSTERS[soloState.group].data[res.targetRow - 1][res.targetDayIdx];
+      document.getElementById("soloResult").innerHTML = `💡 推算結果：日期 <b>${dateInput}</b> 落在 <b>第 ${res.targetRow} 行 ${dayNames[res.targetDayIdx]}</b>，班次為：<b style="color:#d63031; font-size:1.1rem;">${shift}</b>`;
+      renderSoloRoster();
+    };
+
+    window.resetSoloCalc = () => {
+      soloState.calcDays = 0;
+      document.getElementById("soloResult").innerText = '';
+      renderSoloRoster();
+    };
+
+    // ----------------- 雲端歷史紀錄 -----------------
+    window.saveCurrentCalc = async () => {
+      if (!currentUser) return;
+      const title = document.getElementById("recordTitleInput").value.trim() || "大假推算紀錄";
+      const summary = document.getElementById("summaryText").innerText;
+
+      const newRec = {
+        id: "rec_" + Date.now(),
+        title,
+        desc: summary,
+        date: new Date().toLocaleDateString()
+      };
+
+      savedRecords.unshift(newRec);
+      if (savedRecords.length > 10) savedRecords.pop();
+
+      try {
+        await setDoc(doc(db, "user_records", currentUser.uid), { records: savedRecords });
+        document.getElementById("recordTitleInput").value = "";
+        renderRecords();
+        alert("已成功保存記錄！");
+      } catch (e) {
+        alert("儲存失敗: " + e.message);
+      }
+    };
+
+    window.deleteRecordByIndex = async (index) => {
+      if (!confirm("確定要刪除這條備忘記錄嗎？")) return;
+      savedRecords.splice(index, 1);
+      try {
+        await setDoc(doc(db, "user_records", currentUser.uid), { records: savedRecords });
+        renderRecords();
+      } catch (e) {
+        alert("刪除失敗: " + e.message);
+      }
+    };
+
+    async function loadUserRecords() {
+      if (!currentUser) return;
+      try {
+        const snap = await getDoc(doc(db, "user_records", currentUser.uid));
+        if (snap.exists() && snap.data().records) {
+          savedRecords = snap.data().records;
+        } else {
+          savedRecords = [];
+        }
+        renderRecords();
+      } catch (e) { console.error(e); }
+    }
+
+    function renderRecords() {
+      const box = document.getElementById("recordsList");
+      if (!box) return;
+      box.innerHTML = "";
+      if (savedRecords.length === 0) {
+        box.innerHTML = `<div style="color:#7f8c8d; font-size:0.85rem;">暫無儲存紀錄。</div>`;
+        return;
+      }
+      savedRecords.forEach((rec, idx) => {
+        box.innerHTML += `
+          <div class="record-item">
+            <div>
+              <b>${rec.title}</b> (${rec.date})<br>
+              <span style="color:#555; font-size:0.8rem;">${rec.desc}</span>
+            </div>
+            <button class="btn-del-record" onclick="deleteRecordByIndex(${idx})">🗑️ 刪除</button>
+          </div>
+        `;
+      });
+    }
+  </script>
+</head>
+<body>
+
+  <!-- 1. 登入面板 -->
+  <div class="auth-container" id="authPanel">
+    <h2 id="authTitle">🔒 登入推算系統</h2>
+    <input type="email" id="authEmail" placeholder="電子郵件 (Email)">
+    <input type="password" id="authPassword" placeholder="密碼 (最少6位)">
+    <button class="btn-auth" id="submitAuthBtn" onclick="submitEmailAuth()">登入</button>
+    <button class="btn-google" onclick="loginWithGoogle()">
+      <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#ffffff" d="M12.24 10.285V13.4h6.887C18.2 16.14 15.645 18 12.24 18c-3.315 0-6-2.685-6-6s2.685-6 6-6c1.47 0 2.805.54 3.84 1.425l2.385-2.385C16.98 3.555 14.73 2.7 12.24 2.7 7.155 2.7 3 6.855 3 11.94s4.155 9.24 9.24 9.24c5.325 0 8.865-3.75 8.865-9.03 0-.615-.06-1.2-.165-1.755H12.24z"/></svg>
+      Google 一鍵登入
+    </button>
+    <div id="authMsg" style="color:#e74c3c; font-size:0.85rem; margin-top:10px;"></div>
+    <div class="auth-toggle" id="toggleBtn" onclick="toggleAuthMode()">未有帳號？點此免費註冊</div>
+  </div>
+
+  <!-- 2. 主面板 -->
+  <div class="container" id="appPanel" style="display:none;">
+    <div class="top-bar">
+      <div>👤 目前用戶：<b id="userLabel" style="color:var(--highlight);"></b></div>
+      <button class="btn-logout" onclick="userLogout()">登出帳號</button>
+    </div>
+
+    <!-- 我的現時更期定位 -->
+    <div class="my-status-card">
+      <div style="font-weight:bold; color:#2980b9; font-size:1rem; margin-bottom:5px;">
+        📍 步驟推算：設定你自己何時放大假
+      </div>
+      
+      <div class="step-grid">
+        <div class="step-box">
+          <span class="step-title">① 我的組別</span>
+          <select id="myGroupSelect" onchange="updateMyGroup(this.value)" style="width:100%;">
+            <option value="group2">2組 (12行)</option>
+            <option value="group3" selected>3組 (14行)</option>
+            <option value="group4">4組 (5行)</option>
+          </select>
+        </div>
+
+        <div class="step-box">
+          <span class="step-title">② 今日我正處於</span>
+          <select id="myRowSelect" onchange="updateMyRow(this.value)" style="width:100%;"></select>
+        </div>
+
+        <div class="step-box">
+          <span class="step-title">③ 幾號開始放假 (小日曆)</span>
+          <input type="date" id="myLeaveDateInput" onchange="onMyLeaveDateChange(this.value)" style="width:90%;">
+        </div>
+
+        <div class="step-box">
+          <span class="step-title">④ 或選放哪一週大假</span>
+          <div style="display:flex; gap:4px;">
+            <select id="myLeaveYearSelect" onchange="onMyLeaveWeekChange()">
+              <option value="2026">2026年</option>
+              <option value="2027">2027年</option>
+              <option value="2028">2028年</option>
+            </select>
+            <select id="myLeaveWeekSelect" onchange="onMyLeaveWeekChange()"></select>
+          </div>
+        </div>
+      </div>
+      <div id="myWeekTip" style="font-size:0.8rem; color:#555; margin-top:6px; font-weight:bold;"></div>
+    </div>
+
+    <!-- 同事大假推算 -->
+    <h1 style="margin: 0 0 10px 0; font-size:1.25rem; color:var(--primary-color);">👥 多同事大假重疊推算 (日曆 / Week 雙選)</h1>
+    <div class="colleagues-grid" id="colleaguesList"></div>
+    
+    <!-- 分析結果摘要與儲存 -->
+    <div class="result-alert" id="summaryText">載入分析中...</div>
+    <div style="display:flex; gap:8px; align-items:center; margin-bottom:15px; flex-wrap:wrap;">
+      <input type="text" id="recordTitleInput" placeholder="輸入備忘標題 (例如: 接替入位備忘)" style="flex:1; min-width:180px; padding:6px;">
+      <button class="btn-save-record" onclick="saveCurrentCalc()">💾 儲存此推算結果</button>
+    </div>
+
+    <!-- 中部主角：完整大更期月曆表 -->
+    <div class="big-roster-section">
+      <div class="big-roster-header">
+        <div class="big-roster-title">
+          📋 完整更期月曆大表
+          <span style="font-size:0.8rem; color:#27ae60; font-weight:normal;">（綠色整行標註 ★可揀入位）</span>
+        </div>
+        <div>
+          <label style="font-weight:bold; font-size:0.85rem;">切換組別對照：</label>
+          <select id="middleGroupSelect" onchange="changeMiddleGroup(this.value)">
+            <option value="group2">2組 (12行)</option>
+            <option value="group3" selected>3組 (14行)</option>
+            <option value="group4">4組 (5行)</option>
+          </select>
+        </div>
+      </div>
+      <div class="table-container">
+        <table id="bigRosterTable"></table>
+      </div>
+    </div>
+
+    <!-- 雲端個人備忘記錄 -->
+    <div class="records-box">
+      <div style="font-weight:bold; color:var(--primary-color); margin-bottom:8px;">📁 我的雲端推算歷史備忘：</div>
+      <div id="recordsList">載入中...</div>
+    </div>
+
+    <!-- ★ 入位後未來一年全年月曆 (左右翻頁分頁模式) ★ -->
+    <div class="year-preview-box" id="yearPreviewAnchor">
+      <div class="year-preview-header" onclick="toggleYearPreview()">
+        <div style="font-size:1.05rem; font-weight:bold; color:#16a085;">
+          📅 入位後未來一年實體月曆 (左右翻頁模式)
+        </div>
+        <button class="btn-toggle-year" id="toggleYearBtn" type="button">▼ 展開全年月曆</button>
+      </div>
+
+      <div id="yearPreviewContent" style="display:none; margin-top:15px; border-top:1px solid #e0e0e0; padding-top:12px;">
+        
+        <!-- 頂部：貼上參數列 -->
+        <div style="background:#e8f8f5; padding:8px 12px; border-radius:6px; margin-bottom:12px; display:flex; align-items:center; flex-wrap:wrap; gap:8px;">
+          <b style="font-size:0.85rem;">貼上推算結果參數：</b>
+          <input type="text" id="ypPasteInput" placeholder="如 group3|7|2026|45" style="width:180px; padding:4px 6px;">
+          <button class="btn-apply-yp" onclick="pasteCodeToYearPreview()">套用並排表</button>
+        </div>
+
+        <!-- 手動調整起點 -->
+        <div style="font-size:0.85rem; display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
+          <b>手動調整起點：</b>
+          <select id="ypGroupSelect" onchange="onYpConfigChange()">
+            <option value="group2">2組 (12行)</option>
+            <option value="group3" selected>3組 (14行)</option>
+            <option value="group4">4組 (5行)</option>
+          </select>
+          <select id="ypRowSelect" onchange="onYpConfigChange()"></select>
+          <span>從：</span>
+          <select id="ypYearSelect" onchange="onYpConfigChange()">
+            <option value="2026">2026年</option>
+            <option value="2027">2027年</option>
+            <option value="2028">2028年</option>
+          </select>
+          <select id="ypWeekSelect" onchange="onYpConfigChange()"></select>
+        </div>
+
+        <!-- 左右翻頁導航條 -->
+        <div class="cal-nav-bar">
+          <button class="cal-nav-btn" id="prevMonthBtn" onclick="navMonth(-1)">◀ 上一個月</button>
+          
+          <div class="cal-nav-title">
+            <span id="calNavTitleText">-</span>
+            <select id="calMonthJumpSelect" onchange="onMonthJumpSelect(this.value)" style="font-size:0.85rem; padding:3px 6px;"></select>
+          </div>
+
+          <button class="cal-nav-btn" id="nextMonthBtn" onclick="navMonth(1)">下一個月 ▶</button>
+        </div>
+
+        <!-- 當月單張月曆卡片 (置中放大顯示) -->
+        <div class="single-month-container" id="singleMonthCardContainer"></div>
+
+      </div>
+    </div>
+
+    <!-- 分隔線 -->
+    <hr class="section-divider">
+
+    <!-- 下部：獨立單一查更月曆 -->
+    <div class="solo-roster-box">
+      <div class="solo-header">
+        <h2 style="margin:0; font-size:1.15rem; color:#2c3e50;">📅 獨立更期月曆與快速查更器（無人名）</h2>
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; font-size:0.85rem;">
+          <label>組別：</label>
+          <select onchange="updateSoloGroup(this.value)">
+            <option value="group2">2組 (12行)</option>
+            <option value="group3">3組 (14行)</option>
+            <option value="group4">4組 (5行)</option>
+          </select>
+
+          <label>本週處於：</label>
+          <select id="soloRowSelect" onchange="updateSoloRow(this.value)"></select>
+
+          <label style="color:#2980b9; font-weight:bold;">基準日：</label>
+          <input type="date" id="soloCustomTodayInput" onchange="setSoloCustomToday(this.value)">
+          <button class="btn-reset" style="color:white; border:none; padding:4px 8px; border-radius:4px; font-size:0.8rem; cursor:pointer;" onclick="resetSoloCustomToday()">↺ 今日</button>
+        </div>
+      </div>
+
+      <div class="calc-box">
+        <span><b>🔍 數日子推算：</b></span>
+        <label>相隔日數：</label>
+        <input type="number" id="soloDaysInput" placeholder="如 2 或 -3" style="width:65px;">
+        <button onclick="calcSoloByDays()">按日數算</button>
+        <span style="color:#ccc;">|</span>
+        <label>指定日期：</label>
+        <input type="date" id="soloDateInput">
+        <button onclick="calcSoloByDate()">按日期算</button>
+        <button class="btn-reset" onclick="resetSoloCalc()">清除標記</button>
+      </div>
+
+      <div id="soloResult" style="margin-bottom:8px; font-size:0.9rem;"></div>
+
+      <div class="table-container">
+        <table id="soloRosterTable"></table>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>
