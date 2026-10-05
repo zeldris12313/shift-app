@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>更期大假銜接與推算工具 (分頁月曆版)</title>
+  <title>更期大假銜接、推算與PH計算系統</title>
   <style>
     :root {
       --primary-color: #2c3e50;
@@ -14,6 +14,7 @@
       --today-highlight: #fdcb6e;
       --target-row-bg: #d4edda;
       --target-row-border: #28a745;
+      --ph-color: #d63031;
     }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -392,9 +393,9 @@
       gap: 8px;
     }
 
-    /* 單月月曆卡片容器 (置中放大) */
+    /* 單月月曆卡片容器 */
     .single-month-container {
-      max-width: 580px;
+      max-width: 620px;
       margin: 0 auto;
     }
     .month-card {
@@ -424,8 +425,8 @@
       color: #555;
     }
     .month-cal-table td {
-      padding: 5px 2px;
-      height: 54px;
+      padding: 4px 2px;
+      height: 56px;
       vertical-align: top;
       border: 1px solid #f1f2f6;
     }
@@ -433,7 +434,7 @@
       font-size: 0.75rem;
       font-weight: bold;
       color: #7f8c8d;
-      margin-bottom: 2px;
+      margin-bottom: 1px;
     }
     .cal-shift-text {
       font-size: 0.85rem;
@@ -451,6 +452,155 @@
       width: 55px;
       vertical-align: middle;
       line-height: 1.3;
+    }
+
+    .ph-tag {
+      display: block;
+      background-color: #ff7675;
+      color: white;
+      font-size: 0.65rem;
+      padding: 1px 2px;
+      border-radius: 3px;
+      margin-bottom: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-weight: bold;
+    }
+    .is-ph-day { background-color: #fff0f0 !important; }
+
+    /* ---------------- PH 使用量專用計算器樣式 ---------------- */
+    .ph-tracker-box {
+      background: #ffffff;
+      border: 2px solid #8e44ad;
+      border-radius: 10px;
+      padding: 15px;
+      margin-top: 25px;
+      box-shadow: 0 4px 12px rgba(142, 68, 173, 0.08);
+    }
+    .ph-tracker-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      border-bottom: 2px solid #f4ecf7;
+      padding-bottom: 10px;
+      margin-bottom: 12px;
+    }
+    .ph-rules-card {
+      background: #fdf7fe;
+      border-left: 5px solid #8e44ad;
+      border-radius: 6px;
+      padding: 10px 14px;
+      margin-bottom: 15px;
+      font-size: 0.85rem;
+      line-height: 1.6;
+      color: #4a235a;
+    }
+    .ph-summary-dashboard {
+      background: #ebdef0;
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-top: 15px;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      text-align: center;
+    }
+    .ph-stat-item {
+      flex: 1;
+      min-width: 140px;
+    }
+    .ph-stat-val {
+      font-size: 1.4rem;
+      font-weight: bold;
+      color: #6c3483;
+    }
+    .ph-cell-interactive {
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .ph-cell-interactive:hover {
+      background-color: #f5eef8 !important;
+    }
+    .ph-hour-badge {
+      display: inline-block;
+      background: #8e44ad;
+      color: white;
+      font-size: 0.72rem;
+      font-weight: bold;
+      padding: 1px 4px;
+      border-radius: 4px;
+      margin-top: 3px;
+    }
+
+    /* Modal 視窗 */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+    .modal-card {
+      background: white;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 340px;
+      padding: 20px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+      text-align: center;
+    }
+    .hour-wheel-select {
+      width: 80%;
+      padding: 10px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      border: 2px solid #8e44ad;
+      border-radius: 8px;
+      margin: 15px 0;
+      text-align: center;
+    }
+    .modal-btns {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 10px;
+    }
+    .btn-save-ph {
+      background: #8e44ad;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 0.9rem;
+      flex: 1;
+    }
+    .btn-del-ph {
+      background: #e74c3c;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 0.9rem;
+    }
+    .btn-cancel-modal {
+      background: #95a5a6;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
     }
 
     /* 底部獨立查更 */
@@ -538,6 +688,21 @@
 
     let currentUser = null;
     let savedRecords = [];
+    let userPhUsage = {}; // 格式: { "2026-11-02": 8, "2026-12-25": 4 }
+
+    // ----------------- 香港官方公眾假期清單 (PH) -----------------
+    const HK_PUBLIC_HOLIDAYS = {
+      // 2026年
+      "2026-01-01": "元旦", "2026-02-17": "農曆年初一", "2026-02-18": "農曆年初二", "2026-02-19": "農曆年初三",
+      "2026-04-03": "耶穌受難節", "2026-04-04": "清明節", "2026-04-06": "復活節星期一", "2026-05-01": "勞動節",
+      "2026-05-25": "佛誕翌日", "2026-06-19": "端午節", "2026-07-01": "特區成立日", "2026-09-26": "中秋節翌日",
+      "2026-10-01": "國慶日", "2026-10-19": "重陽節", "2026-12-25": "聖誕節", "2026-12-26": "聖誕翌日",
+      // 2027年
+      "2027-01-01": "元旦", "2027-02-06": "農曆年初一", "2027-02-08": "農曆年初二", "2027-02-09": "農曆年初三",
+      "2027-03-26": "耶穌受難節", "2027-03-27": "受難節翌日", "2027-03-29": "復活節星期一", "2027-04-05": "清明節",
+      "2027-05-01": "勞動節", "2027-05-13": "佛誕", "2027-06-09": "端午節", "2027-07-01": "特區成立日",
+      "2027-09-16": "中秋節翌日", "2027-10-01": "國慶日", "2027-10-08": "重陽節", "2027-12-25": "聖誕節", "2027-12-27": "聖誕翌日"
+    };
 
     // ----------------- 班表資料 -----------------
     const ROSTERS = {
@@ -593,7 +758,7 @@
     };
 
     const dayNames = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
-    const ANCHOR_DATE = new Date(2026, 0, 5); // 2026-01-05 (Week 2 Monday)
+    const ANCHOR_DATE = new Date(2026, 0, 5);
 
     function getAbsoluteWeekIndex(dateObj) {
       const d = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
@@ -640,7 +805,7 @@
     const todayObj = new Date();
     const todayAbsWeek = getAbsoluteWeekIndex(todayObj);
 
-    // ----------------- 狀態 -----------------
+    // 狀態
     let myStatus = {
       group: 'group3',
       currentRow: 14,
@@ -658,7 +823,6 @@
     let middleRosterGroup = "group3";
     let currentCandidates = [];
 
-    // 未來一年月曆設定
     let yearPreviewConfig = {
       group: 'group3',
       startRow: 7,
@@ -668,6 +832,11 @@
 
     let currentMonthPageIndex = 0;
     let allGeneratedMonths = [];
+
+    // PH 獨立月曆狀態
+    let phCalYear = 2026;
+    let phCalMonth = 10;
+    let activePhDateKey = null;
 
     let soloState = {
       group: 'group2',
@@ -684,12 +853,13 @@
         document.getElementById("authPanel").style.display = "none";
         document.getElementById("appPanel").style.display = "block";
         document.getElementById("userLabel").innerText = user.email || "已登入用戶";
-        loadUserRecords();
+        await loadUserData();
         initYpWeekSelect();
         initMyStatusUI();
         initColleaguesUI();
         window.calculateAll();
         renderSoloRoster();
+        renderPhTrackerCalendar();
       } else {
         currentUser = null;
         document.getElementById("authPanel").style.display = "block";
@@ -916,20 +1086,18 @@
       window.calculateAll();
     };
 
-    // ----------------- 推算核心 (徹底修正 2/3/4 組推算) -----------------
+    // ----------------- 推算核心 (接替同週空缺) -----------------
     window.calculateAll = () => {
       const activeList = colleagues.filter(c => c.enabled);
       const summaryText = document.getElementById("summaryText");
       currentCandidates = [];
 
-      // 我自己大假週數提示
       const myTargetAbs = getAbsIndexFromYearWeek(myStatus.leaveYear, myStatus.leaveWeek);
       const myDiffWeeks = myTargetAbs - todayAbsWeek;
       const myRoster = ROSTERS[myStatus.group];
       let myLeaveRow = ((myStatus.currentRow - 1 + myDiffWeeks) % myRoster.totalRows) + 1;
       if (myLeaveRow <= 0) myLeaveRow += myRoster.totalRows;
 
-      // 更新每位同事的日期說明
       colleagues.forEach((c, idx) => {
         const tip = document.getElementById(`colleagueTip_${idx}`);
         if (tip) {
@@ -957,7 +1125,6 @@
         const targetAbs = getAbsIndexFromYearWeek(c.targetYear, c.targetWeek);
         const diffWeeks = targetAbs - todayAbsWeek;
 
-        // ★★★ 核心精準公式：同事喺嗰個 Week 放大假，騰出嘅就係嗰個 Week 輪到嘅行數！★★★
         let entryRow = ((c.baseRow - 1 + diffWeeks) % roster.totalRows) + 1;
         if (entryRow <= 0) entryRow += roster.totalRows;
 
@@ -1124,7 +1291,7 @@
       document.getElementById("ypPasteInput").value = "";
     };
 
-    // ----------------- 未來一年更期月曆生成器 (分頁版) -----------------
+    // ----------------- 未來一年更期月曆生成器 (分頁版 + PH) -----------------
     let isYearPreviewOpen = false;
     window.toggleYearPreview = () => {
       isYearPreviewOpen = !isYearPreviewOpen;
@@ -1179,12 +1346,19 @@
         for (let d = 0; d < 7; d++) {
           const curDate = new Date(info.monday);
           curDate.setDate(info.monday.getDate() + d);
+          const y = curDate.getFullYear();
+          const m = String(curDate.getMonth() + 1).padStart(2, '0');
+          const dayStr = String(curDate.getDate()).padStart(2, '0');
+          const dateKey = `${y}-${m}-${dayStr}`;
+
           days.push({
             dateObj: curDate,
+            dateKey,
             dayNum: curDate.getDate(),
             month: curDate.getMonth() + 1,
             year: curDate.getFullYear(),
-            shift: shifts[d]
+            shift: shifts[d],
+            phName: HK_PUBLIC_HOLIDAYS[dateKey] || null
           });
         }
 
@@ -1243,9 +1417,20 @@
       const firstAbs = getAbsoluteWeekIndex(firstDate);
       const lastAbs = getAbsoluteWeekIndex(lastDate);
 
+      let phCountInMonth = 0;
+      for (let day = 1; day <= lastDate.getDate(); day++) {
+        const k = `${mObj.year}-${String(mObj.month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        if (HK_PUBLIC_HOLIDAYS[k]) phCountInMonth++;
+      }
+
       let cardHtml = `
         <div class="month-card">
-          <div class="month-header">${mObj.year} 年 ${mObj.month} 月更期月曆</div>
+          <div class="month-header">
+            ${mObj.year} 年 ${mObj.month} 月更期月曆
+            <span style="font-size:0.8rem; font-weight:normal; margin-left:8px; background:rgba(0,0,0,0.15); padding:2px 8px; border-radius:12px;">
+              🔴 本月共有 ${phCountInMonth} 日 PH 公眾假期
+            </span>
+          </div>
           <table class="month-cal-table">
             <thead>
               <tr>
@@ -1270,7 +1455,12 @@
         for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
           const cellDate = new Date(wInfo.monday);
           cellDate.setDate(wInfo.monday.getDate() + dayOffset);
-          
+          const y = cellDate.getFullYear();
+          const m = String(cellDate.getMonth() + 1).padStart(2, '0');
+          const dStr = String(cellDate.getDate()).padStart(2, '0');
+          const dateKey = `${y}-${m}-${dStr}`;
+          const phName = HK_PUBLIC_HOLIDAYS[dateKey];
+
           if (cellDate.getMonth() + 1 === mObj.month) {
             let shiftDisplay = "";
             let shiftClass = "";
@@ -1281,9 +1471,13 @@
               else if (s && s.startsWith('N')) shiftClass = 'shift-night';
             }
 
+            let phHtml = phName ? `<span class="ph-tag" title="${phName}">🔴 ${phName}</span>` : '';
+            let cellBgClass = phName ? 'is-ph-day' : '';
+
             cardHtml += `
-              <td>
+              <td class="${cellBgClass}">
                 <div class="cal-date-num">${cellDate.getDate()}</div>
+                ${phHtml}
                 <div class="cal-shift-text ${shiftClass}">${shiftDisplay || '-'}</div>
               </td>
             `;
@@ -1306,6 +1500,144 @@
     window.onMonthJumpSelect = (val) => {
       currentMonthPageIndex = parseInt(val);
       renderCurrentMonthPage();
+    };
+
+    // ----------------- PH 使用量計算器核心邏輯 -----------------
+    window.navPhMonth = (delta) => {
+      phCalMonth += delta;
+      if (phCalMonth > 12) { phCalMonth = 1; phCalYear++; }
+      if (phCalMonth < 1) { phCalMonth = 12; phCalYear--; }
+      renderPhTrackerCalendar();
+    };
+
+    window.onPhYearChange = (val) => {
+      phCalYear = parseInt(val);
+      renderPhTrackerCalendar();
+    };
+
+    window.onPhMonthChange = (val) => {
+      phCalMonth = parseInt(val);
+      renderPhTrackerCalendar();
+    };
+
+    function renderPhTrackerCalendar() {
+      document.getElementById("phYearSelect").value = phCalYear;
+      document.getElementById("phMonthSelect").value = phCalMonth;
+      document.getElementById("phNavTitle").innerText = `${phCalYear} 年 ${phCalMonth} 月`;
+
+      const firstDate = new Date(phCalYear, phCalMonth - 1, 1);
+      const lastDate = new Date(phCalYear, phCalMonth, 0);
+      const firstAbs = getAbsoluteWeekIndex(firstDate);
+      const lastAbs = getAbsoluteWeekIndex(lastDate);
+
+      const container = document.getElementById("phTrackerCalendarGrid");
+      let html = `
+        <table class="month-cal-table">
+          <thead>
+            <tr>
+              <th>週一</th><th>週二</th><th>週三</th><th>週四</th><th>週五</th><th>週六</th><th>週日</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      for (let wAbs = firstAbs; wAbs <= lastAbs; wAbs++) {
+        const wInfo = getWeekInfoFromAbsIndex(wAbs);
+        html += `<tr>`;
+
+        for (let d = 0; d < 7; d++) {
+          const cur = new Date(wInfo.monday);
+          cur.setDate(wInfo.monday.getDate() + d);
+          const y = cur.getFullYear();
+          const m = String(cur.getMonth() + 1).padStart(2, '0');
+          const dayNum = String(cur.getDate()).padStart(2, '0');
+          const dateKey = `${y}-${m}-${dayNum}`;
+
+          if (cur.getMonth() + 1 === phCalMonth) {
+            const phHours = userPhUsage[dateKey] || 0;
+            const phHolidayName = HK_PUBLIC_HOLIDAYS[dateKey];
+
+            let badgeHtml = phHours > 0 ? `<div class="ph-hour-badge">PH: ${phHours}hr</div>` : '';
+            let holidayTag = phHolidayName ? `<div style="font-size:0.65rem; color:#e74c3c; font-weight:bold;">${phHolidayName}</div>` : '';
+
+            html += `
+              <td class="ph-cell-interactive" onclick="openPhModal('${dateKey}')">
+                <div class="cal-date-num">${cur.getDate()}</div>
+                ${holidayTag}
+                ${badgeHtml}
+              </td>
+            `;
+          } else {
+            html += `<td style="background:#fafafa; color:#ccc;"><div class="cal-date-num" style="color:#eee;">${cur.getDate()}</div></td>`;
+          }
+        }
+        html += `</tr>`;
+      }
+
+      html += `</tbody></table>`;
+      container.innerHTML = html;
+
+      updatePhStatistics();
+    }
+
+    function updatePhStatistics() {
+      let totalHoursInYear = 0;
+      let totalDaysCount = 0;
+
+      for (const [key, hours] of Object.entries(userPhUsage)) {
+        if (key.startsWith(`${phCalYear}-`)) {
+          totalHoursInYear += hours;
+          if (hours > 0) totalDaysCount++;
+        }
+      }
+
+      const totalDaysConverted = (totalHoursInYear / 8).toFixed(2);
+      const wholeDays = Math.floor(totalHoursInYear / 8);
+      const remHours = totalHoursInYear % 8;
+
+      document.getElementById("phStatTotalHours").innerText = `${totalHoursInYear} 小時`;
+      document.getElementById("phStatTotalDays").innerText = `${totalDaysConverted} 日 (${wholeDays}日 + ${remHours}小時)`;
+      document.getElementById("phStatRecordedDays").innerText = `${totalDaysCount} 天`;
+    }
+
+    window.openPhModal = (dateKey) => {
+      activePhDateKey = dateKey;
+      const currentHours = userPhUsage[dateKey] || 8;
+      document.getElementById("modalDateTitle").innerText = `📅 設定 ${dateKey} 之 PH 使用時數：`;
+      document.getElementById("phHourSelect").value = currentHours;
+      document.getElementById("phModal").style.display = "flex";
+    };
+
+    window.closePhModal = () => {
+      document.getElementById("phModal").style.display = "none";
+      activePhDateKey = null;
+    };
+
+    window.savePhHours = async () => {
+      if (!activePhDateKey || !currentUser) return;
+      const hours = parseInt(document.getElementById("phHourSelect").value);
+      userPhUsage[activePhDateKey] = hours;
+
+      try {
+        await setDoc(doc(db, "user_ph_usage", currentUser.uid), { usage: userPhUsage });
+        closePhModal();
+        renderPhTrackerCalendar();
+      } catch (e) {
+        alert("儲存 PH 記錄失敗: " + e.message);
+      }
+    };
+
+    window.deletePhRecord = async () => {
+      if (!activePhDateKey || !currentUser) return;
+      delete userPhUsage[activePhDateKey];
+
+      try {
+        await setDoc(doc(db, "user_ph_usage", currentUser.uid), { usage: userPhUsage });
+        closePhModal();
+        renderPhTrackerCalendar();
+      } catch (e) {
+        alert("刪除 PH 記錄失敗: " + e.message);
+      }
     };
 
     // ----------------- 底部通用獨立查更器 -----------------
@@ -1444,7 +1776,7 @@
       renderSoloRoster();
     };
 
-    // ----------------- 雲端歷史紀錄 -----------------
+    // ----------------- 雲端歷史紀錄與載入 -----------------
     window.saveCurrentCalc = async () => {
       if (!currentUser) return;
       const title = document.getElementById("recordTitleInput").value.trim() || "大假推算紀錄";
@@ -1481,16 +1813,25 @@
       }
     };
 
-    async function loadUserRecords() {
+    async function loadUserData() {
       if (!currentUser) return;
       try {
-        const snap = await getDoc(doc(db, "user_records", currentUser.uid));
-        if (snap.exists() && snap.data().records) {
-          savedRecords = snap.data().records;
+        // 載入備忘
+        const recSnap = await getDoc(doc(db, "user_records", currentUser.uid));
+        if (recSnap.exists() && recSnap.data().records) {
+          savedRecords = recSnap.data().records;
         } else {
           savedRecords = [];
         }
         renderRecords();
+
+        // 載入 PH 記錄
+        const phSnap = await getDoc(doc(db, "user_ph_usage", currentUser.uid));
+        if (phSnap.exists() && phSnap.data().usage) {
+          userPhUsage = phSnap.data().usage;
+        } else {
+          userPhUsage = {};
+        }
       } catch (e) { console.error(e); }
     }
 
@@ -1618,11 +1959,11 @@
       <div id="recordsList">載入中...</div>
     </div>
 
-    <!-- ★ 入位後未來一年全年月曆 (左右翻頁分頁模式) ★ -->
+    <!-- ★ 入位後未來一年全年月曆 (左右翻頁分頁模式 + PH紅日) ★ -->
     <div class="year-preview-box" id="yearPreviewAnchor">
       <div class="year-preview-header" onclick="toggleYearPreview()">
         <div style="font-size:1.05rem; font-weight:bold; color:#16a085;">
-          📅 入位後未來一年實體月曆 (左右翻頁模式)
+          📅 入位後未來一年實體月曆 (左右翻頁模式・含PH紅日)
         </div>
         <button class="btn-toggle-year" id="toggleYearBtn" type="button">▼ 展開全年月曆</button>
       </div>
@@ -1715,6 +2056,96 @@
       </div>
     </div>
 
+    <!-- 分隔線 -->
+    <hr class="section-divider">
+
+    <!-- ★ 全新功能：PH (公眾假期) 使用量月曆計算器 ★ -->
+    <div class="ph-tracker-box">
+      <div class="ph-tracker-header">
+        <div style="font-size:1.15rem; font-weight:bold; color:#8e44ad;">
+          🏖️ 個人 PH (公眾假期補假) / 假紙使用量計算器
+        </div>
+        <div style="font-size:0.85rem; color:#555;">
+          點選月曆上任一日，即可記錄該日扣減之 PH 時數
+        </div>
+      </div>
+
+      <!-- 假別貼心提示 -->
+      <div class="ph-rules-card">
+        <b>💡 假牌額度重要指引：</b><br>
+        • <b>4 個大假</b>：該年只有 <b>11.5 日</b> PH<br>
+        • <b>5 個大假</b>：該年只有 <b>11.5 - 5.5 = 6 日</b> PH<br>
+        • <b>年資做夠 10 年</b>：享有額外 <b>2 日 AL (年假)</b><br>
+        • <i>換算標準：每累積 8 小時折算為 1 整日 PH。</i>
+      </div>
+
+      <!-- 月曆月份跳轉導航 -->
+      <div class="cal-nav-bar" style="background:#f4ecf7;">
+        <button class="cal-nav-btn" style="background:#8e44ad;" onclick="navPhMonth(-1)">◀ 上一個月</button>
+        <div class="cal-nav-title" style="color:#8e44ad;">
+          <span id="phNavTitle">2026 年 10 月</span>
+          <select id="phYearSelect" onchange="onPhYearChange(this.value)" style="padding:2px 6px;">
+            <option value="2026">2026年</option>
+            <option value="2027">2027年</option>
+            <option value="2028">2028年</option>
+          </select>
+          <select id="phMonthSelect" onchange="onPhMonthChange(this.value)" style="padding:2px 6px;">
+            <option value="1">1月</option><option value="2">2月</option><option value="3">3月</option>
+            <option value="4">4月</option><option value="5">5月</option><option value="6">6月</option>
+            <option value="7">7月</option><option value="8">8月</option><option value="9">9月</option>
+            <option value="10" selected>10月</option><option value="11">11月</option><option value="12">12月</option>
+          </select>
+        </div>
+        <button class="cal-nav-btn" style="background:#8e44ad;" onclick="navPhMonth(1)">下一個月 ▶</button>
+      </div>
+
+      <!-- 點擊月曆格仔 -->
+      <div class="single-month-container" id="phTrackerCalendarGrid"></div>
+
+      <!-- 年度 PH 使用總結儀表板 -->
+      <div class="ph-summary-dashboard">
+        <div class="ph-stat-item">
+          <div style="font-size:0.85rem; color:#7d3c98;">該年已用總時數</div>
+          <div class="ph-stat-val" id="phStatTotalHours">0 小時</div>
+        </div>
+        <div class="ph-stat-item">
+          <div style="font-size:0.85rem; color:#7d3c98;">折合總日數 (8hr=1日)</div>
+          <div class="ph-stat-val" style="color:#c0392b;" id="phStatTotalDays">0.00 日</div>
+        </div>
+        <div class="ph-stat-item">
+          <div style="font-size:0.85rem; color:#7d3c98;">已記錄放假天數</div>
+          <div class="ph-stat-val" id="phStatRecordedDays">0 天</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- PH 時數設定 Modal 視窗 -->
+  <div class="modal-overlay" id="phModal">
+    <div class="modal-card">
+      <h3 style="margin-top:0; color:#8e44ad;" id="modalDateTitle">設定 PH 時數</h3>
+      <p style="font-size:0.85rem; color:#666; margin-bottom:5px;">請選擇該日請了多少小時 PH：</p>
+      
+      <select class="hour-wheel-select" id="phHourSelect">
+        <option value="1">1 小時</option>
+        <option value="2">2 小時</option>
+        <option value="3">3 小時</option>
+        <option value="4">4 小時 (半日)</option>
+        <option value="5">5 小時</option>
+        <option value="6">6 小時</option>
+        <option value="7">7 小時</option>
+        <option value="8" selected>8 小時 (全日)</option>
+        <option value="9">9 小時</option>
+        <option value="10">10 小時</option>
+      </select>
+
+      <div class="modal-btns">
+        <button class="btn-save-ph" onclick="savePhHours()">儲存時數</button>
+        <button class="btn-del-ph" onclick="deletePhRecord()">🗑️ 刪除記錄</button>
+        <button class="btn-cancel-modal" onclick="closePhModal()">取消</button>
+      </div>
+    </div>
   </div>
 
 </body>
