@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>更期大假銜接與推算工具 (Week週期版)</title>
+  <title>更期大假銜接與推算工具 (Week/日曆雙選版)</title>
   <style>
     :root {
       --primary-color: #2c3e50;
@@ -105,18 +105,32 @@
       cursor: pointer;
     }
 
-    /* 我目前的定位卡片 */
+    /* 我目前的定位卡片 (順序步驟版) */
     .my-status-card {
-      background: #eef7fc;
-      border: 1.5px solid #3498db;
-      border-radius: 8px;
-      padding: 12px 15px;
+      background: #f0f7fc;
+      border: 1.5px solid #2980b9;
+      border-radius: 10px;
+      padding: 14px 16px;
       margin-bottom: 15px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
+    }
+    .step-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
       gap: 10px;
+      margin-top: 8px;
+    }
+    .step-box {
+      background: white;
+      border: 1px solid #cfe2f3;
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 0.85rem;
+    }
+    .step-title {
+      font-weight: bold;
+      color: #2980b9;
+      margin-bottom: 5px;
+      display: block;
     }
 
     /* 同事推算卡片 */
@@ -235,7 +249,7 @@
       font-weight: bold;
     }
     .cell-today::after {
-      content: " ★基準日";
+      content: " ★今日";
       font-size: 0.65rem;
       color: #d63031;
       display: block;
@@ -297,6 +311,8 @@
       cursor: pointer;
       font-weight: bold;
     }
+
+    /* 雲端歷史紀錄與刪除按鈕 */
     .records-box {
       background: #f8f9fa;
       border-radius: 8px;
@@ -306,12 +322,27 @@
     }
     .record-item {
       background: white;
-      padding: 8px 12px;
-      margin-bottom: 6px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
       border-radius: 6px;
       font-size: 0.85rem;
       border-left: 4px solid var(--accent-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
     }
+    .btn-del-record {
+      background: #ff7675;
+      color: white;
+      border: none;
+      padding: 4px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.75rem;
+      flex-shrink: 0;
+    }
+    .btn-del-record:hover { background: #d63031; }
   </style>
 
   <!-- Firebase SDK -->
@@ -406,13 +437,9 @@
 
     const dayNames = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 
-    // ----------------- 公司專用週曆計算器 (週一至週日無縫滾動) -----------------
     // 錨點：2026年 Week 2 星期一 為 2026-01-05
-    const ANCHOR_DATE = new Date(2026, 0, 5); // 2026-01-05
-    const ANCHOR_YEAR = 2026;
-    const ANCHOR_WEEK = 2;
+    const ANCHOR_DATE = new Date(2026, 0, 5);
 
-    // 將任何日期轉化為唯一的「絕對週序號 (Absolute Week Index)」
     function getAbsoluteWeekIndex(dateObj) {
       const d = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
       const day = d.getDay();
@@ -421,24 +448,19 @@
       monday.setDate(d.getDate() + diffToMon);
       
       const diffMs = monday.getTime() - ANCHOR_DATE.getTime();
-      const diffWeeks = Math.round(diffMs / (7 * 24 * 60 * 60 * 1000));
-      return diffWeeks;
+      return Math.round(diffMs / (7 * 24 * 60 * 60 * 1000));
     }
 
-    // 根據絕對週序號，取得該週的 (年份, Week幾, 週一日期, 週日日期)
     function getWeekInfoFromAbsIndex(absIndex) {
       const monday = new Date(ANCHOR_DATE);
       monday.setDate(ANCHOR_DATE.getDate() + absIndex * 7);
       const sunday = new Date(monday);
       sunday.setDate(monday.getDate() + 6);
 
-      // 年份判定：取週四所在的年份（符合年首年尾接軌）
       const thurs = new Date(monday);
       thurs.setDate(monday.getDate() + 3);
       const year = thurs.getFullYear();
 
-      // 計算該年 Week 1 週一的絕對週序號
-      // 該年 1 月 4 日所在的那一週必為 Week 1
       const jan4 = new Date(year, 0, 4);
       const jan4Abs = getAbsoluteWeekIndex(jan4);
       const weekNum = absIndex - jan4Abs + 1;
@@ -449,35 +471,41 @@
         absIndex,
         monday,
         sunday,
+        monStr: `${monday.getFullYear()}-${String(monday.getMonth()+1).padStart(2,'0')}-${String(monday.getDate()).padStart(2,'0')}`,
         label: `${year} 年 Week ${weekNum} (${monday.getMonth()+1}/${monday.getDate()} - ${sunday.getMonth()+1}/${sunday.getDate()})`
       };
     }
 
-    // 根據某年 Week X 取得絕對週序號
     function getAbsIndexFromYearWeek(year, weekNum) {
       const jan4 = new Date(year, 0, 4);
       const jan4Abs = getAbsoluteWeekIndex(jan4);
       return jan4Abs + (weekNum - 1);
     }
 
+    // 今日日期字串
+    const todayObj = new Date();
+    const todayStr = `${todayObj.getFullYear()}-${String(todayObj.getMonth()+1).padStart(2,'0')}-${String(todayObj.getDate()).padStart(2,'0')}`;
+    const todayAbsWeek = getAbsoluteWeekIndex(todayObj);
+
     // ----------------- 我目前的狀態 -----------------
     let myStatus = {
       group: 'group2',
-      currentRow: 1,
-      date: new Date().toISOString().split('T')[0]
+      currentRow: 1, // 今日在那一行
+      leaveDate: todayStr, // 放假首日
+      leaveYear: 2026,
+      leaveWeek: 51
     };
 
-    // 同事狀態 (支援選 Week)
+    // 同事狀態
     let colleagues = [
-      { id: 1, name: "同事 A", group: "group2", baseRow: 1, targetYear: 2026, targetWeek: 51, enabled: true },
-      { id: 2, name: "同事 B", group: "group2", baseRow: 4, targetYear: 2026, targetWeek: 51, enabled: true },
-      { id: 3, name: "同事 C", group: "group3", baseRow: 2, targetYear: 2026, targetWeek: 51, enabled: false }
+      { id: 1, name: "同事 A", group: "group2", baseRow: 1, targetYear: 2026, targetWeek: 51, leaveDate: "2026-12-14", enabled: true },
+      { id: 2, name: "同事 B", group: "group2", baseRow: 4, targetYear: 2026, targetWeek: 51, leaveDate: "2026-12-14", enabled: true },
+      { id: 3, name: "同事 C", group: "group3", baseRow: 2, targetYear: 2026, targetWeek: 51, leaveDate: "2026-12-14", enabled: false }
     ];
 
     let middleRosterGroup = "group2";
     let currentCandidates = [];
 
-    // 底部查更狀態
     let soloState = {
       group: 'group2',
       currentRow: 1,
@@ -541,12 +569,20 @@
 
     window.userLogout = () => signOut(auth);
 
-    // ----------------- 我目前的定位設定 -----------------
+    // ----------------- 我目前的定位 UI -----------------
     function initMyStatusUI() {
-      document.getElementById("myDateInput").value = myStatus.date;
       document.getElementById("myGroupSelect").value = myStatus.group;
       updateMyRowSelect();
-      updateMyWeekLabel();
+
+      // 初始化 Week 選單
+      const weekSelect = document.getElementById("myLeaveWeekSelect");
+      weekSelect.innerHTML = "";
+      for (let w = 1; w <= 53; w++) {
+        weekSelect.innerHTML += `<option value="${w}" ${w === myStatus.leaveWeek ? 'selected' : ''}>Week ${w}</option>`;
+      }
+      document.getElementById("myLeaveYearSelect").value = myStatus.leaveYear;
+      document.getElementById("myLeaveDateInput").value = myStatus.leaveDate;
+      syncMyLeaveWeekFromDate(myStatus.leaveDate);
     }
 
     function updateMyRowSelect() {
@@ -556,14 +592,6 @@
       for (let r = 1; r <= maxR; r++) {
         rowSelect.innerHTML += `<option value="${r}" ${r === myStatus.currentRow ? 'selected' : ''}>第 ${r} 行</option>`;
       }
-    }
-
-    function updateMyWeekLabel() {
-      const parts = myStatus.date.split('-');
-      const d = new Date(parts[0], parts[1] - 1, parts[2]);
-      const abs = getAbsoluteWeekIndex(d);
-      const info = getWeekInfoFromAbsIndex(abs);
-      document.getElementById("myWeekLabel").innerHTML = `📍 相當於：<b>${info.year} 年 Week ${info.weekNum}</b> <span style="color:#777; font-size:0.8rem;">(${info.monday.getMonth()+1}/${info.monday.getDate()} - ${info.sunday.getMonth()+1}/${info.sunday.getDate()})</span>`;
     }
 
     window.updateMyGroup = (g) => {
@@ -578,14 +606,39 @@
       window.calculateAll();
     };
 
-    window.updateMyDate = (val) => {
+    // 選擇三：揀小日曆日期放假
+    window.onMyLeaveDateChange = (val) => {
       if (!val) return;
-      myStatus.date = val;
-      updateMyWeekLabel();
+      myStatus.leaveDate = val;
+      syncMyLeaveWeekFromDate(val);
       window.calculateAll();
     };
 
-    // ----------------- 同事大假推算設定 (以 Week 為主) -----------------
+    function syncMyLeaveWeekFromDate(dateStr) {
+      const parts = dateStr.split('-');
+      const d = new Date(parts[0], parts[1] - 1, parts[2]);
+      const abs = getAbsoluteWeekIndex(d);
+      const info = getWeekInfoFromAbsIndex(abs);
+      myStatus.leaveYear = info.year;
+      myStatus.leaveWeek = info.weekNum;
+      document.getElementById("myLeaveYearSelect").value = info.year;
+      document.getElementById("myLeaveWeekSelect").value = info.weekNum;
+      document.getElementById("myWeekTip").innerText = `📅 相當於：${info.year} 年 Week ${info.weekNum} (${info.monday.getMonth()+1}/${info.monday.getDate()} - ${info.sunday.getMonth()+1}/${info.sunday.getDate()})`;
+    }
+
+    // 選擇四：揀 Week 幾放假
+    window.onMyLeaveWeekChange = () => {
+      myStatus.leaveYear = parseInt(document.getElementById("myLeaveYearSelect").value);
+      myStatus.leaveWeek = parseInt(document.getElementById("myLeaveWeekSelect").value);
+      const abs = getAbsIndexFromYearWeek(myStatus.leaveYear, myStatus.leaveWeek);
+      const info = getWeekInfoFromAbsIndex(abs);
+      myStatus.leaveDate = info.monStr;
+      document.getElementById("myLeaveDateInput").value = info.monStr;
+      document.getElementById("myWeekTip").innerText = `📅 相當於：${info.year} 年 Week ${info.weekNum} (${info.monday.getMonth()+1}/${info.monday.getDate()} - ${info.sunday.getMonth()+1}/${info.sunday.getDate()})`;
+      window.calculateAll();
+    };
+
+    // ----------------- 同事 UI -----------------
     function initColleaguesUI() {
       const container = document.getElementById("colleaguesList");
       container.innerHTML = "";
@@ -597,7 +650,6 @@
           rowOptions += `<option value="${r}" ${r === c.baseRow ? 'selected' : ''}>第 ${r} 行</option>`;
         }
 
-        // 產生 Week 1 至 53 的下拉選單
         let weekOptions = "";
         for (let w = 1; w <= 53; w++) {
           weekOptions += `<option value="${w}" ${w === c.targetWeek ? 'selected' : ''}>Week ${w}</option>`;
@@ -620,25 +672,29 @@
               </select>
             </div>
             <div class="field-row">
-              <span>基準行數：</span>
+              <span>基準行數 (今日)：</span>
               <select onchange="updateColleague(${idx}, 'baseRow', parseInt(this.value))">
                 ${rowOptions}
               </select>
             </div>
             <div class="field-row">
-              <span style="color:#d35400; font-weight:bold;">放哪一週大假：</span>
+              <span style="color:#d35400; font-weight:bold;">放假首日：</span>
+              <input type="date" value="${c.leaveDate}" onchange="onColleagueDateChange(${idx}, this.value)">
+            </div>
+            <div class="field-row">
+              <span style="color:#d35400; font-weight:bold;">或放邊個Week：</span>
               <div style="display:flex; gap:4px;">
-                <select onchange="updateColleague(${idx}, 'targetYear', parseInt(this.value))">
+                <select id="colleagueYear_${idx}" onchange="onColleagueWeekChange(${idx})">
                   <option value="2026" ${c.targetYear===2026?'selected':''}>2026年</option>
                   <option value="2027" ${c.targetYear===2027?'selected':''}>2027年</option>
                   <option value="2028" ${c.targetYear===2028?'selected':''}>2028年</option>
                 </select>
-                <select onchange="updateColleague(${idx}, 'targetWeek', parseInt(this.value))">
+                <select id="colleagueWeek_${idx}" onchange="onColleagueWeekChange(${idx})">
                   ${weekOptions}
                 </select>
               </div>
             </div>
-            <div id="colleagueDateSpan_${idx}" style="font-size:0.75rem; color:#7f8c8d; text-align:right; margin-top:3px;"></div>
+            <div id="colleagueTip_${idx}" style="font-size:0.75rem; color:#7f8c8d; text-align:right; margin-top:2px;"></div>
           </div>
         `;
       });
@@ -656,28 +712,70 @@
       window.calculateAll();
     };
 
+    window.onColleagueDateChange = (idx, val) => {
+      if (!val) return;
+      colleagues[idx].leaveDate = val;
+      const parts = val.split('-');
+      const d = new Date(parts[0], parts[1] - 1, parts[2]);
+      const abs = getAbsoluteWeekIndex(d);
+      const info = getWeekInfoFromAbsIndex(abs);
+      colleagues[idx].targetYear = info.year;
+      colleagues[idx].targetWeek = info.weekNum;
+      
+      document.getElementById(`colleagueYear_${idx}`).value = info.year;
+      document.getElementById(`colleagueWeek_${idx}`).value = info.weekNum;
+      window.calculateAll();
+    };
+
+    window.onColleagueWeekChange = (idx) => {
+      const y = parseInt(document.getElementById(`colleagueYear_${idx}`).value);
+      const w = parseInt(document.getElementById(`colleagueWeek_${idx}`).value);
+      colleagues[idx].targetYear = y;
+      colleagues[idx].targetWeek = w;
+      const abs = getAbsIndexFromYearWeek(y, w);
+      const info = getWeekInfoFromAbsIndex(abs);
+      colleagues[idx].leaveDate = info.monStr;
+      
+      const card = document.querySelectorAll(".colleague-card")[idx];
+      if (card) {
+        card.querySelector('input[type="date"]').value = info.monStr;
+      }
+      window.calculateAll();
+    };
+
+    // ----------------- 推算核心 -----------------
     window.calculateAll = () => {
       const activeList = colleagues.filter(c => c.enabled);
       const summaryText = document.getElementById("summaryText");
       currentCandidates = [];
 
-      // 取得我自己目前的絕對週序號
-      const myParts = myStatus.date.split('-');
-      const myD = new Date(myParts[0], myParts[1] - 1, myParts[2]);
-      const myAbsWeek = getAbsoluteWeekIndex(myD);
+      // 我自己大假週數相距今日
+      const myTargetAbs = getAbsIndexFromYearWeek(myStatus.leaveYear, myStatus.leaveWeek);
+      const myDiffWeeks = myTargetAbs - todayAbsWeek;
+      const myRoster = ROSTERS[myStatus.group];
+      let myLeaveRow = ((myStatus.currentRow - 1 + myDiffWeeks) % myRoster.totalRows) + 1;
+      if (myLeaveRow <= 0) myLeaveRow += myRoster.totalRows;
+      // 我放完一周大假回來應該入的行
+      const myReturnRow = (myLeaveRow % myRoster.totalRows) + 1;
 
-      // 更新每位同事的日期說明
+      // 更新每位同事的提示
       colleagues.forEach((c, idx) => {
-        const span = document.getElementById(`colleagueDateSpan_${idx}`);
-        if (span) {
-          const targetAbs = getAbsIndexFromYearWeek(c.targetYear, c.targetWeek);
-          const info = getWeekInfoFromAbsIndex(targetAbs);
-          span.innerText = `📅 該週為: ${info.monday.getMonth()+1}/${info.monday.getDate()} - ${info.sunday.getMonth()+1}/${info.sunday.getDate()}`;
+        const tip = document.getElementById(`colleagueTip_${idx}`);
+        if (tip) {
+          const abs = getAbsIndexFromYearWeek(c.targetYear, c.targetWeek);
+          const info = getWeekInfoFromAbsIndex(abs);
+          tip.innerText = `📅 ${info.year} W${info.weekNum} (${info.monday.getMonth()+1}/${info.monday.getDate()} - ${info.sunday.getMonth()+1}/${info.sunday.getDate()})`;
         }
       });
 
+      let myInfoHtml = `
+        <div style="background:#eaf2f8; padding:8px 10px; border-radius:6px; margin-bottom:8px; border-left:4px solid #2980b9;">
+          👤 <b>你的大假推算</b>：你在 <b>${myStatus.leaveYear} 年 Week ${myStatus.leaveWeek}</b> 放大假（相隔今日 ${myDiffWeeks} 週，放假那一週行緊第 ${myLeaveRow} 行）➔ <b>放完大假回來上班應入：<span style="color:#d35400; font-size:1.05rem; font-weight:bold;">第 ${myReturnRow} 行</span></b>。
+        </div>
+      `;
+
       if (activeList.length === 0) {
-        summaryText.innerHTML = "請至少勾選一位同事進行推算。";
+        summaryText.innerHTML = myInfoHtml + "請勾選同事以對照大假空缺。";
         renderBigRoster();
         return;
       }
@@ -685,12 +783,10 @@
       const results = activeList.map(c => {
         const roster = ROSTERS[c.group];
         const targetAbs = getAbsIndexFromYearWeek(c.targetYear, c.targetWeek);
-        // 相差週數 (自動精確相減)
-        const diffWeeks = targetAbs - myAbsWeek;
+        const diffWeeks = targetAbs - todayAbsWeek;
 
         let endRow = ((c.baseRow - 1 + diffWeeks) % roster.totalRows) + 1;
         if (endRow <= 0) endRow += roster.totalRows;
-        // 同事大假後釋出的可入位行數
         const myNextRow = (endRow % roster.totalRows) + 1;
 
         return {
@@ -712,33 +808,22 @@
         targetWeekLabel: `${r.targetYear} W${r.targetWeek}`
       }));
 
-      // 自動將大表組別換到第一個同事的組別
       if (results.length > 0) {
         middleRosterGroup = results[0].group;
         document.getElementById("middleGroupSelect").value = middleRosterGroup;
       }
 
-      // 檢查是否同週放假
-      const weekLabels = results.map(r => `${r.targetYear}-W${r.targetWeek}`);
-      const isSameWeek = weekLabels.length > 1 && weekLabels.every(w => w === weekLabels[0]);
-
-      let html = "";
-      if (isSameWeek) {
-        html += `🔥 <b>【同週放大假提示】</b>：以下同事均在 <b>${results[0].targetYear} 年 Week ${results[0].targetWeek}</b>（相隔 ${results[0].diffWeeks} 週後）放大假！騰出以下 <b>${results.length} 個選擇</b> 可供你接替入位：<br>`;
-      } else {
-        html += `💡 <b>大假推算分析</b>：<br>`;
-      }
-
+      let html = myInfoHtml;
       results.forEach((r, idx) => {
-        html += `• <b>【選擇 ${idx + 1}】接替 ${r.name}</b>：由你現時定位起計相差 <b>${r.diffWeeks} 週</b>，同事在 <b>${r.targetYear} 年 Week ${r.targetWeek}</b> 大假最後一行行緊第 ${r.endRow} 行 ➔ <b>你可接替入位：<span style="color:#27ae60; font-size:1.1rem; text-decoration:underline;">${r.groupName} 第 ${r.myNextRow} 行</span></b><br>`;
+        html += `• <b>【選擇 ${idx + 1}】接替 ${r.name}</b>：同事在 <b>${r.targetYear} 年 Week ${r.targetWeek}</b> 放大假（最後一行行緊第 ${r.endRow} 行）➔ <b>你放完假可接替入位：<span style="color:#27ae60; font-size:1.1rem; text-decoration:underline; font-weight:bold;">${r.groupName} 第 ${r.myNextRow} 行</span></b><br>`;
       });
 
-      html += `<span style="color:#2980b9; font-weight:bold;">⬇️️ 下方完整更期月曆大表已將可選行數整行標記為綠色【★可揀入位】！</span>`;
+      html += `<span style="color:#2980b9; font-weight:bold;">⬇ 下方大更期表已將接替行數整行標記為綠色【★可揀入位】！</span>`;
       summaryText.innerHTML = html;
       renderBigRoster();
     };
 
-    // ----------------- 中間大更期表 -----------------
+    // ----------------- 中間大表 -----------------
     window.changeMiddleGroup = (val) => {
       middleRosterGroup = val;
       renderBigRoster();
@@ -748,11 +833,8 @@
       const roster = ROSTERS[middleRosterGroup];
       const table = document.getElementById("bigRosterTable");
 
-      // 取得基準日的星期幾
-      const parts = myStatus.date.split('-');
-      const d = new Date(parts[0], parts[1] - 1, parts[2]);
-      const day = d.getDay();
-      const todayIdx = day === 0 ? 6 : day - 1;
+      const todayDay = todayObj.getDay();
+      const todayIdx = todayDay === 0 ? 6 : todayDay - 1;
       
       let html = `
         <thead>
@@ -778,7 +860,7 @@
         
         let labelHtml = `<b>第 ${rowNum} 行</b>`;
         if (isMyCurrent) {
-          labelHtml += `<br><span class="my-tag">★我目前處於</span>`;
+          labelHtml += `<br><span class="my-tag">★我今日處於</span>`;
         }
         if (isTarget) {
           const names = matched.map(m => `接替 ${m.name} (${m.targetWeekLabel})`).join('<br>');
@@ -936,20 +1018,21 @@
       renderSoloRoster();
     };
 
-    // ----------------- 雲端歷史紀錄 -----------------
+    // ----------------- 雲端歷史紀錄 (含刪除) -----------------
     window.saveCurrentCalc = async () => {
       if (!currentUser) return;
-      const title = document.getElementById("recordTitleInput").value.trim() || "Week大假推算";
+      const title = document.getElementById("recordTitleInput").value.trim() || "大假推算紀錄";
       const summary = document.getElementById("summaryText").innerText;
 
       const newRec = {
+        id: Date.now().toString(),
         title,
         desc: summary,
         date: new Date().toLocaleDateString()
       };
 
       savedRecords.unshift(newRec);
-      if (savedRecords.length > 5) savedRecords.pop();
+      if (savedRecords.length > 10) savedRecords.pop();
 
       try {
         await setDoc(doc(db, "user_records", currentUser.uid), { records: savedRecords });
@@ -958,6 +1041,17 @@
         alert("已成功保存記錄！");
       } catch (e) {
         alert("儲存失敗: " + e.message);
+      }
+    };
+
+    window.deleteRecord = async (recId) => {
+      if (!confirm("確定要刪除這條備忘記錄嗎？")) return;
+      savedRecords = savedRecords.filter(r => r.id !== recId);
+      try {
+        await setDoc(doc(db, "user_records", currentUser.uid), { records: savedRecords });
+        renderRecords();
+      } catch (e) {
+        alert("刪除失敗: " + e.message);
       }
     };
 
@@ -984,8 +1078,11 @@
       savedRecords.forEach((rec) => {
         box.innerHTML += `
           <div class="record-item">
-            <b>${rec.title}</b> (${rec.date})<br>
-            <span style="color:#555;">${rec.desc}</span>
+            <div>
+              <b>${rec.title}</b> (${rec.date})<br>
+              <span style="color:#555; font-size:0.8rem;">${rec.desc}</span>
+            </div>
+            <button class="btn-del-record" onclick="deleteRecord('${rec.id}')">🗑️ 刪除</button>
           </div>
         `;
       });
@@ -1015,34 +1112,59 @@
       <button class="btn-logout" onclick="userLogout()">登出帳號</button>
     </div>
 
-    <!-- 我的現時更期定位 -->
+    <!-- 我的現時更期定位 (步驟排列) -->
     <div class="my-status-card">
-      <div style="font-weight:bold; color:#2980b9; font-size:0.95rem;">
-        📍 我目前的更期定位：
+      <div style="font-weight:bold; color:#2980b9; font-size:1rem; margin-bottom:5px;">
+        📍 步驟推算：設定你自己何時放大假與回來入行
       </div>
-      <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:0.85rem;">
-        <label>我的組別：</label>
-        <select id="myGroupSelect" onchange="updateMyGroup(this.value)">
-          <option value="group2">2組 (12行)</option>
-          <option value="group3">3組 (14行)</option>
-          <option value="group4">4組 (5行)</option>
-        </select>
-        <label>本週處於：</label>
-        <select id="myRowSelect" onchange="updateMyRow(this.value)"></select>
-        <label>基準日期：</label>
-        <input type="date" id="myDateInput" onchange="updateMyDate(this.value)">
+      
+      <div class="step-grid">
+        <!-- 步驟 1: 組別 -->
+        <div class="step-box">
+          <span class="step-title">① 我的組別</span>
+          <select id="myGroupSelect" onchange="updateMyGroup(this.value)" style="width:100%;">
+            <option value="group2">2組 (12行)</option>
+            <option value="group3">3組 (14行)</option>
+            <option value="group4">4組 (5行)</option>
+          </select>
+        </div>
+
+        <!-- 步驟 2: 今日在哪一行 -->
+        <div class="step-box">
+          <span class="step-title">② 今日我正處於</span>
+          <select id="myRowSelect" onchange="updateMyRow(this.value)" style="width:100%;"></select>
+        </div>
+
+        <!-- 步驟 3: 幾月幾日放假 (小日曆) -->
+        <div class="step-box">
+          <span class="step-title">③ 幾號開始放假 (小日曆)</span>
+          <input type="date" id="myLeaveDateInput" onchange="onMyLeaveDateChange(this.value)" style="width:90%;">
+        </div>
+
+        <!-- 步驟 4: 或直接揀 Week 幾 -->
+        <div class="step-box">
+          <span class="step-title">④ 或選放哪一週大假</span>
+          <div style="display:flex; gap:4px;">
+            <select id="myLeaveYearSelect" onchange="onMyLeaveWeekChange()">
+              <option value="2026">2026年</option>
+              <option value="2027">2027年</option>
+              <option value="2028">2028年</option>
+            </select>
+            <select id="myLeaveWeekSelect" onchange="onMyLeaveWeekChange()"></select>
+          </div>
+        </div>
       </div>
-      <div id="myWeekLabel" style="font-size:0.85rem; color:#2c3e50; width:100%; margin-top:4px;"></div>
+      <div id="myWeekTip" style="font-size:0.8rem; color:#555; margin-top:6px; font-weight:bold;"></div>
     </div>
 
     <!-- 同事大假推算 -->
-    <h1 style="margin: 0 0 10px 0; font-size:1.25rem; color:var(--primary-color);">👥 多同事大假重疊推算 (直接選Week)</h1>
+    <h1 style="margin: 0 0 10px 0; font-size:1.25rem; color:var(--primary-color);">👥 多同事大假重疊推算 (日曆 / Week 雙選)</h1>
     <div class="colleagues-grid" id="colleaguesList"></div>
     
     <!-- 分析結果摘要與儲存 -->
     <div class="result-alert" id="summaryText">載入分析中...</div>
     <div style="display:flex; gap:8px; align-items:center; margin-bottom:15px; flex-wrap:wrap;">
-      <input type="text" id="recordTitleInput" placeholder="輸入備忘標題 (例如: Week 51 頂位選擇)" style="flex:1; min-width:180px; padding:6px;">
+      <input type="text" id="recordTitleInput" placeholder="輸入備忘標題 (例如: 2026 Week 51 頂位選擇)" style="flex:1; min-width:180px; padding:6px;">
       <button class="btn-save-record" onclick="saveCurrentCalc()">💾 儲存此推算結果</button>
     </div>
 
@@ -1067,7 +1189,7 @@
       </div>
     </div>
 
-    <!-- 雲端個人備忘記錄 -->
+    <!-- 雲端個人備忘記錄 (含刪除按鈕) -->
     <div class="records-box">
       <div style="font-weight:bold; color:var(--primary-color); margin-bottom:8px;">📁 我的雲端推算歷史備忘：</div>
       <div id="recordsList">載入中...</div>
