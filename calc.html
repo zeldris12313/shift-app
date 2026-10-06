@@ -1979,7 +1979,7 @@
 </head>
 <body>
 
-  <!-- 1. 登入面板 -->
+    <!-- 1. 登入面板 -->
   <div class="auth-container" id="authPanel">
     <h2 id="authTitle">🔒 登入推算系統</h2>
     <input type="email" id="authEmail" placeholder="電子郵件 (Email)">
@@ -1989,7 +1989,10 @@
       <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#ffffff" d="M12.24 10.285V13.4h6.887C18.2 16.14 15.645 18 12.24 18c-3.315 0-6-2.685-6-6s2.685-6 6-6c1.47 0 2.805.54 3.84 1.425l2.385-2.385C16.98 3.555 14.73 2.7 12.24 2.7 7.155 2.7 3 6.855 3 11.94s4.155 9.24 9.24 9.24c5.325 0 8.865-3.75 8.865-9.03 0-.615-.06-1.2-.165-1.755H12.24z"/></svg>
       Google 一鍵登入
     </button>
-    <div id="authMsg" style="color:#e74c3c; font-size:0.85rem; margin-top:10px;"></div>
+    <div style="font-size:0.75rem; color:#7f8c8d; margin-top:8px; line-height:1.4;">
+      ⚠️ 若首次使用 Google 登入未有反應或失敗，請<b>再按一下</b>「Google 一鍵登入」即可。
+    </div>
+    <div id="authMsg" style="color:#e74c3c; font-size:0.85rem; margin-top:8px;"></div>
     <div class="auth-toggle" id="toggleBtn" onclick="toggleAuthMode()">未有帳號？點此免費註冊</div>
   </div>
 
