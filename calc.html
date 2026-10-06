@@ -2,7 +2,7 @@
 <html lang="zh-HK">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>更期大假銜接、推算與一體化PH個人月曆系統</title>
   <style>
     :root {
@@ -18,27 +18,31 @@
       --leave-bg: #fadbd8;
       --leave-text: #c0392b;
     }
+    * {
+      box-sizing: border-box;
+    }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       margin: 0;
-      padding: 12px;
+      padding: 8px;
       background-color: #fdfbf7;
       color: #333;
+      overflow-x: hidden;
     }
     .auth-container {
       max-width: 380px;
-      margin: 40px auto;
+      margin: 30px auto;
       background: white;
       border-radius: 12px;
-      padding: 25px;
+      padding: 20px;
       box-shadow: 0 4px 15px rgba(0,0,0,0.08);
       border-top: 5px solid var(--accent-color);
       text-align: center;
     }
     .auth-container input {
-      width: 90%;
+      width: 100%;
       padding: 10px;
-      margin: 8px 0;
+      margin: 6px 0;
       border: 1px solid #ccc;
       border-radius: 6px;
       font-size: 0.95rem;
@@ -52,8 +56,8 @@
       cursor: pointer;
       font-weight: bold;
       font-size: 0.95rem;
-      width: 96%;
-      margin-top: 10px;
+      width: 100%;
+      margin-top: 8px;
     }
     .btn-google {
       background: #4285f4;
@@ -64,8 +68,8 @@
       cursor: pointer;
       font-weight: bold;
       font-size: 0.95rem;
-      width: 96%;
-      margin-top: 12px;
+      width: 100%;
+      margin-top: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -80,13 +84,14 @@
     }
 
     .container {
-      max-width: 1050px;
+      max-width: 1000px;
       margin: 0 auto;
       background: white;
       border-radius: 12px;
-      padding: 15px;
+      padding: 12px;
       box-shadow: 0 4px 15px rgba(0,0,0,0.08);
       border-top: 6px solid var(--accent-color);
+      overflow: hidden;
     }
     .top-bar {
       display: flex;
@@ -103,7 +108,7 @@
       color: white;
       border: none;
       font-size: 0.8rem;
-      padding: 5px 12px;
+      padding: 5px 10px;
       border-radius: 4px;
       cursor: pointer;
     }
@@ -113,106 +118,98 @@
       background: #f0f7fc;
       border: 1.5px solid #2980b9;
       border-radius: 10px;
-      padding: 14px 16px;
-      margin-bottom: 15px;
+      padding: 12px;
+      margin-bottom: 12px;
     }
     .step-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-      gap: 10px;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 8px;
       margin-top: 8px;
     }
     .step-box {
       background: white;
       border: 1px solid #cfe2f3;
       border-radius: 6px;
-      padding: 8px 10px;
+      padding: 8px;
       font-size: 0.85rem;
     }
     .step-title {
       font-weight: bold;
       color: #2980b9;
-      margin-bottom: 5px;
+      margin-bottom: 4px;
       display: block;
     }
 
     /* 同事推算卡片 */
     .colleagues-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
-      gap: 12px;
-      margin-bottom: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+      gap: 10px;
+      margin-bottom: 10px;
     }
     .colleague-card {
       background: #f8f9fa;
       border: 1px solid #e0e0e0;
       border-radius: 8px;
-      padding: 12px;
+      padding: 10px;
       border-top: 4px solid #3498db;
     }
     .colleague-card:nth-child(2) { border-top-color: #9b59b6; }
     .colleague-card:nth-child(3) { border-top-color: #e67e22; }
     .colleague-title {
       font-weight: bold;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
     .field-row {
-      margin-bottom: 6px;
+      margin-bottom: 5px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      font-size: 0.85rem;
+      font-size: 0.82rem;
     }
     select, input[type="number"], input[type="text"], input[type="date"] {
-      padding: 4px 8px;
+      padding: 4px 6px;
       border-radius: 6px;
       border: 1px solid #ccc;
-      font-size: 0.85rem;
+      font-size: 0.82rem;
+      max-width: 100%;
     }
 
     .result-alert {
       background: #fff8e1;
       border-left: 5px solid #ffa000;
       border-radius: 6px;
-      padding: 12px 14px;
-      margin-bottom: 15px;
-      font-size: 0.9rem;
-      line-height: 1.6;
+      padding: 10px 12px;
+      margin-bottom: 12px;
+      font-size: 0.85rem;
+      line-height: 1.5;
     }
     .option-card-row {
       background: white;
       border: 1px solid #e0e0e0;
       border-radius: 6px;
-      padding: 10px 14px;
-      margin-top: 8px;
+      padding: 8px 10px;
+      margin-top: 6px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;
-      gap: 8px;
+      gap: 6px;
       border-left: 5px solid #27ae60;
     }
     .btn-apply-yp {
       background: #27ae60;
       color: white;
       border: none;
-      padding: 6px 12px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 0.85rem;
-      font-weight: bold;
-    }
-    .btn-copy-code {
-      background: #34495e;
-      color: white;
-      border: none;
-      padding: 6px 10px;
+      padding: 5px 10px;
       border-radius: 4px;
       cursor: pointer;
       font-size: 0.8rem;
+      font-weight: bold;
     }
 
     /* 完整大更期表 */
@@ -220,61 +217,65 @@
       background: #ffffff;
       border: 2px solid #2980b9;
       border-radius: 10px;
-      padding: 15px;
-      margin-bottom: 20px;
+      padding: 12px;
+      margin-bottom: 15px;
     }
     .big-roster-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;
-      gap: 10px;
-      margin-bottom: 10px;
+      gap: 8px;
+      margin-bottom: 8px;
       border-bottom: 2px solid #ecf0f1;
-      padding-bottom: 8px;
+      padding-bottom: 6px;
     }
     .big-roster-title {
-      font-size: 1.15rem;
+      font-size: 1.05rem;
       font-weight: bold;
       color: #2980b9;
     }
-    .table-container { overflow-x: auto; }
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
     table {
       width: 100%;
       border-collapse: collapse;
       text-align: center;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
     }
     th, td {
-      padding: 7px 4px;
+      padding: 6px 2px;
       border: 1px solid #e0e0e0;
     }
     th { background: #f1f2f6; color: #57606f; }
     .row-my-current {
       background-color: #fff9db !important;
-      border-left: 5px solid #f39c12 !important;
+      border-left: 4px solid #f39c12 !important;
     }
     .row-highlight-choice {
       background-color: var(--target-row-bg) !important;
-      border-left: 5px solid var(--target-row-border) !important;
+      border-left: 4px solid var(--target-row-border) !important;
       font-weight: bold;
     }
     .choice-tag {
       background: #27ae60;
       color: white;
-      padding: 2px 6px;
+      padding: 2px 4px;
       border-radius: 4px;
-      font-size: 0.72rem;
+      font-size: 0.68rem;
       display: inline-block;
-      margin-top: 3px;
+      margin-top: 2px;
       line-height: 1.2;
     }
     .my-tag {
       background: #f39c12;
       color: white;
-      padding: 2px 5px;
+      padding: 2px 4px;
       border-radius: 4px;
-      font-size: 0.72rem;
+      font-size: 0.68rem;
       display: inline-block;
       margin-top: 2px;
     }
@@ -291,190 +292,217 @@
       border: 0;
       height: 2px;
       background: linear-gradient(to right, #ccc, #8e44ad, #ccc);
-      margin: 30px 0 20px;
+      margin: 20px 0 15px;
     }
 
     /* 雲端歷史紀錄 */
     .records-box {
       background: #f8f9fa;
       border-radius: 8px;
-      padding: 12px;
-      margin-top: 15px;
+      padding: 10px;
+      margin-top: 12px;
       border: 1px solid #eee;
     }
     .record-item {
       background: white;
-      padding: 10px 12px;
-      margin-bottom: 8px;
+      padding: 8px 10px;
+      margin-bottom: 6px;
       border-radius: 6px;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       border-left: 4px solid var(--accent-color);
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
     }
     .btn-del-record {
       background: #ff7675;
       color: white;
       border: none;
-      padding: 5px 9px;
+      padding: 4px 8px;
       border-radius: 4px;
       cursor: pointer;
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       flex-shrink: 0;
       font-weight: bold;
     }
 
-    /* ---------------- 一體化個人月曆 (更期推算 + 大假 + PH合拼) ---------------- */
+    /* ---------------- 一體化個人月曆 (手機排版防爆格) ---------------- */
     .unified-calendar-box {
       background: #ffffff;
-      border: 2.5px solid #8e44ad;
-      border-radius: 12px;
-      padding: 16px;
-      margin-top: 25px;
+      border: 2px solid #8e44ad;
+      border-radius: 10px;
+      padding: 10px;
+      margin-top: 15px;
       box-shadow: 0 4px 15px rgba(142, 68, 173, 0.08);
+      overflow: hidden;
     }
     .unified-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;
-      gap: 10px;
+      gap: 6px;
       border-bottom: 2px solid #f4ecf7;
-      padding-bottom: 10px;
-      margin-bottom: 12px;
+      padding-bottom: 8px;
+      margin-bottom: 10px;
     }
+
+    /* 💡 假期額度指引：清晰連點排版 */
+    .ph-rules-card {
+      background: #fdf7fe;
+      border-left: 4px solid #8e44ad;
+      border-radius: 6px;
+      padding: 10px 12px;
+      margin-bottom: 12px;
+      font-size: 0.82rem;
+      line-height: 1.5;
+      color: #4a235a;
+    }
+    .ph-rules-list {
+      margin: 6px 0 0 0;
+      padding-left: 18px;
+    }
+    .ph-rules-list li {
+      margin-bottom: 4px;
+    }
+
     .unified-controls {
       background: #fbf7fd;
       border: 1px solid #e8daf0;
       border-radius: 8px;
-      padding: 10px 12px;
-      margin-bottom: 12px;
+      padding: 8px 10px;
+      margin-bottom: 10px;
       display: flex;
       align-items: center;
       flex-wrap: wrap;
-      gap: 10px;
-      font-size: 0.85rem;
+      gap: 6px;
+      font-size: 0.8rem;
     }
 
-    /* 月曆分頁導航條 */
     .cal-nav-bar {
       display: flex;
       align-items: center;
       justify-content: space-between;
       background: #f4ecf7;
-      padding: 8px 12px;
+      padding: 6px 8px;
       border-radius: 8px;
-      margin: 10px 0;
+      margin: 8px 0;
       flex-wrap: wrap;
-      gap: 8px;
+      gap: 6px;
     }
     .cal-nav-btn {
       background: #8e44ad;
       color: white;
       border: none;
-      padding: 6px 14px;
+      padding: 5px 10px;
       border-radius: 6px;
       cursor: pointer;
       font-weight: bold;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
     }
     .btn-quick-nav {
       background: #6c3483;
       color: white;
       border: none;
-      padding: 5px 10px;
+      padding: 5px 8px;
       border-radius: 5px;
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       cursor: pointer;
       font-weight: bold;
     }
 
+    /* 手機版防突出版面核心設定 */
     .single-month-container {
-      max-width: 680px;
-      margin: 0 auto;
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
     }
     .month-card {
       background: white;
-      border: 2px solid #8e44ad;
+      border: 1.5px solid #8e44ad;
       border-radius: 8px;
       overflow: hidden;
-      box-shadow: 0 3px 10px rgba(0,0,0,0.06);
+      min-width: 320px;
+      width: 100%;
     }
     .month-header {
       background: #8e44ad;
       color: white;
       text-align: center;
-      padding: 8px;
+      padding: 6px;
       font-weight: bold;
-      font-size: 1.05rem;
+      font-size: 0.95rem;
     }
     .month-cal-table {
       width: 100%;
+      table-layout: fixed; /* 🔒 鎖死 8 欄均分，徹底防止星期日突出去 */
       border-collapse: collapse;
-      font-size: 0.85rem;
+      font-size: 0.72rem;
     }
     .month-cal-table th {
       background: #f8f9fa;
-      padding: 6px 2px;
-      font-size: 0.8rem;
+      padding: 4px 1px;
+      font-size: 0.7rem;
       color: #555;
     }
     .month-cal-table td {
-      padding: 4px 2px;
-      height: 60px;
+      padding: 2px 1px;
+      height: 52px;
       vertical-align: top;
       border: 1px solid #f1f2f6;
+      word-break: break-all;
     }
     .cal-date-num {
-      font-size: 0.75rem;
+      font-size: 0.68rem;
       font-weight: bold;
       color: #7f8c8d;
       margin-bottom: 1px;
     }
     .cal-shift-text {
-      font-size: 0.82rem;
+      font-size: 0.75rem;
       font-weight: bold;
-      border-radius: 4px;
-      padding: 2px 2px;
+      border-radius: 3px;
+      padding: 1px 1px;
       line-height: 1.1;
+      display: inline-block;
+      width: 100%;
     }
     .cal-week-tag-col {
       background: #fbf7fd;
-      font-size: 0.68rem;
+      font-size: 0.62rem;
       color: #8e44ad;
-      padding: 2px 2px;
+      padding: 1px;
       border-right: 1.5px solid #d7bde2;
-      width: 62px;
+      width: 44px; /* 🔒 固定左側欄寬 */
       vertical-align: middle;
-      line-height: 1.25;
+      line-height: 1.15;
       text-align: center;
     }
     .btn-set-leave-week {
       background: #e74c3c;
       color: white;
       border: none;
-      padding: 2px 4px;
+      padding: 2px 2px;
       border-radius: 3px;
-      font-size: 0.65rem;
+      font-size: 0.58rem;
       cursor: pointer;
-      margin-top: 3px;
+      margin-top: 2px;
       display: block;
-      width: 90%;
+      width: 95%;
       margin-left: auto;
       margin-right: auto;
+      line-height: 1.1;
     }
 
-    /* PH 標章 */
     .ph-tag-holiday {
       display: block;
       background-color: #ff7675;
       color: white;
-      font-size: 0.62rem;
-      padding: 1px 2px;
-      border-radius: 3px;
-      margin-bottom: 2px;
+      font-size: 0.58rem;
+      padding: 1px;
+      border-radius: 2px;
+      margin-bottom: 1px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -484,36 +512,60 @@
       display: inline-block;
       background: #8e44ad;
       color: white;
-      font-size: 0.68rem;
+      font-size: 0.62rem;
       font-weight: bold;
-      padding: 1px 3px;
-      border-radius: 4px;
-      margin-top: 2px;
+      padding: 1px 2px;
+      border-radius: 3px;
+      margin-top: 1px;
     }
 
     /* PH 年份選擇 Chips 按鈕列 */
     .ph-year-chips-bar {
       display: flex;
-      gap: 6px;
+      gap: 5px;
       overflow-x: auto;
-      padding: 8px 0;
-      margin-top: 10px;
+      padding: 6px 0;
+      margin-top: 8px;
+      -webkit-overflow-scrolling: touch;
     }
     .btn-year-chip {
       background: #ebdef0;
       color: #4a235a;
       border: 1px solid #d2b4de;
-      padding: 5px 12px;
-      border-radius: 16px;
+      padding: 4px 10px;
+      border-radius: 14px;
       cursor: pointer;
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       font-weight: bold;
       white-space: nowrap;
+      flex-shrink: 0;
     }
     .btn-year-chip.active {
       background: #8e44ad;
       color: white;
       border-color: #8e44ad;
+    }
+
+    /* 儀表板：只保留 2 格，置中工整 */
+    .ph-summary-dashboard {
+      background: #ebdef0;
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-top: 10px;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      gap: 10px;
+      text-align: center;
+    }
+    .ph-stat-item {
+      flex: 1;
+    }
+    .ph-stat-val {
+      font-size: 1.25rem;
+      font-weight: bold;
+      color: #6c3483;
+      margin-top: 2px;
     }
 
     /* Modal 視窗 */
@@ -529,57 +581,57 @@
     .modal-card {
       background: white;
       border-radius: 12px;
-      width: 90%;
-      max-width: 340px;
-      padding: 20px;
+      width: 88%;
+      max-width: 320px;
+      padding: 18px;
       box-shadow: 0 5px 20px rgba(0,0,0,0.2);
       text-align: center;
     }
     .hour-wheel-select {
-      width: 80%;
-      padding: 10px;
-      font-size: 1.1rem;
+      width: 85%;
+      padding: 8px;
+      font-size: 1.05rem;
       font-weight: bold;
       border: 2px solid #8e44ad;
       border-radius: 8px;
-      margin: 15px 0;
+      margin: 12px 0;
       text-align: center;
     }
     .modal-btns {
       display: flex;
-      gap: 8px;
+      gap: 6px;
       justify-content: center;
-      margin-top: 10px;
+      margin-top: 8px;
     }
     .btn-save-ph {
       background: #8e44ad;
       color: white;
       border: none;
-      padding: 8px 16px;
+      padding: 8px 12px;
       border-radius: 6px;
       cursor: pointer;
       font-weight: bold;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       flex: 1;
     }
     .btn-del-ph {
       background: #e74c3c;
       color: white;
       border: none;
-      padding: 8px 12px;
+      padding: 8px 10px;
       border-radius: 6px;
       cursor: pointer;
       font-weight: bold;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
     }
     .btn-cancel-modal {
       background: #95a5a6;
       color: white;
       border: none;
-      padding: 8px 12px;
+      padding: 8px 10px;
       border-radius: 6px;
       cursor: pointer;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
     }
   </style>
 
@@ -620,7 +672,7 @@
 
     let currentUser = null;
     let savedRecords = [];
-    let userPhUsage = {}; // { "2026-11-02": 8 }
+    let userPhUsage = {};
 
     // ----------------- 香港官方公眾假期清單 (PH) -----------------
     const HK_PUBLIC_HOLIDAYS = {
@@ -687,7 +739,6 @@
       }
     };
 
-    const dayNames = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
     const ANCHOR_DATE = new Date(2026, 0, 5); // 2026-01-05 (Week 2 Monday)
 
     function getAbsoluteWeekIndex(dateObj) {
@@ -735,12 +786,9 @@
     const todayObj = new Date();
     const todayAbsWeek = getAbsoluteWeekIndex(todayObj);
 
-    // ----------------- 個人一體化月曆設定 (支援換組插旗與大假截停) -----------------
-    // timelineAnchors 記錄不同週次插旗的組別和行數：[{ absWeek: 50, group: 'group3', startRow: 1 }]
     let timelineAnchors = [
       { absWeek: todayAbsWeek, group: 'group3', startRow: 14 }
     ];
-    // 已放整週大假的絕對週數清單 (Set)
     let vacationWeeks = new Set();
 
     let myStatus = {
@@ -760,7 +808,6 @@
     let middleRosterGroup = "group3";
     let currentCandidates = [];
 
-    // 當前瀏覽的年月
     let viewCalYear = todayObj.getFullYear();
     let viewCalMonth = todayObj.getMonth() + 1;
     let selectedSummaryYear = todayObj.getFullYear();
@@ -931,7 +978,7 @@
         await updatePassword(auth.currentUser, newPass);
         alert("✅ 密碼修改成功！下次登入請使用新密碼。");
       } catch (e) {
-        alert("修改密碼失敗: " + e.message);
+        alert("修改密碼失敗 (若太久沒登入需重新登入後再試): " + e.message);
       }
     };
 
@@ -1068,6 +1115,7 @@
                   <option value="2026" ${c.targetYear===2026?'selected':''}>2026年</option>
                   <option value="2027" ${c.targetYear===2027?'selected':''}>2027年</option>
                   <option value="2028" ${c.targetYear===2028?'selected':''}>2028年</option>
+                  <option value="2029" ${c.targetYear===2029?'selected':''}>2029年</option>
                 </select>
                 <select id="colleagueWeek_${idx}" onchange="onColleagueWeekChange(${idx})">
                   ${weekOptions}
@@ -1148,7 +1196,7 @@
       });
 
       let myInfoNotice = `
-        <div style="background:#eaf2f8; padding:8px 12px; border-radius:6px; margin-bottom:10px; border-left:4px solid #2980b9; font-size:0.88rem;">
+        <div style="background:#eaf2f8; padding:8px 12px; border-radius:6px; margin-bottom:10px; border-left:4px solid #2980b9; font-size:0.85rem;">
           👤 <b>你的大假安排</b>：你在 <b>${myStatus.leaveYear} 年 Week ${myStatus.leaveWeek}</b> 放大假（放假該週原處於第 ${myLeaveRow} 行，更期已交出）。<br>
           👉 <b>放完大假回來上班日</b>：請在下方挑選接替哪位同事放假騰出的更期行數！
         </div>
@@ -1203,7 +1251,7 @@
         html += `
           <div class="option-card-row">
             <div>
-              • <b>【可揀選擇 ${idx + 1}】接替 ${r.name}</b>：同事在 <b>${r.targetYear} 年 Week ${r.targetWeek}</b>（${r.entryMonStr}）放大假 ➔ <b>你放完大假接替入位：<span style="color:#27ae60; font-size:1.1rem; font-weight:bold; text-decoration:underline;">${r.groupName} 第 ${r.entryRow} 行</span></b>（由 ${r.entryMonStr} 星期一返該行！）
+              • <b>【可揀選擇 ${idx + 1}】接替 ${r.name}</b>：同事在 <b>${r.targetYear} 年 Week ${r.targetWeek}</b>（${r.entryMonStr}）放大假 ➔ <b>你放完大假接替入位：<span style="color:#27ae60; font-size:1.05rem; font-weight:bold; text-decoration:underline;">${r.groupName} 第 ${r.entryRow} 行</span></b>（由 ${r.entryMonStr} 星期一返該行！）
             </div>
             <div style="display:flex; gap:6px;">
               <button class="btn-apply-yp" onclick="applyAnchorToUnified('${r.group}', ${r.entryRow}, ${r.targetAbs})">👉 套用至個人月曆</button>
@@ -1212,7 +1260,7 @@
         `;
       });
 
-      html += `<div style="color:#2980b9; font-weight:bold; margin-top:8px;">⬇ 下方大更期表已將可入位行數標記為綠色【★可揀入位】！</div>`;
+      html += `<div style="color:#2980b9; font-weight:bold; margin-top:6px;">⬇ 下方大更期表已將可入位行數標記為綠色【★可揀入位】！</div>`;
       summaryText.innerHTML = html;
       renderBigRoster();
     };
@@ -1233,7 +1281,7 @@
       let html = `
         <thead>
           <tr>
-            <th style="width: 140px;">更期行數</th>
+            <th style="width: 110px;">更期行數</th>
             <th>MON</th><th>TUE</th><th>WED</th><th>THU</th><th>FRI</th><th>SAT</th><th>SUN</th>
           </tr>
         </thead>
@@ -1279,18 +1327,14 @@
     }
 
     // ----------------- 一體化個人月曆推算引擎 (換組插旗 + 大假截停) -----------------
-    // 依據絕對週數，推算出該週對應的組別和行數
     function getWeekShiftState(absWeek) {
       if (vacationWeeks.has(absWeek)) {
         return { isVacation: true, group: null, rowNum: null, shifts: ["大假","大假","大假","大假","大假","大假","大假"] };
       }
 
-      // 檢查此週之前是否有大假截停，而之後未有新錨點
-      // 找出小於等於 absWeek 的所有錨點，依時間由近至遠排序
       const validAnchors = timelineAnchors.filter(a => a.absWeek <= absWeek).sort((a,b) => b.absWeek - a.absWeek);
 
       if (validAnchors.length === 0) {
-        // 沒有之前的錨點，使用最古老的一個反向推
         const oldest = timelineAnchors.slice().sort((a,b) => a.absWeek - b.absWeek)[0];
         const roster = ROSTERS[oldest.group];
         const diff = absWeek - oldest.absWeek;
@@ -1301,7 +1345,6 @@
 
       const currentAnchor = validAnchors[0];
 
-      // 檢查在 currentAnchor.absWeek 到 absWeek 之間，是否存在大假截停
       let hasVacationBetween = false;
       vacationWeeks.forEach(vWeek => {
         if (vWeek >= currentAnchor.absWeek && vWeek < absWeek) {
@@ -1310,11 +1353,9 @@
       });
 
       if (hasVacationBetween) {
-        // 大假後未有新設定，停止盲目推算
         return { isPending: true, group: null, rowNum: null, shifts: ["待入位","待入位","待入位","待入位","待入位","待入位","待入位"] };
       }
 
-      // 正常順推
       const roster = ROSTERS[currentAnchor.group];
       const diff = absWeek - currentAnchor.absWeek;
       let r = ((currentAnchor.startRow - 1 + diff) % roster.totalRows) + 1;
@@ -1322,7 +1363,6 @@
       return { isVacation: false, group: currentAnchor.group, rowNum: r, shifts: roster.data[r - 1] };
     }
 
-    // 插旗設定新更期錨點
     window.setManualAnchorAtDate = async () => {
       const dateStr = document.getElementById("anchorDateInput").value;
       if (!dateStr) { alert("請先選擇要插旗換組的日期！"); return; }
@@ -1333,15 +1373,13 @@
       const group = document.getElementById("anchorGroupSelect").value;
       const row = parseInt(document.getElementById("anchorRowSelect").value);
 
-      // 移除相同或之後衝突的舊錨點
       timelineAnchors = timelineAnchors.filter(a => a.absWeek !== absWeek);
       timelineAnchors.push({ absWeek, group, startRow: row });
       timelineAnchors.sort((a,b) => a.absWeek - b.absWeek);
 
-      // 同步儲存至雲端
       await saveUserTimeline();
       renderUnifiedCalendar();
-      alert(`✅ 成功設定更期起點！\n由 ${dateStr} (第${absWeek}週) 起採用 ${ROSTERS[group].name} 第 ${row} 行，後續自動順推，之前更期不受影響。`);
+      alert(`✅ 成功設定更期起點！\n由 ${dateStr} 起採用 ${ROSTERS[group].name} 第 ${row} 行，後續自動順推，之前更期不受影響。`);
     };
 
     window.applyAnchorToUnified = async (group, row, absWeek) => {
@@ -1355,10 +1393,10 @@
 
       await saveUserTimeline();
       renderUnifiedCalendar();
-      document.getElementById("unifiedCalAnchor").scrollIntoView({ behavior: 'smooth' });
+      const anchor = document.getElementById("unifiedCalAnchor");
+      if (anchor) anchor.scrollIntoView({ behavior: 'smooth' });
     };
 
-    // 一鍵設定整週大假 (切換大假與取消)
     window.toggleVacationWeek = async (absWeek) => {
       if (vacationWeeks.has(absWeek)) {
         vacationWeeks.delete(absWeek);
@@ -1412,14 +1450,16 @@
 
       const container = document.getElementById("unifiedCalendarGrid");
       let html = `
-        <table class="month-cal-table">
-          <thead>
-            <tr>
-              <th style="width:64px;">週數/操作</th>
-              <th>MON</th><th>TUE</th><th>WED</th><th>THU</th><th>FRI</th><th>SAT</th><th>SUN</th>
-            </tr>
-          </thead>
-          <tbody>
+        <div class="month-card">
+          <div class="month-header">${viewCalYear} 年 ${viewCalMonth} 月個人更期月曆</div>
+          <table class="month-cal-table">
+            <thead>
+              <tr>
+                <th style="width:44px;">週/操作</th>
+                <th>MON</th><th>TUE</th><th>WED</th><th>THU</th><th>FRI</th><th>SAT</th><th>SUN</th>
+              </tr>
+            </thead>
+            <tbody>
       `;
 
       for (let wAbs = firstAbs; wAbs <= lastAbs; wAbs++) {
@@ -1427,12 +1467,12 @@
         const state = getWeekShiftState(wAbs);
 
         let rowTag = "";
-        let leaveBtnText = "🏖️ 設大假";
+        let leaveBtnText = "🏖️大假";
         let leaveBtnClass = "btn-set-leave-week";
 
         if (state.isVacation) {
-          rowTag = `<b style="color:#c0392b;">大假週</b>`;
-          leaveBtnText = "↺ 取消大假";
+          rowTag = `<b style="color:#c0392b;">大假</b>`;
+          leaveBtnText = "↺取消";
         } else if (state.isPending) {
           rowTag = `<span style="color:#7f8c8d;">待入位</span>`;
         } else {
@@ -1466,11 +1506,11 @@
             else if (shift === '大假') shiftClass = 'shift-leave';
 
             let holidayTag = phHolidayName ? `<span class="ph-tag-holiday" title="${phHolidayName}">🔴 ${phHolidayName}</span>` : '';
-            let phBadge = phHours > 0 ? `<div class="ph-hour-badge">PH: ${phHours}h</div>` : '';
+            let phBadge = phHours > 0 ? `<div class="ph-hour-badge">PH:${phHours}h</div>` : '';
             let isTodayBorder = (cur.toDateString() === todayObj.toDateString()) ? 'border: 2px solid #e67e22 !important;' : '';
 
             html += `
-              <td class="ph-cell-interactive" style="${isTodayBorder}" onclick="openPhModal('${dateKey}')">
+              <td style="${isTodayBorder} cursor:pointer;" onclick="openPhModal('${dateKey}')">
                 <div class="cal-date-num">${cur.getDate()}</div>
                 ${holidayTag}
                 <div class="cal-shift-text ${shiftClass}">${shift}</div>
@@ -1478,13 +1518,13 @@
               </td>
             `;
           } else {
-            html += `<td style="background:#fafafa; color:#ccc;"><div class="cal-date-num" style="color:#eee;">${cur.getDate()}</div></td>`;
+            html += `<td style="background:#fafafa;"><div class="cal-date-num" style="color:#eee;">${cur.getDate()}</div></td>`;
           }
         }
         html += `</tr>`;
       }
 
-      html += `</tbody></table>`;
+      html += `</tbody></table></div>`;
       container.innerHTML = html;
 
       updatePhStatistics();
@@ -1495,7 +1535,6 @@
       const container = document.getElementById("phYearChipsContainer");
       if (!container) return;
 
-      // 提取有使用過 PH 的所有年份
       const yearsSet = new Set([todayObj.getFullYear()]);
       for (const key of Object.keys(userPhUsage)) {
         const y = parseInt(key.split('-')[0]);
@@ -1519,12 +1558,10 @@
 
     function updatePhStatistics() {
       let totalHoursInYear = 0;
-      let totalDaysCount = 0;
 
       for (const [key, hours] of Object.entries(userPhUsage)) {
         if (key.startsWith(`${selectedSummaryYear}-`)) {
           totalHoursInYear += hours;
-          if (hours > 0) totalDaysCount++;
         }
       }
 
@@ -1535,14 +1572,13 @@
       document.getElementById("summaryYearTitle").innerText = `${selectedSummaryYear} 年`;
       document.getElementById("phStatTotalHours").innerText = `${totalHoursInYear} 小時`;
       document.getElementById("phStatTotalDays").innerText = `${totalDaysConverted} 日 (${wholeDays}日 + ${remHours}h)`;
-      document.getElementById("phStatRecordedDays").innerText = `${totalDaysCount} 天`;
     }
 
     // ----------------- PH Modal -----------------
     window.openPhModal = (dateKey) => {
       activePhDateKey = dateKey;
       const currentHours = userPhUsage[dateKey] || 8;
-      document.getElementById("modalDateTitle").innerText = `📅 記錄 ${dateKey} 之 PH 使用：`;
+      document.getElementById("modalDateTitle").innerText = `📅 記錄 ${dateKey} 之 PH：`;
       document.getElementById("phHourSelect").value = currentHours;
       document.getElementById("phModal").style.display = "flex";
     };
@@ -1675,7 +1711,6 @@
       });
     }
 
-    // 更新插旗行數選單
     window.onAnchorGroupChange = (grp) => {
       const select = document.getElementById("anchorRowSelect");
       const totalR = ROSTERS[grp].totalRows;
@@ -1730,7 +1765,7 @@
 
     <!-- 我的現時更期定位 -->
     <div class="my-status-card">
-      <div style="font-weight:bold; color:#2980b9; font-size:1rem; margin-bottom:5px;">
+      <div style="font-weight:bold; color:#2980b9; font-size:0.95rem; margin-bottom:4px;">
         📍 步驟推算：設定你自己何時放大假
       </div>
       
@@ -1766,17 +1801,17 @@
           </div>
         </div>
       </div>
-      <div id="myWeekTip" style="font-size:0.8rem; color:#555; margin-top:6px; font-weight:bold;"></div>
+      <div id="myWeekTip" style="font-size:0.75rem; color:#555; margin-top:4px; font-weight:bold;"></div>
     </div>
 
     <!-- 同事大假推算 -->
-    <h1 style="margin: 0 0 10px 0; font-size:1.25rem; color:var(--primary-color);">👥 多同事大假重疊推算 (日曆 / Week 雙選)</h1>
+    <h1 style="margin: 0 0 8px 0; font-size:1.1rem; color:var(--primary-color);">👥 多同事大假重疊推算 (日曆 / Week 雙選)</h1>
     <div class="colleagues-grid" id="colleaguesList"></div>
     
     <!-- 分析結果摘要與儲存 -->
     <div class="result-alert" id="summaryText">載入分析中...</div>
-    <div style="display:flex; gap:8px; align-items:center; margin-bottom:15px; flex-wrap:wrap;">
-      <input type="text" id="recordTitleInput" placeholder="輸入備忘標題 (例如: 接替入位備忘)" style="flex:1; min-width:180px; padding:6px;">
+    <div style="display:flex; gap:6px; align-items:center; margin-bottom:12px; flex-wrap:wrap;">
+      <input type="text" id="recordTitleInput" placeholder="輸入備忘標題 (例如: 接替入位備忘)" style="flex:1; min-width:160px; padding:6px;">
       <button class="btn-save-record" onclick="saveCurrentCalc()">💾 儲存此推算結果</button>
     </div>
 
@@ -1785,10 +1820,10 @@
       <div class="big-roster-header">
         <div class="big-roster-title">
           📋 完整更期月曆大表
-          <span style="font-size:0.8rem; color:#27ae60; font-weight:normal;">（綠色整行標註 ★可揀入位）</span>
+          <span style="font-size:0.75rem; color:#27ae60; font-weight:normal;">（綠色整行標註 ★可揀入位）</span>
         </div>
         <div>
-          <label style="font-weight:bold; font-size:0.85rem;">切換組別對照：</label>
+          <label style="font-weight:bold; font-size:0.8rem;">組別：</label>
           <select id="middleGroupSelect" onchange="changeMiddleGroup(this.value)">
             <option value="group2">2組 (12行)</option>
             <option value="group3" selected>3組 (14行)</option>
@@ -1803,32 +1838,36 @@
 
     <!-- 雲端個人備忘記錄 -->
     <div class="records-box">
-      <div style="font-weight:bold; color:var(--primary-color); margin-bottom:8px;">📁 我的雲端推算歷史備忘：</div>
+      <div style="font-weight:bold; color:var(--primary-color); margin-bottom:6px; font-size:0.85rem;">📁 我的雲端推算歷史備忘：</div>
       <div id="recordsList">載入中...</div>
     </div>
 
     <!-- 分隔線 -->
     <hr class="section-divider">
 
-    <!-- ★★★ 合拼核心：個人一體化更期月曆 ＋ 大假 ＋ PH使用量計算器 ★★★ -->
+    <!-- ★★★ 合拼核心：個人一體化更期月曆（班次推算・大假管理・PH記錄） ★★★ -->
     <div class="unified-calendar-box" id="unifiedCalAnchor">
       <div class="unified-header">
-        <div style="font-size:1.15rem; font-weight:bold; color:#8e44ad;">
+        <div style="font-size:1.05rem; font-weight:bold; color:#8e44ad;">
           📅 個人一體化更期月曆（班次推算・大假管理・PH記錄）
         </div>
-        <div style="font-size:0.8rem; color:#666;">
+        <div style="font-size:0.75rem; color:#666;">
           點選日期可記 PH (1-10hr)；點左側可一鍵設整週大假
         </div>
       </div>
 
-      <!-- 假別規則提示卡片 -->
+      <!-- 💡 假期額度指引：清晰連點排版 -->
       <div class="ph-rules-card">
-        <b>💡 假期額度指引：</b><br>
-        • <b>4 個大假</b>：該年只有 <b>11.5 日</b> PH ｜ <b>5 個大假</b>：只有 <b>6 日</b> PH<br>
-        • <b>年資滿 10 年</b>：享有額外 <b>2 日 AL</b> ｜ <i>每 8 小時折算為 1 整日 PH。</i>
+        <b>💡 假期額度指引：</b>
+        <ul class="ph-rules-list">
+          <li><b>4 個大假</b>：該年只有 <b>11.5 日</b> PH。</li>
+          <li><b>5 個大假</b>：該年只有 <b>6 日</b> PH (11.5 - 5.5 = 6)。</li>
+          <li><b>年資滿 10 年</b>：享有額外 <b>2 日 AL</b> (年假)。</li>
+          <li><i>每累積 8 小時折算為 1 整日 PH。</i></li>
+        </ul>
       </div>
 
-      <!-- 換組/插旗控制列 (設定點之前不改，之後自動順推) -->
+      <!-- 換組/插旗控制列 -->
       <div class="unified-controls">
         <b>🚩 換組插旗設定：</b>
         <span>由</span>
@@ -1851,16 +1890,16 @@
 
       <!-- 月曆導航條 -->
       <div class="cal-nav-bar">
-        <div style="display:flex; gap:6px; align-items:center;">
+        <div style="display:flex; gap:4px; align-items:center;">
           <button class="cal-nav-btn" onclick="navUnifiedMonth(-1)">◀ 上月</button>
-          <button class="btn-quick-nav" onclick="jumpUnifiedToJanuary()">🚀 該年1月</button>
+          <button class="btn-quick-nav" onclick="jumpUnifiedToJanuary()">🚀 1月</button>
           <button class="btn-quick-nav" style="background:#e67e22;" onclick="jumpUnifiedToToday()">🎯 今日</button>
         </div>
 
-        <div class="cal-nav-title" style="color:#8e44ad; font-size:1.05rem; font-weight:bold;">
+        <div class="cal-nav-title" style="color:#8e44ad; font-size:0.95rem; font-weight:bold;">
           <span id="unifiedNavTitle">2026 年 10 月</span>
-          <select id="viewCalYearSelect" onchange="onViewCalYearChange(this.value)" style="padding:2px 6px;"></select>
-          <select id="viewCalMonthSelect" onchange="onViewCalMonthChange(this.value)" style="padding:2px 6px;">
+          <select id="viewCalYearSelect" onchange="onViewCalYearChange(this.value)" style="padding:2px 4px;"></select>
+          <select id="viewCalMonthSelect" onchange="onViewCalMonthChange(this.value)" style="padding:2px 4px;">
             <option value="1">1月</option><option value="2">2月</option><option value="3">3月</option>
             <option value="4">4月</option><option value="5">5月</option><option value="6">6月</option>
             <option value="7">7月</option><option value="8">8月</option><option value="9">9月</option>
@@ -1871,31 +1910,25 @@
         <button class="cal-nav-btn" onclick="navUnifiedMonth(1)">下月 ▶</button>
       </div>
 
-      <!-- 單月實體月曆格仔 -->
+      <!-- 單月實體月曆格仔 (防爆格外層) -->
       <div class="single-month-container" id="unifiedCalendarGrid"></div>
 
       <!-- PH 統計部分 (Chips 按鈕選年份) -->
-      <div style="margin-top:20px; border-top:2px dashed #d7bde2; padding-top:15px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-          <div style="font-weight:bold; color:#6c3483;">📊 歷年 PH 統計（點擊按鈕快速切換年份）：</div>
-        </div>
+      <div style="margin-top:15px; border-top:2px dashed #d7bde2; padding-top:12px;">
+        <div style="font-weight:bold; color:#6c3483; font-size:0.85rem;">📊 歷年 PH 統計（點擊年份切換）：</div>
 
-        <!-- 橫向年份 Chips 按鈕 -->
         <div class="ph-year-chips-bar" id="phYearChipsContainer"></div>
 
-        <!-- 儀表板 -->
+        <!-- 儀表板 (已移除請假天數，只保留時數與折合日數) -->
         <div class="ph-summary-dashboard">
           <div class="ph-stat-item">
-            <div style="font-size:0.85rem; color:#7d3c98;" id="summaryYearTitle">2026 年</div>
+            <div style="font-size:0.75rem; color:#7d3c98;" id="summaryYearTitle">2026 年</div>
+            <div style="font-size:0.75rem; color:#555;">已用總時數</div>
             <div class="ph-stat-val" id="phStatTotalHours">0 小時</div>
           </div>
           <div class="ph-stat-item">
-            <div style="font-size:0.85rem; color:#7d3c98;">折合總日數 (8h=1日)</div>
+            <div style="font-size:0.75rem; color:#7d3c98;">折合總日數 (8h=1日)</div>
             <div class="ph-stat-val" style="color:#c0392b;" id="phStatTotalDays">0.00 日</div>
-          </div>
-          <div class="ph-stat-item">
-            <div style="font-size:0.85rem; color:#7d3c98;">已記錄請假天數</div>
-            <div class="ph-stat-val" id="phStatRecordedDays">0 天</div>
           </div>
         </div>
       </div>
@@ -1907,8 +1940,8 @@
   <!-- PH 時數設定 Modal 視窗 -->
   <div class="modal-overlay" id="phModal">
     <div class="modal-card">
-      <h3 style="margin-top:0; color:#8e44ad;" id="modalDateTitle">設定 PH 時數</h3>
-      <p style="font-size:0.85rem; color:#666; margin-bottom:5px;">請選擇該日請了多少小時 PH：</p>
+      <h3 style="margin-top:0; color:#8e44ad; font-size:1rem;" id="modalDateTitle">設定 PH 時數</h3>
+      <p style="font-size:0.8rem; color:#666; margin-bottom:5px;">請選擇該日請了多少小時 PH：</p>
       
       <select class="hour-wheel-select" id="phHourSelect">
         <option value="1">1 小時</option>
@@ -1925,7 +1958,7 @@
 
       <div class="modal-btns">
         <button class="btn-save-ph" onclick="savePhHours()">儲存時數</button>
-        <button class="btn-del-ph" onclick="deletePhRecord()">🗑️ 刪除記錄</button>
+        <button class="btn-del-ph" onclick="deletePhRecord()">🗑️ 刪除</button>
         <button class="btn-cancel-modal" onclick="closePhModal()">取消</button>
       </div>
     </div>
