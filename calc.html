@@ -899,29 +899,133 @@
       }
     });
 
-    let isRegisterMode = false;
+        let authMode = "login"; // "login", "register", "forgot"
+    const DEFAULT_RESET_PASS = "123456";
+
+    const toVirtualEmail = (username) => {
+      const cleanUser = username.toLowerCase().replace(/[^a-z0-9_]/g, '');
+      return `${cleanUser}@shift.local`;
+    };
+
     window.toggleAuthMode = () => {
-      isRegisterMode = !isRegisterMode;
-      document.getElementById("authTitle").innerText = isRegisterMode ? "📝 註冊帳號" : "🔒 登入推算系統";
-      document.getElementById("submitAuthBtn").innerText = isRegisterMode ? "立即註冊" : "登入";
-      document.getElementById("toggleBtn").innerText = isRegisterMode ? "已有帳號？點此登入" : "未有帳號？點此免費註冊";
+      authMode = (authMode === "register") ? "login" : "register";
+      const staffDiv = document.getElementById("staffIdField");
+      const passInput = document.getElementById("authPassword");
+      
+      if (authMode === "register") {
+        staffDiv.style.display = "block";
+        passInput.style.display = "block";
+        document.getElementById("authTitle").innerText = "📝 註冊帳戶名";
+        document.getElementById("submitAuthBtn").innerText = "立即註冊";
+        document.getElementById("toggleBtn").innerText = "已有帳號？點此登入";
+        document.getElementById("forgotBtn").style.display = "none";
+      } else {
+        staffDiv.style.display = "none";
+        passInput.style.display = "block";
+        document.getElementById("authTitle").innerText = "🔒 登入推算系統";
+        document.getElementById("submitAuthBtn").innerText = "登入";
+        document.getElementById("toggleBtn").innerText = "未有帳號？點此註冊";
+        document.getElementById("forgotBtn").style.display = "inline";
+      }
       document.getElementById("authMsg").innerText = "";
     };
 
-    window.submitEmailAuth = async () => {
-      const email = document.getElementById("authEmail").value.trim();
+    window.toggleForgotMode = () => {
+      authMode = (authMode === "forgot") ? "login" : "forgot";
+      const staffDiv = document.getElementById("staffIdField");
+      const passInput = document.getElementById("authPassword");
+
+      if (authMode === "forgot") {
+        staffDiv.style.display = "block";
+        passInput.style.display = "none";
+        document.getElementById("authTitle").innerText = "🔑 忘記密碼 / 重設";
+        document.getElementById("submitAuthBtn").innerText = "驗證員工編號並重設";
+        document.getElementById("forgotBtn").innerText = "返回登入";
+        document.getElementById("toggleBtn").style.display = "none";
+      } else {
+        staffDiv.style.display = "none";
+        passInput.style.display = "block";
+        document.getElementById("authTitle").innerText = "🔒 登入推算系統";
+        document.getElementById("submitAuthBtn").innerText = "登入";
+        document.getElementById("forgotBtn").innerText = "忘記密碼？";
+        document.getElementById("toggleBtn").style.display = "inline";
+      }
+      document.getElementById("authMsg").innerText = "";
+    };
+
+    window.submitUserAuth = async () => {
+      const username = document.getElementById("authUsername").value.trim();
       const pass = document.getElementById("authPassword").value;
+      const staffId = document.getElementById("authStaffId").value.trim().toUpperCase();
       const msgBox = document.getElementById("authMsg");
+      msgBox.style.color = "#e74c3c";
       msgBox.innerText = "";
-      if (!email || !pass) { msgBox.innerText = "請輸入完整 Email 及密碼"; return; }
+
+      if (!username) {
+        msgBox.innerText = "請輸入帳戶名稱！";
+        return;
+      }
+
+      const vEmail = toVirtualEmail(username);
+
       try {
-        if (isRegisterMode) {
-          await createUserWithEmailAndPassword(auth, email, pass);
+        if (authMode === "register") {
+          if (!pass || pass.length < 6) { 
+            msgBox.innerText = "請設定最少 6 位密碼！"; 
+            return; 
+          }
+          if (!staffId) { 
+            msgBox.innerText = "請填寫員工編號（此編號不能重複且用於驗證）！"; 
+            return; 
+          }
+
+          // 1. 唯一性檢查：檢查該員工編號是否已經被登記過
+          const staffCheckRef = doc(db, "registered_staff_ids", staffId);
+          const staffCheckSnap = await getDoc(staffCheckRef);
+          if (staffCheckSnap.exists()) {
+            msgBox.innerText = `❌ 員工編號【${staffId}】已被其他帳戶註冊，無法重複使用！`;
+            return;
+          }
+
+          // 2. 建立帳戶
+          const userCred = await createUserWithEmailAndPassword(auth, vEmail, pass);
+          
+          // 3. 鎖定員工編號與帳號對應
+          await setDoc(staffCheckRef, { username: username, uid: userCred.user.uid, registeredAt: new Date().toISOString() });
+          await setDoc(doc(db, "public_user_map", username.toLowerCase()), { uid: userCred.user.uid, staffId: staffId });
+          await setDoc(doc(db, "user_security", userCred.user.uid), { username: username, staffId: staffId });
+
+          // 4. 彈出成功提示
+          alert(`🎉 註冊成功！\n帳戶名稱: ${username}\n員工編號: ${staffId}\n系統即將為你登入。`);
+
+        } else if (authMode === "forgot") {
+          if (!staffId) { 
+            msgBox.innerText = "請輸入登記時綁定的員工編號！"; 
+            return; 
+          }
+
+          const mapSnap = await getDoc(doc(db, "public_user_map", username.toLowerCase()));
+          if (!mapSnap.exists() || mapSnap.data().staffId !== staffId) {
+            msgBox.innerText = "❌ 驗證失敗：帳戶名稱不存在或員工編號不匹配！";
+            return;
+          }
+
+          msgBox.style.color = "#27ae60";
+          msgBox.innerHTML = `✅ 員工編號驗證成功！<br>請切換回「登入」，使用預設密碼 <b>${DEFAULT_RESET_PASS}</b> 登入，登入後請立即點擊右上角「修改密碼」。`;
+
         } else {
-          await signInWithEmailAndPassword(auth, email, pass);
+          // 一般登入
+          if (!pass) { msgBox.innerText = "請輸入密碼！"; return; }
+          await signInWithEmailAndPassword(auth, vEmail, pass);
         }
       } catch (e) {
-        msgBox.innerText = "登入失敗: " + e.message;
+        if (e.code === 'auth/email-already-in-use') {
+          msgBox.innerText = "❌ 此帳戶名稱已被使用，請換另一個名稱！";
+        } else if (e.code === 'auth/invalid-credential' || e.code === 'auth/wrong-password') {
+          msgBox.innerText = "❌ 帳戶名稱或密碼錯誤！";
+        } else {
+          msgBox.innerText = "操作失敗: " + e.message;
+        }
       }
     };
 
@@ -1979,22 +2083,23 @@
 </head>
 <body>
 
-      <!-- 1. 登入面板 (帳戶名 + 員工編號密保版) -->
+        <!-- 1. 登入面板 (帳戶名 + 唯一員工編號) -->
   <div class="auth-container" id="authPanel">
-    <h2 id="authTitle">🔒 登入推算系統</h2>
+    <h2 id="authTitle" style="color:var(--primary-color); margin-top:0;">🔒 登入推算系統</h2>
     <input type="text" id="authUsername" placeholder="帳戶名稱 (例如: peter888)">
     <input type="password" id="authPassword" placeholder="密碼 (最少6位)">
     
-    <!-- 員工編號欄位 (註冊 / 忘記密碼時顯示) -->
-    <div id="staffIdField" style="display:none; margin-top:5px;">
-      <input type="text" id="authStaffId" placeholder="員工編號 (例如: E12345)">
+    <!-- 員工編號欄位 (註冊 / 忘記密碼時自動顯現) -->
+    <div id="staffIdField" style="display:none; width:100%; margin:4px 0;">
+      <input type="text" id="authStaffId" placeholder="員工編號 (例如: E12345)" style="border: 2px solid #e67e22;">
+      <div style="font-size:0.75rem; color:#7f8c8d; text-align:left; padding-left:5px;">* 每個員工編號只能綁定一個帳號</div>
     </div>
 
     <button class="btn-auth" id="submitAuthBtn" onclick="submitUserAuth()">登入</button>
     
-    <div style="display:flex; justify-content:space-between; margin-top:8px; font-size:0.8rem;">
-      <span class="auth-toggle" id="forgotBtn" style="margin:0; color:#e67e22;" onclick="toggleForgotMode()">忘記密碼？</span>
-      <span class="auth-toggle" id="toggleBtn" style="margin:0;" onclick="toggleAuthMode()">未有帳號？點此註冊</span>
+    <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:0.82rem;">
+      <span class="auth-toggle" id="forgotBtn" style="margin:0; color:#e67e22; font-weight:bold;" onclick="toggleForgotMode()">忘記密碼？</span>
+      <span class="auth-toggle" id="toggleBtn" style="margin:0; font-weight:bold;" onclick="toggleAuthMode()">未有帳號？點此註冊</span>
     </div>
 
     <hr style="border:0; border-top:1px solid #eee; margin:15px 0 10px;">
@@ -2004,9 +2109,9 @@
       Google 一鍵登入
     </button>
     <div style="font-size:0.75rem; color:#7f8c8d; margin-top:8px; line-height:1.4;">
-      ⚠️ 若首次使用 Google 登入未有反應或失敗，請<b>再按一下</b>「Google 一鍵登入」即可。
+      ⚠️ 若首次使用 Google 登入未有反應，請<b>再按一下</b>「Google 一鍵登入」即可。
     </div>
-    <div id="authMsg" style="color:#e74c3c; font-size:0.85rem; margin-top:8px;"></div>
+    <div id="authMsg" style="color:#e74c3c; font-size:0.85rem; margin-top:10px; font-weight:bold;"></div>
   </div>
 
   <!-- 2. 主面板 -->
