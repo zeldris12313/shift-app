@@ -18,9 +18,7 @@
       --leave-bg: #fadbd8;
       --leave-text: #c0392b;
     }
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       margin: 0;
@@ -327,7 +325,7 @@
       font-weight: bold;
     }
 
-    /* ---------------- 一體化個人月曆 (手機排版防爆格) ---------------- */
+    /* ---------------- 一體化個人月曆 (手機防爆格版) ---------------- */
     .unified-calendar-box {
       background: #ffffff;
       border: 2px solid #8e44ad;
@@ -348,7 +346,6 @@
       margin-bottom: 10px;
     }
 
-    /* 💡 假期額度指引：清晰連點排版 */
     .ph-rules-card {
       background: #fdf7fe;
       border-left: 4px solid #8e44ad;
@@ -412,7 +409,6 @@
       font-weight: bold;
     }
 
-    /* 手機版防突出版面核心設定 */
     .single-month-container {
       width: 100%;
       overflow-x: auto;
@@ -436,7 +432,7 @@
     }
     .month-cal-table {
       width: 100%;
-      table-layout: fixed; /* 🔒 鎖死 8 欄均分，徹底防止星期日突出去 */
+      table-layout: fixed; /* 🔒 鎖死 8 欄均分，防星期日突出去 */
       border-collapse: collapse;
       font-size: 0.72rem;
     }
@@ -448,7 +444,7 @@
     }
     .month-cal-table td {
       padding: 2px 1px;
-      height: 52px;
+      height: 54px;
       vertical-align: top;
       border: 1px solid #f1f2f6;
       word-break: break-all;
@@ -468,13 +464,17 @@
       display: inline-block;
       width: 100%;
     }
+    .cal-shift-custom {
+      border: 1.5px solid #2980b9 !important;
+      position: relative;
+    }
     .cal-week-tag-col {
       background: #fbf7fd;
       font-size: 0.62rem;
       color: #8e44ad;
       padding: 1px;
       border-right: 1.5px solid #d7bde2;
-      width: 44px; /* 🔒 固定左側欄寬 */
+      width: 44px;
       vertical-align: middle;
       line-height: 1.15;
       text-align: center;
@@ -546,7 +546,6 @@
       border-color: #8e44ad;
     }
 
-    /* 儀表板：只保留 2 格，置中工整 */
     .ph-summary-dashboard {
       background: #ebdef0;
       border-radius: 8px;
@@ -558,9 +557,7 @@
       gap: 10px;
       text-align: center;
     }
-    .ph-stat-item {
-      flex: 1;
-    }
+    .ph-stat-item { flex: 1; }
     .ph-stat-val {
       font-size: 1.25rem;
       font-weight: bold;
@@ -581,29 +578,55 @@
     .modal-card {
       background: white;
       border-radius: 12px;
-      width: 88%;
-      max-width: 320px;
-      padding: 18px;
+      width: 90%;
+      max-width: 340px;
+      padding: 16px;
       box-shadow: 0 5px 20px rgba(0,0,0,0.2);
       text-align: center;
+      max-height: 90vh;
+      overflow-y: auto;
     }
-    .hour-wheel-select {
-      width: 85%;
-      padding: 8px;
-      font-size: 1.05rem;
-      font-weight: bold;
-      border: 2px solid #8e44ad;
+    .modal-section {
+      background: #fcf9fe;
+      border: 1px solid #e8daf0;
       border-radius: 8px;
-      margin: 12px 0;
-      text-align: center;
+      padding: 10px;
+      margin-bottom: 10px;
+      text-align: left;
+    }
+    .modal-section-title {
+      font-size: 0.85rem;
+      font-weight: bold;
+      color: #8e44ad;
+      margin-bottom: 6px;
+      display: block;
+    }
+    .modal-holiday-banner {
+      background: #fadbd8;
+      border-left: 4px solid #c0392b;
+      padding: 6px 10px;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      color: #922b21;
+      font-weight: bold;
+      margin-bottom: 10px;
+      text-align: left;
+    }
+    .select-block {
+      width: 100%;
+      padding: 7px;
+      font-size: 0.95rem;
+      font-weight: bold;
+      border: 1.5px solid #8e44ad;
+      border-radius: 6px;
     }
     .modal-btns {
       display: flex;
       gap: 6px;
       justify-content: center;
-      margin-top: 8px;
+      margin-top: 10px;
     }
-    .btn-save-ph {
+    .btn-save-modal {
       background: #8e44ad;
       color: white;
       border: none;
@@ -614,15 +637,14 @@
       font-size: 0.85rem;
       flex: 1;
     }
-    .btn-del-ph {
-      background: #e74c3c;
+    .btn-reset-modal {
+      background: #e67e22;
       color: white;
       border: none;
       padding: 8px 10px;
       border-radius: 6px;
       cursor: pointer;
-      font-weight: bold;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
     }
     .btn-cancel-modal {
       background: #95a5a6;
@@ -672,7 +694,8 @@
 
     let currentUser = null;
     let savedRecords = [];
-    let userPhUsage = {};
+    let userPhUsage = {}; // { "2026-11-02": 8 }
+    let userShiftOverrides = {}; // 手動調更記錄: { "2026-11-02": "4-11" }
 
     // ----------------- 香港官方公眾假期清單 (PH) -----------------
     const HK_PUBLIC_HOLIDAYS = {
@@ -739,7 +762,22 @@
       }
     };
 
-    const ANCHOR_DATE = new Date(2026, 0, 5); // 2026-01-05 (Week 2 Monday)
+    // 匯總並去重 2、3、4 組所有班次供調更選取
+    const ALL_SHIFT_OPTIONS = (() => {
+      const set = new Set(["W", "R", "N (10-8)"]);
+      Object.values(ROSTERS).forEach(grp => {
+        grp.data.forEach(row => {
+          row.forEach(s => set.add(s));
+        });
+      });
+      return Array.from(set).sort((a,b) => {
+        if (a === "W" || a === "R") return -1;
+        if (b === "W" || b === "R") return 1;
+        return a.localeCompare(b);
+      });
+    })();
+
+    const ANCHOR_DATE = new Date(2026, 0, 5);
 
     function getAbsoluteWeekIndex(dateObj) {
       const d = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
@@ -811,7 +849,8 @@
     let viewCalYear = todayObj.getFullYear();
     let viewCalMonth = todayObj.getMonth() + 1;
     let selectedSummaryYear = todayObj.getFullYear();
-    let activePhDateKey = null;
+    let activeModalDateKey = null;
+    let activeModalDefaultShift = "";
 
     onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -823,6 +862,7 @@
         initDynamicYears();
         initMyStatusUI();
         initColleaguesUI();
+        initOverrideShiftSelect();
         window.calculateAll();
         renderUnifiedCalendar();
       } else {
@@ -997,6 +1037,15 @@
         });
       }
       renderPhYearChips();
+    }
+
+    function initOverrideShiftSelect() {
+      const sel = document.getElementById("modalShiftSelect");
+      if (!sel) return;
+      sel.innerHTML = `<option value="">-- 維持原本輪更更期 --</option>`;
+      ALL_SHIFT_OPTIONS.forEach(s => {
+        sel.innerHTML += `<option value="${s}">${s}</option>`;
+      });
     }
 
     // ----------------- 我目前的定位 UI -----------------
@@ -1498,22 +1547,26 @@
           if (cur.getMonth() + 1 === viewCalMonth) {
             const phHours = userPhUsage[dateKey] || 0;
             const phHolidayName = HK_PUBLIC_HOLIDAYS[dateKey];
-            const shift = state.shifts[d];
+            const defaultShift = state.shifts[d];
+            const customShift = userShiftOverrides[dateKey];
+            const finalShift = customShift || defaultShift;
 
             let shiftClass = "";
-            if (shift === 'W' || shift === 'R') shiftClass = 'shift-off';
-            else if (shift && shift.startsWith('N')) shiftClass = 'shift-night';
-            else if (shift === '大假') shiftClass = 'shift-leave';
+            if (finalShift === 'W' || finalShift === 'R') shiftClass = 'shift-off';
+            else if (finalShift && finalShift.startsWith('N')) shiftClass = 'shift-night';
+            else if (finalShift === '大假') shiftClass = 'shift-leave';
 
             let holidayTag = phHolidayName ? `<span class="ph-tag-holiday" title="${phHolidayName}">🔴 ${phHolidayName}</span>` : '';
             let phBadge = phHours > 0 ? `<div class="ph-hour-badge">PH:${phHours}h</div>` : '';
+            let isCustomBadge = customShift ? `<span style="font-size:0.6rem; color:#2980b9; display:block;">(調)</span>` : '';
             let isTodayBorder = (cur.toDateString() === todayObj.toDateString()) ? 'border: 2px solid #e67e22 !important;' : '';
 
             html += `
-              <td style="${isTodayBorder} cursor:pointer;" onclick="openPhModal('${dateKey}')">
+              <td style="${isTodayBorder} cursor:pointer;" onclick="openCombinedModal('${dateKey}', '${defaultShift}')">
                 <div class="cal-date-num">${cur.getDate()}</div>
                 ${holidayTag}
-                <div class="cal-shift-text ${shiftClass}">${shift}</div>
+                <div class="cal-shift-text ${shiftClass} ${customShift ? 'cal-shift-custom' : ''}">${finalShift}</div>
+                ${isCustomBadge}
                 ${phBadge}
               </td>
             `;
@@ -1574,46 +1627,82 @@
       document.getElementById("phStatTotalDays").innerText = `${totalDaysConverted} 日 (${wholeDays}日 + ${remHours}h)`;
     }
 
-    // ----------------- PH Modal -----------------
-    window.openPhModal = (dateKey) => {
-      activePhDateKey = dateKey;
-      const currentHours = userPhUsage[dateKey] || 8;
-      document.getElementById("modalDateTitle").innerText = `📅 記錄 ${dateKey} 之 PH：`;
-      document.getElementById("phHourSelect").value = currentHours;
-      document.getElementById("phModal").style.display = "flex";
+    // ----------------- PH 及手動調更 Modal -----------------
+    window.openCombinedModal = (dateKey, defaultShift) => {
+      activeModalDateKey = dateKey;
+      activeModalDefaultShift = defaultShift;
+
+      // 檢查是否公眾假期
+      const phHolidayName = HK_PUBLIC_HOLIDAYS[dateKey];
+      const banner = document.getElementById("modalHolidayBanner");
+      if (phHolidayName) {
+        banner.style.display = "block";
+        banner.innerText = `🔴 公眾假期：${phHolidayName}`;
+      } else {
+        banner.style.display = "none";
+      }
+
+      document.getElementById("modalDateTitle").innerText = `📅 設定 ${dateKey} 之紀錄：`;
+      
+      // 填入 PH 時數
+      const curPh = userPhUsage[dateKey] || 0;
+      document.getElementById("phHourSelect").value = curPh;
+
+      // 填入調更
+      const curShift = userShiftOverrides[dateKey] || "";
+      document.getElementById("modalShiftSelect").value = curShift;
+
+      document.getElementById("combinedModal").style.display = "flex";
     };
 
-    window.closePhModal = () => {
-      document.getElementById("phModal").style.display = "none";
-      activePhDateKey = null;
+    window.closeCombinedModal = () => {
+      document.getElementById("combinedModal").style.display = "none";
+      activeModalDateKey = null;
     };
 
-    window.savePhHours = async () => {
-      if (!activePhDateKey || !currentUser) return;
-      const hours = parseInt(document.getElementById("phHourSelect").value);
-      userPhUsage[activePhDateKey] = hours;
+    window.saveCombinedData = async () => {
+      if (!activeModalDateKey || !currentUser) return;
+
+      // 1. 處理 PH 時數
+      const phVal = parseInt(document.getElementById("phHourSelect").value);
+      if (phVal > 0) {
+        userPhUsage[activeModalDateKey] = phVal;
+      } else {
+        delete userPhUsage[activeModalDateKey];
+      }
+
+      // 2. 處理調更班次
+      const shiftVal = document.getElementById("modalShiftSelect").value;
+      if (shiftVal) {
+        userShiftOverrides[activeModalDateKey] = shiftVal;
+      } else {
+        delete userShiftOverrides[activeModalDateKey];
+      }
 
       try {
         await setDoc(doc(db, "user_ph_usage", currentUser.uid), { usage: userPhUsage });
-        closePhModal();
+        await setDoc(doc(db, "user_shift_overrides", currentUser.uid), { overrides: userShiftOverrides });
+        closeCombinedModal();
         renderPhYearChips();
         renderUnifiedCalendar();
       } catch (e) {
-        alert("儲存 PH 失敗: " + e.message);
+        alert("儲存失敗: " + e.message);
       }
     };
 
-    window.deletePhRecord = async () => {
-      if (!activePhDateKey || !currentUser) return;
-      delete userPhUsage[activePhDateKey];
+    window.resetCombinedDate = async () => {
+      if (!activeModalDateKey || !currentUser) return;
+      delete userPhUsage[activeModalDateKey];
+      delete userShiftOverrides[activeModalDateKey];
 
       try {
         await setDoc(doc(db, "user_ph_usage", currentUser.uid), { usage: userPhUsage });
-        closePhModal();
+        await setDoc(doc(db, "user_shift_overrides", currentUser.uid), { overrides: userShiftOverrides });
+        closeCombinedModal();
         renderPhYearChips();
         renderUnifiedCalendar();
       } catch (e) {
-        alert("刪除 PH 失敗: " + e.message);
+        alert("還原失敗: " + e.message);
       }
     };
 
@@ -1682,6 +1771,13 @@
           userPhUsage = {};
         }
 
+        const ovSnap = await getDoc(doc(db, "user_shift_overrides", currentUser.uid));
+        if (ovSnap.exists() && ovSnap.data().overrides) {
+          userShiftOverrides = ovSnap.data().overrides;
+        } else {
+          userShiftOverrides = {};
+        }
+
         const tlSnap = await getDoc(doc(db, "user_timeline", currentUser.uid));
         if (tlSnap.exists() && tlSnap.data().anchors) {
           timelineAnchors = tlSnap.data().anchors;
@@ -1723,7 +1819,7 @@
 </head>
 <body>
 
-  <!-- 1. 登入面板 (帳戶名 + 唯一員工編號) -->
+  <!-- 1. 登入面板 -->
   <div class="auth-container" id="authPanel">
     <h2 id="authTitle" style="color:var(--primary-color); margin-top:0;">🔒 登入推算系統</h2>
     <input type="text" id="authUsername" placeholder="帳戶名稱 (例如: peter888)">
@@ -1845,14 +1941,14 @@
     <!-- 分隔線 -->
     <hr class="section-divider">
 
-    <!-- ★★★ 合拼核心：個人一體化更期月曆（班次推算・大假管理・PH記錄） ★★★ -->
+    <!-- ★★★ 合拼核心：個人一體化更期月曆 ★★★ -->
     <div class="unified-calendar-box" id="unifiedCalAnchor">
       <div class="unified-header">
         <div style="font-size:1.05rem; font-weight:bold; color:#8e44ad;">
-          📅 個人一體化更期月曆（班次推算・大假管理・PH記錄）
+          📅 個人一體化更期月曆（班次推算・手動調更・PH記錄）
         </div>
         <div style="font-size:0.75rem; color:#666;">
-          點選日期可記 PH (1-10hr)；點左側可一鍵設整週大假
+          點選日期可記 PH 及手動調更；點左側可一鍵設整週大假
         </div>
       </div>
 
@@ -1910,16 +2006,15 @@
         <button class="cal-nav-btn" onclick="navUnifiedMonth(1)">下月 ▶</button>
       </div>
 
-      <!-- 單月實體月曆格仔 (防爆格外層) -->
+      <!-- 單月實體月曆格仔 -->
       <div class="single-month-container" id="unifiedCalendarGrid"></div>
 
-      <!-- PH 統計部分 (Chips 按鈕選年份) -->
+      <!-- PH 統計部分 -->
       <div style="margin-top:15px; border-top:2px dashed #d7bde2; padding-top:12px;">
         <div style="font-weight:bold; color:#6c3483; font-size:0.85rem;">📊 歷年 PH 統計（點擊年份切換）：</div>
 
         <div class="ph-year-chips-bar" id="phYearChipsContainer"></div>
 
-        <!-- 儀表板 (已移除請假天數，只保留時數與折合日數) -->
         <div class="ph-summary-dashboard">
           <div class="ph-stat-item">
             <div style="font-size:0.75rem; color:#7d3c98;" id="summaryYearTitle">2026 年</div>
@@ -1937,29 +2032,43 @@
 
   </div>
 
-  <!-- PH 時數設定 Modal 視窗 -->
-  <div class="modal-overlay" id="phModal">
+  <!-- PH 時數及手動調更 Modal 視窗 -->
+  <div class="modal-overlay" id="combinedModal">
     <div class="modal-card">
-      <h3 style="margin-top:0; color:#8e44ad; font-size:1rem;" id="modalDateTitle">設定 PH 時數</h3>
-      <p style="font-size:0.8rem; color:#666; margin-bottom:5px;">請選擇該日請了多少小時 PH：</p>
-      
-      <select class="hour-wheel-select" id="phHourSelect">
-        <option value="1">1 小時</option>
-        <option value="2">2 小時</option>
-        <option value="3">3 小時</option>
-        <option value="4">4 小時 (半日)</option>
-        <option value="5">5 小時</option>
-        <option value="6">6 小時</option>
-        <option value="7">7 小時</option>
-        <option value="8" selected>8 小時 (全日)</option>
-        <option value="9">9 小時</option>
-        <option value="10">10 小時</option>
-      </select>
+      <!-- 紅日全名橫幅 (若當日是紅日則自動顯示) -->
+      <div id="modalHolidayBanner" class="modal-holiday-banner" style="display:none;"></div>
+
+      <h3 style="margin-top:0; color:#8e44ad; font-size:0.95rem;" id="modalDateTitle">設定該日紀錄</h3>
+
+      <!-- 區塊 1: PH 記錄 -->
+      <div class="modal-section">
+        <span class="modal-section-title">🏖️ 扣減 PH (公眾假期) 時數：</span>
+        <select class="select-block" id="phHourSelect">
+          <option value="0">0 小時 (未請 PH)</option>
+          <option value="1">1 小時</option>
+          <option value="2">2 小時</option>
+          <option value="3">3 小時</option>
+          <option value="4">4 小時 (半日)</option>
+          <option value="5">5 小時</option>
+          <option value="6">6 小時</option>
+          <option value="7">7 小時</option>
+          <option value="8">8 小時 (全日)</option>
+          <option value="9">9 小時</option>
+          <option value="10">10 小時</option>
+        </select>
+      </div>
+
+      <!-- 區塊 2: 手動調更 / 覆寫班次 -->
+      <div class="modal-section">
+        <span class="modal-section-title">🔄 手動調更 / 覆寫當日班次：</span>
+        <select class="select-block" id="modalShiftSelect"></select>
+        <div style="font-size:0.72rem; color:#7f8c8d; margin-top:4px;">* 調更只影響當日，後續日子依然自動推算</div>
+      </div>
 
       <div class="modal-btns">
-        <button class="btn-save-ph" onclick="savePhHours()">儲存時數</button>
-        <button class="btn-del-ph" onclick="deletePhRecord()">🗑️ 刪除</button>
-        <button class="btn-cancel-modal" onclick="closePhModal()">取消</button>
+        <button class="btn-save-modal" onclick="saveCombinedData()">儲存設定</button>
+        <button class="btn-reset-modal" onclick="resetCombinedDate()">還原預設</button>
+        <button class="btn-cancel-modal" onclick="closeCombinedModal()">取消</button>
       </div>
     </div>
   </div>
