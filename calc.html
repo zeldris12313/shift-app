@@ -685,6 +685,7 @@
       getAuth, 
       signInWithEmailAndPassword, 
       createUserWithEmailAndPassword, 
+      updatePassword,
       signInWithPopup, 
       GoogleAuthProvider, 
       onAuthStateChanged, 
@@ -714,7 +715,7 @@
 
     let currentUser = null;
     let savedRecords = [];
-    let userPhUsage = {}; // 格式: { "2026-11-02": 8, "2027-01-05": 4 }
+    let userPhUsage = {};
 
     // ----------------- 香港官方公眾假期清單 (PH) -----------------
     const HK_PUBLIC_HOLIDAYS = {
@@ -789,7 +790,7 @@
     };
 
     const dayNames = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
-    const ANCHOR_DATE = new Date(2026, 0, 5); // 2026-01-05 (Week 2 Monday)
+    const ANCHOR_DATE = new Date(2026, 0, 5);
 
     function getAbsoluteWeekIndex(dateObj) {
       const d = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
@@ -836,7 +837,6 @@
     const todayObj = new Date();
     const todayAbsWeek = getAbsoluteWeekIndex(todayObj);
 
-    // 狀態
     let myStatus = {
       group: 'group3',
       currentRow: 14,
@@ -854,7 +854,6 @@
     let middleRosterGroup = "group3";
     let currentCandidates = [];
 
-    // 未來一年月曆設定
     let yearPreviewConfig = {
       group: 'group3',
       startRow: 7,
@@ -865,7 +864,6 @@
     let currentMonthPageIndex = 0;
     let allGeneratedMonths = [];
 
-    // PH 獨立月曆狀態 (預設跟隨今天年月)
     let phCalYear = todayObj.getFullYear();
     let phCalMonth = todayObj.getMonth() + 1;
     let activePhDateKey = null;
@@ -884,7 +882,7 @@
         currentUser = user;
         document.getElementById("authPanel").style.display = "none";
         document.getElementById("appPanel").style.display = "block";
-        document.getElementById("userLabel").innerText = user.email || "已登入用戶";
+        document.getElementById("userLabel").innerText = user.email ? user.email.replace("@shift.local", "") : "已登入用戶";
         await loadUserData();
         initDynamicYears();
         initMyStatusUI();
@@ -899,7 +897,8 @@
       }
     });
 
-        let authMode = "login"; // "login", "register", "forgot"
+    // ----------------- 帳戶與登入 (帳號名 + 員工編號唯一驗證) -----------------
+    let authMode = "login";
     const DEFAULT_RESET_PASS = "123456";
 
     const toVirtualEmail = (username) => {
@@ -979,7 +978,7 @@
             return; 
           }
 
-          // 1. 唯一性檢查：檢查該員工編號是否已經被登記過
+          // 1. 唯一性檢查：檢查員工編號是否已存在
           const staffCheckRef = doc(db, "registered_staff_ids", staffId);
           const staffCheckSnap = await getDoc(staffCheckRef);
           if (staffCheckSnap.exists()) {
@@ -990,12 +989,11 @@
           // 2. 建立帳戶
           const userCred = await createUserWithEmailAndPassword(auth, vEmail, pass);
           
-          // 3. 鎖定員工編號與帳號對應
+          // 3. 儲存對應數據
           await setDoc(staffCheckRef, { username: username, uid: userCred.user.uid, registeredAt: new Date().toISOString() });
           await setDoc(doc(db, "public_user_map", username.toLowerCase()), { uid: userCred.user.uid, staffId: staffId });
           await setDoc(doc(db, "user_security", userCred.user.uid), { username: username, staffId: staffId });
 
-          // 4. 彈出成功提示
           alert(`🎉 註冊成功！\n帳戶名稱: ${username}\n員工編號: ${staffId}\n系統即將為你登入。`);
 
         } else if (authMode === "forgot") {
@@ -1039,7 +1037,23 @@
 
     window.userLogout = () => signOut(auth);
 
-    // 動態產生年份（涵蓋過去1年到未來5年，保證無限年使用）
+    // 登入後手動修改密碼
+    window.openChangePasswordModal = async () => {
+      const newPass = prompt("請輸入你的新密碼（最少 6 位）：");
+      if (!newPass) return;
+      if (newPass.length < 6) {
+        alert("新密碼最少需 6 位！");
+        return;
+      }
+      try {
+        await updatePassword(auth.currentUser, newPass);
+        alert("✅ 密碼修改成功！下次登入請使用新密碼。");
+      } catch (e) {
+        alert("修改密碼失敗 (若太久沒登入需重新登入後再試): " + e.message);
+      }
+    };
+
+    // 動態年份生成
     function initDynamicYears() {
       const curY = new Date().getFullYear();
       const years = [];
@@ -1047,7 +1061,6 @@
         years.push(y);
       }
 
-      // 填充 PH 計算器年份選單
       const phYSelect = document.getElementById("phYearSelect");
       if (phYSelect) {
         phYSelect.innerHTML = "";
@@ -1056,7 +1069,6 @@
         });
       }
 
-      // 填充未來一年更期年份選單
       const ypYSelect = document.getElementById("ypYearSelect");
       if (ypYSelect) {
         ypYSelect.innerHTML = "";
@@ -1065,7 +1077,6 @@
         });
       }
 
-      // 填充 Week 1 至 53 選單
       const ypWeekSelect = document.getElementById("ypWeekSelect");
       if (ypWeekSelect) {
         ypWeekSelect.innerHTML = "";
@@ -1666,7 +1677,7 @@
       renderCurrentMonthPage();
     };
 
-    // ----------------- PH 使用量計算器核心邏輯 (含一鍵跳轉與跨年歷史) -----------------
+    // ----------------- PH 使用量計算器核心邏輯 -----------------
     window.navPhMonth = (delta) => {
       phCalMonth += delta;
       if (phCalMonth > 12) { phCalMonth = 1; phCalYear++; }
@@ -1684,13 +1695,11 @@
       renderPhTrackerCalendar();
     };
 
-    // 一鍵跳轉至該年 1 月
     window.jumpToPhJanuary = () => {
       phCalMonth = 1;
       renderPhTrackerCalendar();
     };
 
-    // 一鍵瞬間回到今日月份
     window.jumpToPhToday = () => {
       phCalYear = todayObj.getFullYear();
       phCalMonth = todayObj.getMonth() + 1;
@@ -1781,12 +1790,10 @@
       document.getElementById("phStatRecordedDays").innerText = `${totalDaysCount} 天`;
     }
 
-    // 渲染歷年全部 PH 總覽表格
     function renderAllYearsPhSummaryTable() {
       const tbody = document.getElementById("phAllYearsTableBody");
       if (!tbody) return;
 
-      // 匯總歷年數據
       const yearMap = {};
       for (const [key, hours] of Object.entries(userPhUsage)) {
         const yr = key.split('-')[0];
@@ -1795,7 +1802,6 @@
         if (hours > 0) yearMap[yr].daysCount++;
       }
 
-      // 如果無紀錄，預設放當前年份
       if (!yearMap[phCalYear]) {
         yearMap[phCalYear] = { totalHours: 0, daysCount: 0 };
       }
@@ -2083,7 +2089,7 @@
 </head>
 <body>
 
-        <!-- 1. 登入面板 (帳戶名 + 唯一員工編號) -->
+  <!-- 1. 登入面板 (帳戶名 + 唯一員工編號) -->
   <div class="auth-container" id="authPanel">
     <h2 id="authTitle" style="color:var(--primary-color); margin-top:0;">🔒 登入推算系統</h2>
     <input type="text" id="authUsername" placeholder="帳戶名稱 (例如: peter888)">
@@ -2118,7 +2124,10 @@
   <div class="container" id="appPanel" style="display:none;">
     <div class="top-bar">
       <div>👤 目前用戶：<b id="userLabel" style="color:var(--highlight);"></b></div>
-      <button class="btn-logout" onclick="userLogout()">登出帳號</button>
+      <div style="display:flex; gap:6px;">
+        <button class="btn-logout" style="background:#3498db;" onclick="openChangePasswordModal()">🔑 修改密碼</button>
+        <button class="btn-logout" onclick="userLogout()">登出帳號</button>
+      </div>
     </div>
 
     <!-- 我的現時更期定位 -->
@@ -2296,11 +2305,11 @@
     <!-- 分隔線 -->
     <hr class="section-divider">
 
-    <!-- ★ 全新功能：PH (公眾假期) 使用量月曆計算器 ★ -->
+    <!-- ★ PH 使用量月曆計算器 ★ -->
     <div class="ph-tracker-box">
       <div class="ph-tracker-header">
         <div style="font-size:1.15rem; font-weight:bold; color:#8e44ad;">
-          🏖️ 個人 PH (公眾假期補假) / 假紙使用量計算器
+          🏖️️ 個人 PH (公眾假期補假) / 假紙使用量計算器
         </div>
         <div style="font-size:0.85rem; color:#555;">
           點選月曆上任一日，即可記錄該日扣減之 PH 時數
@@ -2331,7 +2340,7 @@
             <option value="1">1月</option><option value="2">2月</option><option value="3">3月</option>
             <option value="4">4月</option><option value="5">5月</option><option value="6">6月</option>
             <option value="7">7月</option><option value="8">8月</option><option value="9">9月</option>
-            <option value="10">10月</option><option value="11">11月</option><option value="12">12月</option>
+            <option value="10" selected>10月</option><option value="11">11月</option><option value="12">12月</option>
           </select>
         </div>
 
