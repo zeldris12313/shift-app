@@ -1979,12 +1979,26 @@
 </head>
 <body>
 
-    <!-- 1. 登入面板 -->
+      <!-- 1. 登入面板 (帳戶名 + 員工編號密保版) -->
   <div class="auth-container" id="authPanel">
     <h2 id="authTitle">🔒 登入推算系統</h2>
-    <input type="email" id="authEmail" placeholder="電子郵件 (Email)">
+    <input type="text" id="authUsername" placeholder="帳戶名稱 (例如: peter888)">
     <input type="password" id="authPassword" placeholder="密碼 (最少6位)">
-    <button class="btn-auth" id="submitAuthBtn" onclick="submitEmailAuth()">登入</button>
+    
+    <!-- 員工編號欄位 (註冊 / 忘記密碼時顯示) -->
+    <div id="staffIdField" style="display:none; margin-top:5px;">
+      <input type="text" id="authStaffId" placeholder="員工編號 (例如: E12345)">
+    </div>
+
+    <button class="btn-auth" id="submitAuthBtn" onclick="submitUserAuth()">登入</button>
+    
+    <div style="display:flex; justify-content:space-between; margin-top:8px; font-size:0.8rem;">
+      <span class="auth-toggle" id="forgotBtn" style="margin:0; color:#e67e22;" onclick="toggleForgotMode()">忘記密碼？</span>
+      <span class="auth-toggle" id="toggleBtn" style="margin:0;" onclick="toggleAuthMode()">未有帳號？點此註冊</span>
+    </div>
+
+    <hr style="border:0; border-top:1px solid #eee; margin:15px 0 10px;">
+
     <button class="btn-google" onclick="loginWithGoogle()">
       <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#ffffff" d="M12.24 10.285V13.4h6.887C18.2 16.14 15.645 18 12.24 18c-3.315 0-6-2.685-6-6s2.685-6 6-6c1.47 0 2.805.54 3.84 1.425l2.385-2.385C16.98 3.555 14.73 2.7 12.24 2.7 7.155 2.7 3 6.855 3 11.94s4.155 9.24 9.24 9.24c5.325 0 8.865-3.75 8.865-9.03 0-.615-.06-1.2-.165-1.755H12.24z"/></svg>
       Google 一鍵登入
@@ -1993,7 +2007,6 @@
       ⚠️ 若首次使用 Google 登入未有反應或失敗，請<b>再按一下</b>「Google 一鍵登入」即可。
     </div>
     <div id="authMsg" style="color:#e74c3c; font-size:0.85rem; margin-top:8px;"></div>
-    <div class="auth-toggle" id="toggleBtn" onclick="toggleAuthMode()">未有帳號？點此免費註冊</div>
   </div>
 
   <!-- 2. 主面板 -->
