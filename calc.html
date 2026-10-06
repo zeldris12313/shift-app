@@ -536,6 +536,32 @@
       border-radius: 4px;
       margin-top: 3px;
     }
+    .btn-quick-nav {
+      background: #6c3483;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 5px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .btn-quick-nav:hover { background: #512e5f; }
+
+    /* 歷年歷史總表 */
+    .ph-history-table-box {
+      margin-top: 20px;
+      border: 1px solid #d7bde2;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .ph-history-table-title {
+      background: #d2b4de;
+      color: #4a235a;
+      padding: 8px 12px;
+      font-weight: bold;
+      font-size: 0.9rem;
+    }
 
     /* Modal 視窗 */
     .modal-overlay {
@@ -688,7 +714,7 @@
 
     let currentUser = null;
     let savedRecords = [];
-    let userPhUsage = {}; // 格式: { "2026-11-02": 8, "2026-12-25": 4 }
+    let userPhUsage = {}; // 格式: { "2026-11-02": 8, "2027-01-05": 4 }
 
     // ----------------- 香港官方公眾假期清單 (PH) -----------------
     const HK_PUBLIC_HOLIDAYS = {
@@ -701,7 +727,12 @@
       "2027-01-01": "元旦", "2027-02-06": "農曆年初一", "2027-02-08": "農曆年初二", "2027-02-09": "農曆年初三",
       "2027-03-26": "耶穌受難節", "2027-03-27": "受難節翌日", "2027-03-29": "復活節星期一", "2027-04-05": "清明節",
       "2027-05-01": "勞動節", "2027-05-13": "佛誕", "2027-06-09": "端午節", "2027-07-01": "特區成立日",
-      "2027-09-16": "中秋節翌日", "2027-10-01": "國慶日", "2027-10-08": "重陽節", "2027-12-25": "聖誕節", "2027-12-27": "聖誕翌日"
+      "2027-09-16": "中秋節翌日", "2027-10-01": "國慶日", "2027-10-08": "重陽節", "2027-12-25": "聖誕節", "2027-12-27": "聖誕翌日",
+      // 2028年
+      "2028-01-01": "元旦", "2028-01-26": "農曆年初一", "2028-01-27": "農曆年初二", "2028-01-28": "農曆年初三",
+      "2028-04-04": "清明節", "2028-04-14": "耶穌受難節", "2028-04-17": "復活節星期一", "2028-05-01": "勞動節",
+      "2028-05-02": "佛誕", "2028-05-29": "端午節", "2028-07-01": "特區成立日", "2028-10-01": "國慶日",
+      "2028-10-04": "中秋節翌日", "2028-10-26": "重陽節", "2028-12-25": "聖誕節", "2028-12-26": "節禮日"
     };
 
     // ----------------- 班表資料 -----------------
@@ -758,7 +789,7 @@
     };
 
     const dayNames = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
-    const ANCHOR_DATE = new Date(2026, 0, 5);
+    const ANCHOR_DATE = new Date(2026, 0, 5); // 2026-01-05 (Week 2 Monday)
 
     function getAbsoluteWeekIndex(dateObj) {
       const d = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
@@ -823,6 +854,7 @@
     let middleRosterGroup = "group3";
     let currentCandidates = [];
 
+    // 未來一年月曆設定
     let yearPreviewConfig = {
       group: 'group3',
       startRow: 7,
@@ -833,9 +865,9 @@
     let currentMonthPageIndex = 0;
     let allGeneratedMonths = [];
 
-    // PH 獨立月曆狀態
-    let phCalYear = 2026;
-    let phCalMonth = 10;
+    // PH 獨立月曆狀態 (預設跟隨今天年月)
+    let phCalYear = todayObj.getFullYear();
+    let phCalMonth = todayObj.getMonth() + 1;
     let activePhDateKey = null;
 
     let soloState = {
@@ -854,7 +886,7 @@
         document.getElementById("appPanel").style.display = "block";
         document.getElementById("userLabel").innerText = user.email || "已登入用戶";
         await loadUserData();
-        initYpWeekSelect();
+        initDynamicYears();
         initMyStatusUI();
         initColleaguesUI();
         window.calculateAll();
@@ -903,12 +935,39 @@
 
     window.userLogout = () => signOut(auth);
 
-    function initYpWeekSelect() {
+    // 動態產生年份（涵蓋過去1年到未來5年，保證無限年使用）
+    function initDynamicYears() {
+      const curY = new Date().getFullYear();
+      const years = [];
+      for (let y = curY - 2; y <= curY + 6; y++) {
+        years.push(y);
+      }
+
+      // 填充 PH 計算器年份選單
+      const phYSelect = document.getElementById("phYearSelect");
+      if (phYSelect) {
+        phYSelect.innerHTML = "";
+        years.forEach(y => {
+          phYSelect.innerHTML += `<option value="${y}" ${y === phCalYear ? 'selected' : ''}>${y}年</option>`;
+        });
+      }
+
+      // 填充未來一年更期年份選單
+      const ypYSelect = document.getElementById("ypYearSelect");
+      if (ypYSelect) {
+        ypYSelect.innerHTML = "";
+        years.forEach(y => {
+          ypYSelect.innerHTML += `<option value="${y}" ${y === yearPreviewConfig.startYear ? 'selected' : ''}>${y}年</option>`;
+        });
+      }
+
+      // 填充 Week 1 至 53 選單
       const ypWeekSelect = document.getElementById("ypWeekSelect");
-      if (!ypWeekSelect) return;
-      ypWeekSelect.innerHTML = "";
-      for (let w = 1; w <= 53; w++) {
-        ypWeekSelect.innerHTML += `<option value="${w}">Week ${w}</option>`;
+      if (ypWeekSelect) {
+        ypWeekSelect.innerHTML = "";
+        for (let w = 1; w <= 53; w++) {
+          ypWeekSelect.innerHTML += `<option value="${w}">Week ${w}</option>`;
+        }
       }
     }
 
@@ -1028,6 +1087,7 @@
                   <option value="2026" ${c.targetYear===2026?'selected':''}>2026年</option>
                   <option value="2027" ${c.targetYear===2027?'selected':''}>2027年</option>
                   <option value="2028" ${c.targetYear===2028?'selected':''}>2028年</option>
+                  <option value="2029" ${c.targetYear===2029?'selected':''}>2029年</option>
                 </select>
                 <select id="colleagueWeek_${idx}" onchange="onColleagueWeekChange(${idx})">
                   ${weekOptions}
@@ -1174,7 +1234,7 @@
         `;
       });
 
-      html += `<div style="color:#2980b9; font-weight:bold; margin-top:8px;">⬇ 下方大更期表已將可入位行數標記為綠色【★可揀入位】，點擊「👉 帶入年表」即可直接由 11月2日 起排出全年月曆！</div>`;
+      html += `<div style="color:#2980b9; font-weight:bold; margin-top:8px;">⬇ 下方大更期表已將可入位行數標記為綠色【★可揀入位】，點擊「👉 帶入年表」即可直接由入位當週起排出全年月曆！</div>`;
       summaryText.innerHTML = html;
       renderBigRoster();
     };
@@ -1502,7 +1562,7 @@
       renderCurrentMonthPage();
     };
 
-    // ----------------- PH 使用量計算器核心邏輯 -----------------
+    // ----------------- PH 使用量計算器核心邏輯 (含一鍵跳轉與跨年歷史) -----------------
     window.navPhMonth = (delta) => {
       phCalMonth += delta;
       if (phCalMonth > 12) { phCalMonth = 1; phCalYear++; }
@@ -1520,9 +1580,24 @@
       renderPhTrackerCalendar();
     };
 
+    // 一鍵跳轉至該年 1 月
+    window.jumpToPhJanuary = () => {
+      phCalMonth = 1;
+      renderPhTrackerCalendar();
+    };
+
+    // 一鍵瞬間回到今日月份
+    window.jumpToPhToday = () => {
+      phCalYear = todayObj.getFullYear();
+      phCalMonth = todayObj.getMonth() + 1;
+      renderPhTrackerCalendar();
+    };
+
     function renderPhTrackerCalendar() {
-      document.getElementById("phYearSelect").value = phCalYear;
-      document.getElementById("phMonthSelect").value = phCalMonth;
+      const ySelect = document.getElementById("phYearSelect");
+      const mSelect = document.getElementById("phMonthSelect");
+      if (ySelect) ySelect.value = phCalYear;
+      if (mSelect) mSelect.value = phCalMonth;
       document.getElementById("phNavTitle").innerText = `${phCalYear} 年 ${phCalMonth} 月`;
 
       const firstDate = new Date(phCalYear, phCalMonth - 1, 1);
@@ -1559,9 +1634,10 @@
 
             let badgeHtml = phHours > 0 ? `<div class="ph-hour-badge">PH: ${phHours}hr</div>` : '';
             let holidayTag = phHolidayName ? `<div style="font-size:0.65rem; color:#e74c3c; font-weight:bold;">${phHolidayName}</div>` : '';
+            let isTodayBorder = (cur.toDateString() === todayObj.toDateString()) ? 'border: 2px solid #e67e22 !important;' : '';
 
             html += `
-              <td class="ph-cell-interactive" onclick="openPhModal('${dateKey}')">
+              <td class="ph-cell-interactive" style="${isTodayBorder}" onclick="openPhModal('${dateKey}')">
                 <div class="cal-date-num">${cur.getDate()}</div>
                 ${holidayTag}
                 ${badgeHtml}
@@ -1578,6 +1654,7 @@
       container.innerHTML = html;
 
       updatePhStatistics();
+      renderAllYearsPhSummaryTable();
     }
 
     function updatePhStatistics() {
@@ -1598,6 +1675,51 @@
       document.getElementById("phStatTotalHours").innerText = `${totalHoursInYear} 小時`;
       document.getElementById("phStatTotalDays").innerText = `${totalDaysConverted} 日 (${wholeDays}日 + ${remHours}小時)`;
       document.getElementById("phStatRecordedDays").innerText = `${totalDaysCount} 天`;
+    }
+
+    // 渲染歷年全部 PH 總覽表格
+    function renderAllYearsPhSummaryTable() {
+      const tbody = document.getElementById("phAllYearsTableBody");
+      if (!tbody) return;
+
+      // 匯總歷年數據
+      const yearMap = {};
+      for (const [key, hours] of Object.entries(userPhUsage)) {
+        const yr = key.split('-')[0];
+        if (!yearMap[yr]) yearMap[yr] = { totalHours: 0, daysCount: 0 };
+        yearMap[yr].totalHours += hours;
+        if (hours > 0) yearMap[yr].daysCount++;
+      }
+
+      // 如果無紀錄，預設放當前年份
+      if (!yearMap[phCalYear]) {
+        yearMap[phCalYear] = { totalHours: 0, daysCount: 0 };
+      }
+
+      const sortedYears = Object.keys(yearMap).sort((a,b) => b - a);
+      let html = "";
+      sortedYears.forEach(yr => {
+        const h = yearMap[yr].totalHours;
+        const d = (h / 8).toFixed(2);
+        const wDays = Math.floor(h / 8);
+        const rH = h % 8;
+        const isCurrentView = (parseInt(yr) === phCalYear);
+        const highlightStyle = isCurrentView ? 'background:#fbf2fc; font-weight:bold;' : '';
+
+        html += `
+          <tr style="${highlightStyle}">
+            <td><b>${yr} 年</b> ${isCurrentView ? '👈 目前瀏覽' : ''}</td>
+            <td><b style="color:#6c3483;">${h} 小時</b></td>
+            <td><span style="color:#c0392b; font-weight:bold;">${d} 日</span> (${wDays}日 + ${rH}小時)</td>
+            <td>${yearMap[yr].daysCount} 天</td>
+            <td>
+              <button class="btn-quick-nav" style="padding:2px 8px; font-size:0.75rem;" onclick="phCalYear=${yr}; renderPhTrackerCalendar();">切換到此年</button>
+            </td>
+          </tr>
+        `;
+      });
+
+      tbody.innerHTML = html;
     }
 
     window.openPhModal = (dateKey) => {
@@ -1816,7 +1938,6 @@
     async function loadUserData() {
       if (!currentUser) return;
       try {
-        // 載入備忘
         const recSnap = await getDoc(doc(db, "user_records", currentUser.uid));
         if (recSnap.exists() && recSnap.data().records) {
           savedRecords = recSnap.data().records;
@@ -1825,7 +1946,6 @@
         }
         renderRecords();
 
-        // 載入 PH 記錄
         const phSnap = await getDoc(doc(db, "user_ph_usage", currentUser.uid));
         if (phSnap.exists() && phSnap.data().usage) {
           userPhUsage = phSnap.data().usage;
@@ -1987,11 +2107,7 @@
           </select>
           <select id="ypRowSelect" onchange="onYpConfigChange()"></select>
           <span>從：</span>
-          <select id="ypYearSelect" onchange="onYpConfigChange()">
-            <option value="2026">2026年</option>
-            <option value="2027">2027年</option>
-            <option value="2028">2028年</option>
-          </select>
+          <select id="ypYearSelect" onchange="onYpConfigChange()"></select>
           <select id="ypWeekSelect" onchange="onYpConfigChange()"></select>
         </div>
 
@@ -2079,24 +2195,26 @@
         • <i>換算標準：每累積 8 小時折算為 1 整日 PH。</i>
       </div>
 
-      <!-- 月曆月份跳轉導航 -->
+      <!-- 月曆月份跳轉導航 (含一鍵去1月 / 一鍵返今日) -->
       <div class="cal-nav-bar" style="background:#f4ecf7;">
-        <button class="cal-nav-btn" style="background:#8e44ad;" onclick="navPhMonth(-1)">◀ 上一個月</button>
+        <div style="display:flex; gap:6px; align-items:center;">
+          <button class="cal-nav-btn" style="background:#8e44ad;" onclick="navPhMonth(-1)">◀ 上月</button>
+          <button class="btn-quick-nav" onclick="jumpToPhJanuary()">🚀 該年1月</button>
+          <button class="btn-quick-nav" style="background:#e67e22;" onclick="jumpToPhToday()">🎯 今日</button>
+        </div>
+
         <div class="cal-nav-title" style="color:#8e44ad;">
           <span id="phNavTitle">2026 年 10 月</span>
-          <select id="phYearSelect" onchange="onPhYearChange(this.value)" style="padding:2px 6px;">
-            <option value="2026">2026年</option>
-            <option value="2027">2027年</option>
-            <option value="2028">2028年</option>
-          </select>
+          <select id="phYearSelect" onchange="onPhYearChange(this.value)" style="padding:2px 6px;"></select>
           <select id="phMonthSelect" onchange="onPhMonthChange(this.value)" style="padding:2px 6px;">
             <option value="1">1月</option><option value="2">2月</option><option value="3">3月</option>
             <option value="4">4月</option><option value="5">5月</option><option value="6">6月</option>
             <option value="7">7月</option><option value="8">8月</option><option value="9">9月</option>
-            <option value="10" selected>10月</option><option value="11">11月</option><option value="12">12月</option>
+            <option value="10">10月</option><option value="11">11月</option><option value="12">12月</option>
           </select>
         </div>
-        <button class="cal-nav-btn" style="background:#8e44ad;" onclick="navPhMonth(1)">下一個月 ▶</button>
+
+        <button class="cal-nav-btn" style="background:#8e44ad;" onclick="navPhMonth(1)">下月 ▶</button>
       </div>
 
       <!-- 點擊月曆格仔 -->
@@ -2105,7 +2223,7 @@
       <!-- 年度 PH 使用總結儀表板 -->
       <div class="ph-summary-dashboard">
         <div class="ph-stat-item">
-          <div style="font-size:0.85rem; color:#7d3c98;">該年已用總時數</div>
+          <div style="font-size:0.85rem; color:#7d3c98;">所選年份已用時數</div>
           <div class="ph-stat-val" id="phStatTotalHours">0 小時</div>
         </div>
         <div class="ph-stat-item">
@@ -2117,6 +2235,24 @@
           <div class="ph-stat-val" id="phStatRecordedDays">0 天</div>
         </div>
       </div>
+
+      <!-- 跨年 PH 總覽歷史表 (每年有數睇) -->
+      <div class="ph-history-table-box">
+        <div class="ph-history-table-title">📊 歷年 PH 使用總覽統計表 (全部歷史年份清單)</div>
+        <table style="width:100%; border-collapse:collapse; background:white;">
+          <thead>
+            <tr style="background:#f5eef8; font-size:0.82rem; color:#512e5f;">
+              <th>年份</th>
+              <th>已用總時數</th>
+              <th>折合總日數</th>
+              <th>請假日數</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="phAllYearsTableBody" style="font-size:0.85rem;"></tbody>
+        </table>
+      </div>
+
     </div>
 
   </div>
