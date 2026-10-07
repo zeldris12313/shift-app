@@ -1462,43 +1462,40 @@
     }
 
     // ----------------- 一體化個人月曆推算引擎 (換組插旗 + 大假截停) -----------------
-    function getWeekShiftState(absWeek) {
+        function getWeekShiftState(absWeek) {
+      // 1. 如果此週本身被標記為整週大假
       if (vacationWeeks.has(absWeek)) {
         return { isVacation: true, group: null, rowNum: null, shifts: ["大假","大假","大假","大假","大假","大假","大假"] };
       }
 
-      const validAnchors = timelineAnchors.filter(a => a.absWeek <= absWeek).sort((a,b) => b.absWeek - a.absWeek);
+      // 取得基準起始錨點 (以最早建立或目前生效之錨點為基準)
+      const baseAnchor = timelineAnchors[0] || { absWeek: todayAbsWeek, group: 'group3', startRow: 14 };
+      const roster = ROSTERS[baseAnchor.group];
 
-      if (validAnchors.length === 0) {
-        const oldest = timelineAnchors.slice().sort((a,b) => a.absWeek - b.absWeek)[0];
-        const roster = ROSTERS[oldest.group];
-        const diff = absWeek - oldest.absWeek;
-        let r = ((oldest.startRow - 1 + diff) % roster.totalRows) + 1;
-        if (r <= 0) r += roster.totalRows;
-        return { isVacation: false, group: oldest.group, rowNum: r, shifts: roster.data[r - 1] };
-      }
-
-      const currentAnchor = validAnchors[0];
-
-      let hasVacationBetween = false;
-      vacationWeeks.forEach(vWeek => {
-        if (vWeek >= currentAnchor.absWeek && vWeek < absWeek) {
-          hasVacationBetween = true;
+      // 檢查此週之前是否有任何大假週 (且在大假後未有更晚的全新手動插旗)
+      // 找出小於 absWeek 的所有大假週，取最近期的一個
+      const pastVacations = Array.from(vacationWeeks).filter(v => v < absWeek).sort((a,b) => b - a);
+      if (pastVacations.length > 0) {
+        const latestVacation = pastVacations[0];
+        // 檢查在大假之後，用戶是否有手動插旗指定新行數
+        const manualAfterVacation = timelineAnchors.find(a => a.absWeek > latestVacation && a.absWeek <= absWeek && a.manual);
+        if (!manualAfterVacation) {
+          // 大假之後尚未重新入位，全線截停
+          return { isPending: true, group: null, rowNum: null, shifts: ["待入位","待入位","待入位","待入位","待入位","待入位","待入位"] };
         }
-      });
-
-      if (hasVacationBetween) {
-        return { isPending: true, group: null, rowNum: null, shifts: ["待入位","待入位","待入位","待入位","待入位","待入位","待入位"] };
       }
 
-      const roster = ROSTERS[currentAnchor.group];
-      const diff = absWeek - currentAnchor.absWeek;
-      let r = ((currentAnchor.startRow - 1 + diff) % roster.totalRows) + 1;
-      if (r <= 0) r += roster.totalRows;
-      return { isVacation: false, group: currentAnchor.group, rowNum: r, shifts: roster.data[r - 1] };
+      // 2. 正常順推計算 (取消大假後會自動依距離自然連續累加，例如第3行取消後自動變第4行)
+      const activeAnchor = timelineAnchors.filter(a => a.absWeek <= absWeek).sort((a,b) => b.absWeek - a.absWeek)[0] || baseAnchor;
+      const curRoster = ROSTERS[activeAnchor.group];
+      const diff = absWeek - activeAnchor.absWeek;
+      let r = ((activeAnchor.startRow - 1 + diff) % curRoster.totalRows) + 1;
+      if (r <= 0) r += curRoster.totalRows;
+
+      return { isVacation: false, group: activeAnchor.group, rowNum: r, shifts: curRoster.data[r - 1] };
     }
 
-    window.setManualAnchorAtDate = async () => {
+       window.setManualAnchorAtDate = async () => {
       const dateStr = document.getElementById("anchorDateInput").value;
       if (!dateStr) { alert("請先選擇要插旗換組的日期！"); return; }
 
@@ -1509,17 +1506,17 @@
       const row = parseInt(document.getElementById("anchorRowSelect").value);
 
       timelineAnchors = timelineAnchors.filter(a => a.absWeek !== absWeek);
-      timelineAnchors.push({ absWeek, group, startRow: row });
+      timelineAnchors.push({ absWeek, group, startRow: row, manual: true });
       timelineAnchors.sort((a,b) => a.absWeek - b.absWeek);
 
       await saveUserTimeline();
       renderUnifiedCalendar();
-      alert(`✅ 成功設定更期起點！\n由 ${dateStr} 起採用 ${ROSTERS[group].name} 第 ${row} 行，後續自動順推，之前更期不受影響。`);
+      alert(`✅ 成功設定更期起點！\n由 ${dateStr} 起採用 ${ROSTERS[group].name} 第 ${row} 行，後續自動順推。`);
     };
 
     window.applyAnchorToUnified = async (group, row, absWeek) => {
       timelineAnchors = timelineAnchors.filter(a => a.absWeek !== absWeek);
-      timelineAnchors.push({ absWeek, group, startRow: row });
+      timelineAnchors.push({ absWeek, group, startRow: row, manual: true });
       timelineAnchors.sort((a,b) => a.absWeek - b.absWeek);
 
       const info = getWeekInfoFromAbsIndex(absWeek);
