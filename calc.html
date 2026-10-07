@@ -142,7 +142,7 @@
     /* 同事推算卡片 */
     .colleagues-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 10px;
       margin-bottom: 10px;
     }
@@ -432,7 +432,7 @@
     }
     .month-cal-table {
       width: 100%;
-      table-layout: fixed; /* 🔒 鎖死 8 欄均分，防星期日突出去 */
+      table-layout: fixed;
       border-collapse: collapse;
       font-size: 0.72rem;
     }
@@ -694,8 +694,8 @@
 
     let currentUser = null;
     let savedRecords = [];
-    let userPhUsage = {}; // { "2026-11-02": 8 }
-    let userShiftOverrides = {}; // 手動調更記錄: { "2026-11-02": "4-11" }
+    let userPhUsage = {};
+    let userShiftOverrides = {};
 
     // ----------------- 香港官方公眾假期清單 (PH) -----------------
     const HK_PUBLIC_HOLIDAYS = {
@@ -762,7 +762,7 @@
       }
     };
 
-        // 依特定次序排列：AL(單日) ➔ 半日(1點收) ➔ 早更 ➔ P更(1點起) ➔ N更 ➔ R ➔ W
+    // 依特定次序排列：AL(單日) ➔ 半日(1點收) ➔ 早更 ➔ P更(1點起) ➔ N更 ➔ R ➔ W
     const ALL_SHIFT_OPTIONS = [
       "AL",
       "9-1", "8-1",
@@ -773,6 +773,7 @@
       "W"
     ];
 
+    const dayNames = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
     const ANCHOR_DATE = new Date(2026, 0, 5);
 
     function getAbsoluteWeekIndex(dateObj) {
@@ -833,7 +834,7 @@
       leaveWeek: 44
     };
 
-        let colleagues = [
+    let colleagues = [
       { id: 1, name: "同事 A", useKnownDate: false, knownDate: "2026-10-05", knownGroup: "group3", knownRow: 3, group: "group3", baseRow: 3, targetYear: 2026, targetWeek: 45, leaveDate: "2026-11-02", enabled: true },
       { id: 2, name: "同事 B", useKnownDate: false, knownDate: "2026-10-05", knownGroup: "group2", knownRow: 1, group: "group2", baseRow: 1, targetYear: 2026, targetWeek: 45, leaveDate: "2026-11-02", enabled: true },
       { id: 3, name: "同事 C", useKnownDate: false, knownDate: "2026-10-05", knownGroup: "group4", knownRow: 1, group: "group4", baseRow: 1, targetYear: 2026, targetWeek: 45, leaveDate: "2026-11-02", enabled: false }
@@ -1110,8 +1111,8 @@
       window.calculateAll();
     };
 
-    // ----------------- 同事 UI -----------------
-        function initColleaguesUI() {
+    // ----------------- 同事 UI (同一行並排 + 已知某日推算) -----------------
+    function initColleaguesUI() {
       const container = document.getElementById("colleaguesList");
       container.innerHTML = "";
 
@@ -1133,7 +1134,6 @@
           weekOptions += `<option value="${w}" ${w === c.targetWeek ? 'selected' : ''}>Week ${w}</option>`;
         }
 
-        // 計算已知日期為星期幾
         let knownDayName = "";
         if (c.knownDate) {
           const parts = c.knownDate.split('-');
@@ -1153,7 +1153,7 @@
 
             <!-- 模式選擇 -->
             <div style="background:#edf2f7; padding:4px 6px; border-radius:5px; margin-bottom:6px; font-size:0.75rem;">
-              <label style="margin-right:10px; cursor:pointer;">
+              <label style="margin-right:8px; cursor:pointer;">
                 <input type="radio" name="mode_${idx}" ${!c.useKnownDate ? 'checked' : ''} onchange="updateColleague(${idx}, 'useKnownDate', false)"> 以今日行數推算
               </label>
               <label style="cursor:pointer;">
@@ -1161,7 +1161,7 @@
               </label>
             </div>
 
-            <!-- ① 組別與基準行數 (放在同一行並排) -->
+            <!-- ① 組別與基準行數 (同一行並排) -->
             <div class="field-row" style="${c.useKnownDate ? 'display:none;' : ''}">
               <div style="display:flex; align-items:center; gap:3px;">
                 <span>組別:</span>
@@ -1179,7 +1179,7 @@
               </div>
             </div>
 
-            <!-- ② 已知何年何月何日在那一組那一行 (並自動顯示星期幾) -->
+            <!-- ② 已知何年何月何日在那一組那一行 (自動計算星期幾) -->
             <div style="${!c.useKnownDate ? 'display:none;' : ''} background:#fff9e6; border:1px solid #fed330; border-radius:5px; padding:6px; margin-bottom:6px;">
               <div class="field-row" style="margin-bottom:4px;">
                 <span style="color:#b7791f; font-weight:bold;">已知日期:</span>
@@ -1327,13 +1327,12 @@
         return;
       }
 
-            const results = activeList.map(c => {
+      const results = activeList.map(c => {
         const targetAbs = getAbsIndexFromYearWeek(c.targetYear, c.targetWeek);
         let actualGroup = c.group;
         let entryRow = 1;
 
         if (c.useKnownDate && c.knownDate) {
-          // 使用已知何年何月何日在那一組那一行進行推算
           actualGroup = c.knownGroup;
           const roster = ROSTERS[actualGroup];
           const parts = c.knownDate.split('-');
@@ -1344,7 +1343,6 @@
           entryRow = ((c.knownRow - 1 + diffWeeks) % roster.totalRows) + 1;
           if (entryRow <= 0) entryRow += roster.totalRows;
         } else {
-          // 原本按今日行數推算
           actualGroup = c.group;
           const roster = ROSTERS[actualGroup];
           const diffWeeks = targetAbs - todayAbsWeek;
@@ -1361,8 +1359,7 @@
           targetYear: c.targetYear,
           targetWeek: c.targetWeek,
           targetAbs,
-          diffWeeks,
-          group: c.group,
+          group: actualGroup,
           groupName: roster.name,
           entryRow,
           entryYear: entryInfo.year,
@@ -1641,7 +1638,7 @@
             const finalShift = customShift || defaultShift;
 
             let shiftClass = "";
-                        if (finalShift === 'W' || finalShift === 'R') shiftClass = 'shift-off';
+            if (finalShift === 'W' || finalShift === 'R') shiftClass = 'shift-off';
             else if (finalShift && finalShift.startsWith('N')) shiftClass = 'shift-night';
             else if (finalShift === '大假' || finalShift === 'AL') shiftClass = 'shift-leave';
 
@@ -1721,7 +1718,6 @@
       activeModalDateKey = dateKey;
       activeModalDefaultShift = defaultShift;
 
-      // 檢查是否公眾假期
       const phHolidayName = HK_PUBLIC_HOLIDAYS[dateKey];
       const banner = document.getElementById("modalHolidayBanner");
       if (phHolidayName) {
@@ -1733,11 +1729,9 @@
 
       document.getElementById("modalDateTitle").innerText = `📅 設定 ${dateKey} 之紀錄：`;
       
-      // 填入 PH 時數
       const curPh = userPhUsage[dateKey] || 0;
       document.getElementById("phHourSelect").value = curPh;
 
-      // 填入調更
       const curShift = userShiftOverrides[dateKey] || "";
       document.getElementById("modalShiftSelect").value = curShift;
 
@@ -1752,7 +1746,6 @@
     window.saveCombinedData = async () => {
       if (!activeModalDateKey || !currentUser) return;
 
-      // 1. 處理 PH 時數
       const phVal = parseInt(document.getElementById("phHourSelect").value);
       if (phVal > 0) {
         userPhUsage[activeModalDateKey] = phVal;
@@ -1760,7 +1753,6 @@
         delete userPhUsage[activeModalDateKey];
       }
 
-      // 2. 處理調更班次
       const shiftVal = document.getElementById("modalShiftSelect").value;
       if (shiftVal) {
         userShiftOverrides[activeModalDateKey] = shiftVal;
@@ -1915,12 +1907,12 @@
     <input type="password" id="authPassword" placeholder="密碼 (最少6位)">
     
     <div id="staffIdField" style="display:none; width:100%; margin:4px 0;">
-  <input type="text" id="authStaffId" placeholder="員工編號 (例如: E12345)" style="border: 2px solid #e67e22;">
-  <div style="font-size:0.75rem; color:#7f8c8d; text-align:left; padding-left:5px; line-height:1.4;">
-    * 每個員工編號只能綁定一個帳號<br>
-    * <b>帳號名稱無法重置</b>，請務必緊記你的帳號名稱！
-  </div>
-</div>
+      <input type="text" id="authStaffId" placeholder="員工編號 (例如: E12345)" style="border: 2px solid #e67e22;">
+      <div style="font-size:0.75rem; color:#7f8c8d; text-align:left; padding-left:5px; line-height:1.4;">
+        * 每個員工編號只能綁定一個帳號<br>
+        * <b>帳號名稱無法重置</b>，請務必緊記你的帳號名稱！
+      </div>
+    </div>
 
     <button class="btn-auth" id="submitAuthBtn" onclick="submitUserAuth()">登入</button>
     
@@ -1943,10 +1935,11 @@
 
   <!-- 2. 主面板 -->
   <div class="container" id="appPanel" style="display:none;">
-  <div style="background:#fff3cd; border-left:4px solid #ffc107; padding:6px 10px; margin-bottom:10px; border-radius:4px; font-size:0.8rem; color:#856404;">
-    📢 <b>溫馨提示：</b>首次註冊成功後系統數據或有短暫延遲，如未即時顯示更期或個人資料，請先 <b>重新整理 (Refresh)</b> 頁面一次。
-  </div>
-  <div class="top-bar">
+    <div style="background:#fff3cd; border-left:4px solid #ffc107; padding:6px 10px; margin-bottom:10px; border-radius:4px; font-size:0.8rem; color:#856404;">
+      📢 <b>溫馨提示：</b>首次註冊成功後系統數據或有短暫延遲，如未即時顯示更期或個人資料，請先 <b>重新整理 (Refresh)</b> 頁面一次。
+    </div>
+    
+    <div class="top-bar">
       <div>
         👤 目前用戶：<b id="userLabel" style="color:var(--highlight);"></b>
         <div style="color:#e74c3c; font-size:0.75rem; font-weight:bold; margin-top:2px;">⚠️ 測試版本 (Beta)</div>
@@ -2050,7 +2043,7 @@
         </div>
       </div>
 
-      <!-- 💡 假期額度指引：清晰連點排版 -->
+      <!-- 💡 假期額度指引：連點整齊排版 -->
       <div class="ph-rules-card">
         <b>💡 假期額度指引：</b>
         <ul class="ph-rules-list">
@@ -2133,7 +2126,6 @@
   <!-- PH 時數及手動調更 Modal 視窗 -->
   <div class="modal-overlay" id="combinedModal">
     <div class="modal-card">
-      <!-- 紅日全名橫幅 (若當日是紅日則自動顯示) -->
       <div id="modalHolidayBanner" class="modal-holiday-banner" style="display:none;"></div>
 
       <h3 style="margin-top:0; color:#8e44ad; font-size:0.95rem;" id="modalDateTitle">設定該日紀錄</h3>
@@ -2156,10 +2148,10 @@
         </select>
       </div>
 
-      <!-- 區塊 2: 手動調更 / 覆寫班次 -->
+      <!-- 區塊 2: 手動調更 / 單日 AL -->
       <div class="modal-section">
         <span class="modal-section-title">🔄 手動調更 / 覆寫當日班次：</span>
-                <select class="select-block" id="modalShiftSelect"></select>
+        <select class="select-block" id="modalShiftSelect"></select>
         <div style="margin-top:6px; display:flex; gap:6px; align-items:center;">
           <button type="button" style="background:#e74c3c; color:white; border:none; padding:4px 10px; border-radius:4px; font-size:0.75rem; font-weight:bold; cursor:pointer;" onclick="document.getElementById('modalShiftSelect').value='AL'">🏖️ 設為單日 AL (大假)</button>
         </div>
