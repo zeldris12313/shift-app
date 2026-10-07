@@ -1826,9 +1826,12 @@
     <input type="password" id="authPassword" placeholder="密碼 (最少6位)">
     
     <div id="staffIdField" style="display:none; width:100%; margin:4px 0;">
-      <input type="text" id="authStaffId" placeholder="員工編號 (例如: E12345)" style="border: 2px solid #e67e22;">
-      <div style="font-size:0.75rem; color:#7f8c8d; text-align:left; padding-left:5px;">* 每個員工編號只能綁定一個帳號</div>
-    </div>
+  <input type="text" id="authStaffId" placeholder="員工編號 (例如: E12345)" style="border: 2px solid #e67e22;">
+  <div style="font-size:0.75rem; color:#7f8c8d; text-align:left; padding-left:5px; line-height:1.4;">
+    * 每個員工編號只能綁定一個帳號<br>
+    * <b>帳號名稱無法重置</b>，請務必緊記你的帳號名稱！
+  </div>
+</div>
 
     <button class="btn-auth" id="submitAuthBtn" onclick="submitUserAuth()">登入</button>
     
@@ -1851,7 +1854,10 @@
 
   <!-- 2. 主面板 -->
   <div class="container" id="appPanel" style="display:none;">
-    <div class="top-bar">
+  <div style="background:#fff3cd; border-left:4px solid #ffc107; padding:6px 10px; margin-bottom:10px; border-radius:4px; font-size:0.8rem; color:#856404;">
+    📢 <b>溫馨提示：</b>首次註冊成功後系統數據或有短暫延遲，如未即時顯示更期或個人資料，請先 <b>重新整理 (Refresh)</b> 頁面一次。
+  </div>
+  <div class="top-bar">
       <div>👤 目前用戶：<b id="userLabel" style="color:var(--highlight);"></b></div>
       <div style="display:flex; gap:6px;">
         <button class="btn-logout" style="background:#3498db;" onclick="openChangePasswordModal()">🔑 修改密碼</button>
