@@ -762,20 +762,16 @@
       }
     };
 
-    // 匯總並去重 2、3、4 組所有班次供調更選取
-    const ALL_SHIFT_OPTIONS = (() => {
-      const set = new Set(["W", "R", "N (10-8)"]);
-      Object.values(ROSTERS).forEach(grp => {
-        grp.data.forEach(row => {
-          row.forEach(s => set.add(s));
-        });
-      });
-      return Array.from(set).sort((a,b) => {
-        if (a === "W" || a === "R") return -1;
-        if (b === "W" || b === "R") return 1;
-        return a.localeCompare(b);
-      });
-    })();
+        // 依特定次序排列：AL(單日) ➔ 半日(1點收) ➔ 早更 ➔ P更(1點起) ➔ N更 ➔ R ➔ W
+    const ALL_SHIFT_OPTIONS = [
+      "AL",
+      "9-1", "8-1",
+      "8-4", "8-5", "9-4", "9-5", "9-6", "10-5",
+      "1-9", "1-10", "1-11", "2-10", "2-11", "3-10", "3-11", "4-10", "4-11", "5-10", "5-11",
+      "N (10-8)",
+      "R",
+      "W"
+    ];
 
     const ANCHOR_DATE = new Date(2026, 0, 5);
 
@@ -1552,9 +1548,9 @@
             const finalShift = customShift || defaultShift;
 
             let shiftClass = "";
-            if (finalShift === 'W' || finalShift === 'R') shiftClass = 'shift-off';
+                        if (finalShift === 'W' || finalShift === 'R') shiftClass = 'shift-off';
             else if (finalShift && finalShift.startsWith('N')) shiftClass = 'shift-night';
-            else if (finalShift === '大假') shiftClass = 'shift-leave';
+            else if (finalShift === '大假' || finalShift === 'AL') shiftClass = 'shift-leave';
 
             let holidayTag = phHolidayName ? `<span class="ph-tag-holiday" title="${phHolidayName}">🔴 ${phHolidayName}</span>` : '';
             let phBadge = phHours > 0 ? `<div class="ph-hour-badge">PH:${phHours}h</div>` : '';
@@ -2067,8 +2063,11 @@
       <!-- 區塊 2: 手動調更 / 覆寫班次 -->
       <div class="modal-section">
         <span class="modal-section-title">🔄 手動調更 / 覆寫當日班次：</span>
-        <select class="select-block" id="modalShiftSelect"></select>
-        <div style="font-size:0.72rem; color:#7f8c8d; margin-top:4px;">* 調更只影響當日，後續日子依然自動推算</div>
+                <select class="select-block" id="modalShiftSelect"></select>
+        <div style="margin-top:6px; display:flex; gap:6px; align-items:center;">
+          <button type="button" style="background:#e74c3c; color:white; border:none; padding:4px 10px; border-radius:4px; font-size:0.75rem; font-weight:bold; cursor:pointer;" onclick="document.getElementById('modalShiftSelect').value='AL'">🏖️ 設為單日 AL (大假)</button>
+        </div>
+        <div style="font-size:0.72rem; color:#7f8c8d; margin-top:4px;">* 調更或放單日 AL 只影響當日，後續日子依然自動推算</div>
       </div>
 
       <div class="modal-btns">
