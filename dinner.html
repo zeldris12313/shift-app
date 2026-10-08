@@ -3,93 +3,186 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>多人聚會食飯・撞假推算系統</title>
+  <title>多人輪班更期對照與撞假食飯推算系統</title>
   <style>
     :root {
       --primary: #2c3e50;
       --accent: #e67e22;
       --success: #27ae60;
-      --card-bg: #ffffff;
-      --off-bg: #ffeaa7;
+      --card-border: #2ecc71;
     }
     * { box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       margin: 0; padding: 10px;
-      background-color: #fdfbf7;
+      background-color: #f8fafc;
       color: #333;
     }
     .container {
-      max-width: 900px;
+      max-width: 800px;
       margin: 0 auto;
       background: white;
       border-radius: 12px;
       padding: 12px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-      border-top: 6px solid var(--accent);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+    }
+    .page-title {
+      text-align: center;
+      font-size: 1.25rem;
+      font-weight: bold;
+      color: #2c3e50;
+      margin: 5px 0 12px 0;
     }
     .nav-tabs {
       display: flex;
       gap: 8px;
       margin-bottom: 12px;
-      border-bottom: 2px solid #eee;
+      border-bottom: 2px solid #edf2f7;
       padding-bottom: 8px;
     }
     .tab-btn {
-      padding: 7px 12px;
+      padding: 6px 12px;
       border-radius: 6px;
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       font-weight: bold;
       text-decoration: none;
-      border: 1px solid #ccc;
-      color: #555;
-      background: #f8f9fa;
+      border: 1px solid #cbd5e0;
+      color: #4a5568;
+      background: #f7fafc;
     }
     .tab-btn.active {
       background: var(--accent);
       color: white;
       border-color: var(--accent);
     }
-    .header-box {
-      background: #fff8f0;
-      border-left: 4px solid var(--accent);
-      padding: 8px 12px;
+
+    /* 圖2：頂部比對卡片盒 */
+    .compare-section {
+      background: white;
+      border: 2px solid var(--card-border);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 16px;
+    }
+    .compare-title {
+      font-size: 1.05rem;
+      font-weight: bold;
+      color: #27ae60;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+    .filter-bar {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      font-size: 0.82rem;
+      margin-bottom: 12px;
+      background: #f8fafc;
+      padding: 6px 10px;
       border-radius: 6px;
-      font-size: 0.85rem;
-      margin-bottom: 12px;
-      line-height: 1.5;
     }
-    .members-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+
+    /* 比對結果清單卡片 */
+    .match-list {
+      display: flex;
+      flex-direction: column;
       gap: 10px;
-      margin-bottom: 12px;
+      max-height: 520px;
+      overflow-y: auto;
+      padding-right: 2px;
     }
-    .member-card {
-      background: #fdfdfd;
-      border: 1px solid #ddd;
+    .match-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
       border-radius: 8px;
-      padding: 10px;
-      border-top: 3px solid #3498db;
+      padding: 10px 12px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.03);
     }
-    .member-header {
+    .match-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+    .match-date {
+      font-size: 0.95rem;
+      font-weight: bold;
+      color: #1a202c;
+    }
+    .match-badge {
+      background: #3182ce;
+      color: white;
+      font-size: 0.7rem;
+      font-weight: bold;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .match-summary-text {
+      font-size: 0.85rem;
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+    .text-off { color: #319795; }
+    .text-food { color: #dd6b20; }
+    .match-shifts-row {
+      font-size: 0.78rem;
+      color: #4a5568;
+      background: #f7fafc;
+      padding: 4px 8px;
+      border-radius: 4px;
+      line-height: 1.4;
+    }
+
+    /* 下部：成員設定卡片 (圖2下方樣式) */
+    .member-box {
+      background: #ffffff;
+      border: 1.5px solid #cbd5e0;
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin-bottom: 10px;
+    }
+    .member-box-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 6px;
     }
-    .row-field {
+    .member-name-input {
+      font-size: 1rem;
+      font-weight: bold;
+      color: #2d3748;
+      border: 1px solid #cbd5e0;
+      border-radius: 6px;
+      padding: 3px 6px;
+      width: 110px;
+    }
+    .field-row {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      margin-bottom: 4px;
+      flex-wrap: wrap;
+      gap: 6px;
       font-size: 0.82rem;
+      margin-bottom: 6px;
     }
-    select, input[type="text"], input[type="date"] {
-      padding: 4px 6px;
+    .custom-date-box {
+      background: #ebf8ff;
+      border: 1px dashed #bee3f8;
       border-radius: 6px;
-      border: 1px solid #ccc;
-      font-size: 0.82rem;
+      padding: 6px 8px;
+      font-size: 0.78rem;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    select, input[type="date"] {
+      padding: 3px 6px;
+      border-radius: 5px;
+      border: 1px solid #cbd5e0;
+      font-size: 0.8rem;
     }
     .btn-toggle-members {
       width: 100%;
@@ -101,11 +194,10 @@
       cursor: pointer;
       font-size: 0.85rem;
       font-weight: bold;
-      margin-bottom: 15px;
+      margin: 10px 0;
     }
-    .btn-toggle-members:hover { background: #e2e8f0; }
 
-    /* 結果月曆樣式 */
+    /* 底部月曆 */
     .cal-controls {
       display: flex;
       justify-content: space-between;
@@ -113,18 +205,7 @@
       background: #edf2f7;
       padding: 6px 10px;
       border-radius: 8px;
-      margin-bottom: 8px;
-      flex-wrap: wrap;
-      gap: 6px;
-    }
-    .cal-btn {
-      background: var(--primary);
-      color: white;
-      border: none;
-      padding: 5px 10px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 0.8rem;
+      margin: 15px 0 8px;
     }
     .month-table {
       width: 100%;
@@ -133,70 +214,73 @@
       text-align: center;
       font-size: 0.72rem;
     }
-    .month-table th {
-      background: #f1f2f6;
-      padding: 5px 1px;
-      color: #555;
-    }
+    .month-table th { background: #f1f2f6; padding: 5px 1px; }
     .month-table td {
       border: 1px solid #eee;
-      height: 64px;
+      height: 56px;
       vertical-align: top;
       padding: 2px 1px;
       word-break: break-all;
     }
-    .match-highlight {
+    .cal-match-bg {
       background: #e8f8f5 !important;
-      border: 2px solid #27ae60 !important;
-    }
-    .match-badge {
-      background: #27ae60;
-      color: white;
-      padding: 1px 3px;
-      border-radius: 3px;
-      font-size: 0.62rem;
-      font-weight: bold;
-      display: inline-block;
-      margin-top: 1px;
+      border: 1.5px solid #27ae60 !important;
     }
   </style>
 </head>
 <body>
 
   <div class="container">
-    <!-- 頂部頁面切換導航 -->
     <div class="nav-tabs">
       <a href="calc.html" class="tab-btn">📅 個人更期與PH計算</a>
       <a href="dinner.html" class="tab-btn active">🍽️ 多人約食飯／撞假對照</a>
     </div>
 
-    <div class="header-box">
-      <b>💡 食飯撞假規則：</b><br>
-      • 勾選參與食飯的同事，系統會推算未來一個月哪些日子適合約會。<br>
-      • <b>門檻判定：至少要過半人數放假（W/R）才成立</b>（例如 3 人需 2 人、6 人需 3 人、7 人需 4 人），達標日子會以綠框高亮標示！
+    <div class="page-title">多人輪班更期對照與推算系統</div>
+
+    <!-- 🌟 圖2頂部：撞假 / 食飯時間交叉比對卡片 -->
+    <div class="compare-section">
+      <div class="compare-title">
+        📅 多人撞假 / 食飯時間交叉比對
+      </div>
+      
+      <div class="filter-bar">
+        <span>篩選條件：</span>
+        <select id="filterType" onchange="renderAll()">
+          <option value="all">🌟 全部 (放假 ＋ 早班/9-1食飯)</option>
+          <option value="holiday_only">✈️ 共同放假 (W / R)</option>
+          <option value="food_only">🍔 適合約食飯/早班</option>
+        </select>
+        <span>範圍：</span>
+        <select id="rangeDays" onchange="renderAll()">
+          <option value="30">未來 30 天</option>
+          <option value="60">未來 60 天</option>
+          <option value="90">未來 90 天</option>
+        </select>
+        <span style="font-size:0.75rem; color:#718096;" id="thresholdNotice"></span>
+      </div>
+
+      <!-- 交叉比對清單 -->
+      <div class="match-list" id="matchList"></div>
     </div>
 
-    <!-- 10 位成員設定區 -->
-    <div class="members-grid" id="membersGrid"></div>
+    <!-- 🌟 圖2下方：成員名單設定（預設同事 A、B、C 打開，其餘 4 至 10 摺疊） -->
+    <div id="membersContainer"></div>
 
     <button class="btn-toggle-members" id="btnToggleMembers" onclick="toggleExtraMembers()">
       ➕ 展開其餘同事名額 (第 4 至 10 位)
     </button>
 
-    <!-- 月曆導航 -->
+    <!-- 底部月曆 -->
     <div class="cal-controls">
-      <button class="cal-btn" onclick="navMonth(-1)">◀ 上月</button>
-      <div style="font-weight:bold; color:var(--primary);" id="calTitle">2026 年 10 月</div>
-      <button class="cal-btn" onclick="navMonth(1)">下月 ▶</button>
+      <button onclick="navMonth(-1)" style="border:none; background:#2c3e50; color:white; padding:4px 8px; border-radius:4px; cursor:pointer;">◀ 上月</button>
+      <div style="font-weight:bold; color:#2c3e50;" id="calTitle"></div>
+      <button onclick="navMonth(1)" style="border:none; background:#2c3e50; color:white; padding:4px 8px; border-radius:4px; cursor:pointer;">下月 ▶</button>
     </div>
-
-    <!-- 撞假月曆表格 -->
-    <div style="overflow-x: auto;">
+    <div style="overflow-x:auto;">
       <table class="month-table">
         <thead>
-          <tr>
-            <th>MON</th><th>TUE</th><th>WED</th><th>THU</th><th>FRI</th><th>SAT</th><th>SUN</th>
-          </tr>
+          <tr><th>MON</th><th>TUE</th><th>WED</th><th>THU</th><th>FRI</th><th>SAT</th><th>SUN</th></tr>
         </thead>
         <tbody id="calTableBody"></tbody>
       </table>
@@ -205,7 +289,6 @@
   </div>
 
   <script>
-    // 支援日後隨時加組別
     const ROSTERS = {
       group2: {
         name: "2組 (12行)",
@@ -258,7 +341,9 @@
       }
     };
 
-    const ANCHOR_DATE = new Date(2026, 0, 5);
+    const dayNames = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+    const ANCHOR_DATE = new Date(2026, 0, 5); // 2026-01-05 Monday
+
     function getAbsoluteWeekIndex(dateObj) {
       const d = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
       const day = d.getDay();
@@ -271,30 +356,29 @@
     const todayObj = new Date();
     const todayAbsWeek = getAbsoluteWeekIndex(todayObj);
 
-    // 10 位成員初始化資料（前 3 位預設展開，後 7 位預設摺疊）
-    const defaultMembers = [
-      { name: "Sasa", group: "group2", row: 1, active: true },
-      { name: "Kit", group: "group3", row: 14, active: true },
-      { name: "姐姐", group: "group4", row: 1, active: true },
-      { name: "同事 4", group: "group2", row: 1, active: false },
-      { name: "同事 5", group: "group3", row: 1, active: false },
-      { name: "同事 6", group: "group4", row: 1, active: false },
-      { name: "同事 7", group: "group2", row: 1, active: false },
-      { name: "同事 8", group: "group3", row: 1, active: false },
-      { name: "同事 9", group: "group4", row: 1, active: false },
-      { name: "同事 10", group: "group2", row: 1, active: false }
+    // 10 位同事預設名單 (前 3 位打開，後 7 位摺疊)
+    const members = [
+      { name: "同事 A", group: "group2", row: 1, baseDate: "", active: true },
+      { name: "同事 B", group: "group3", row: 14, baseDate: "", active: true },
+      { name: "同事 C", group: "group4", row: 1, baseDate: "", active: true },
+      { name: "同事 D", group: "group2", row: 1, baseDate: "", active: false },
+      { name: "同事 E", group: "group3", row: 1, baseDate: "", active: false },
+      { name: "同事 F", group: "group4", row: 1, baseDate: "", active: false },
+      { name: "同事 G", group: "group2", row: 1, baseDate: "", active: false },
+      { name: "同事 H", group: "group3", row: 1, baseDate: "", active: false },
+      { name: "同事 I", group: "group4", row: 1, baseDate: "", active: false },
+      { name: "同事 J", group: "group2", row: 1, baseDate: "", active: false }
     ];
 
     let showAllMembers = false;
-    let viewYear = todayObj.getFullYear();
-    let viewMonth = todayObj.getMonth() + 1;
+    let calYear = todayObj.getFullYear();
+    let calMonth = todayObj.getMonth() + 1;
 
     function renderMembersUI() {
-      const container = document.getElementById("membersGrid");
-      container.innerHTML = "";
+      const box = document.getElementById("membersContainer");
+      box.innerHTML = "";
 
-      defaultMembers.forEach((m, idx) => {
-        // 如果未展開，只顯示前 3 位
+      members.forEach((m, idx) => {
         if (!showAllMembers && idx >= 3) return;
 
         let rowOptions = "";
@@ -303,33 +387,33 @@
           rowOptions += `<option value="${r}" ${r === m.row ? 'selected' : ''}>第 ${r} 行</option>`;
         }
 
-        container.innerHTML += `
-          <div class="member-card">
-            <div class="member-header">
-              <input type="text" value="${m.name}" onchange="updateMember(${idx}, 'name', this.value)" style="width:100px; font-weight:bold;">
+        box.innerHTML += `
+          <div class="member-box">
+            <div class="member-box-header">
+              <input type="text" class="member-name-input" value="${m.name}" onchange="updateMember(${idx}, 'name', this.value)">
               <label style="font-size:0.8rem; cursor:pointer;">
                 <input type="checkbox" ${m.active ? 'checked' : ''} onchange="updateMember(${idx}, 'active', this.checked)"> 參與聚會
               </label>
             </div>
-            <div class="row-field">
-              <span>組別:</span>
+            <div class="field-row">
+              <span>組別：</span>
               <select onchange="updateMemberGroup(${idx}, this.value)">
-                <option value="group2" ${m.group === 'group2' ? 'selected' : ''}>2組 (12行)</option>
-                <option value="group3" ${m.group === 'group3' ? 'selected' : ''}>3組 (14行)</option>
-                <option value="group4" ${m.group === 'group4' ? 'selected' : ''}>4組 (5行)</option>
+                <option value="group2" ${m.group==='group2'?'selected':''}>2組 (12行)</option>
+                <option value="group3" ${m.group==='group3'?'selected':''}>3組 (14行)</option>
+                <option value="group4" ${m.group==='group4'?'selected':''}>4組 (5行)</option>
               </select>
-            </div>
-            <div class="row-field">
-              <span>今日行數:</span>
+              <span>基準日當天處於：</span>
               <select onchange="updateMember(${idx}, 'row', parseInt(this.value))">
                 ${rowOptions}
               </select>
             </div>
+            <div class="custom-date-box">
+              <span>📅 基準日期 (若留空則預設今日)：</span>
+              <input type="date" value="${m.baseDate}" onchange="updateMember(${idx}, 'baseDate', this.value)">
+            </div>
           </div>
         `;
       });
-
-      renderCalendar();
     }
 
     function toggleExtraMembers() {
@@ -341,96 +425,204 @@
     }
 
     window.updateMember = (idx, key, val) => {
-      defaultMembers[idx][key] = val;
-      renderCalendar();
+      members[idx][key] = val;
+      renderAll();
     };
 
     window.updateMemberGroup = (idx, val) => {
-      defaultMembers[idx].group = val;
-      defaultMembers[idx].row = 1;
+      members[idx].group = val;
+      members[idx].row = 1;
       renderMembersUI();
+      renderAll();
     };
 
-    window.navMonth = (delta) => {
-      viewMonth += delta;
-      if (viewMonth > 12) { viewMonth = 1; viewYear++; }
-      if (viewMonth < 1) { viewMonth = 12; viewYear--; }
-      renderCalendar();
-    };
+    // 計算成員在特定日期的班次
+    function getMemberShiftOnDate(m, targetDate) {
+      const roster = ROSTERS[m.group];
+      let baseAbs = todayAbsWeek;
 
-    // 計算特定日期某成員的班次
-    function getMemberShift(member, dateObj) {
-      const abs = getAbsoluteWeekIndex(dateObj);
-      const diffWeeks = abs - todayAbsWeek;
-      const roster = ROSTERS[member.group];
+      if (m.baseDate) {
+        const parts = m.baseDate.split('-');
+        const bd = new Date(parts[0], parts[1] - 1, parts[2]);
+        baseAbs = getAbsoluteWeekIndex(bd);
+      }
 
-      let r = ((member.row - 1 + diffWeeks) % roster.totalRows) + 1;
+      const targetAbs = getAbsoluteWeekIndex(targetDate);
+      const diffWeeks = targetAbs - baseAbs;
+
+      let r = ((m.row - 1 + diffWeeks) % roster.totalRows) + 1;
       if (r <= 0) r += roster.totalRows;
 
-      const day = dateObj.getDay();
-      const dayIdx = (day === 0) ? 6 : day - 1;
+      const d = targetDate.getDay();
+      const dayIdx = d === 0 ? 6 : d - 1;
       return roster.data[r - 1][dayIdx];
     }
 
-    // 渲染撞假月曆
-    function renderCalendar() {
-      document.getElementById("calTitle").innerText = `${viewYear} 年 ${viewMonth} 月`;
+    // 判斷是否為放假 (W / R)
+    function isOffShift(s) {
+      return (s === 'W' || s === 'R');
+    }
 
-      const firstDate = new Date(viewYear, viewMonth - 1, 1);
-      const lastDate = new Date(viewYear, viewMonth, 0);
+    // 判斷是否為適合約食飯早班 (放假 或 1點收工)
+    function isEarlyOrFood(s) {
+      if (isOffShift(s)) return true;
+      if (s === '9-1' || s === '8-1') return true;
+      return false;
+    }
+
+    // 渲染頂部比對清單 (圖2核心邏輯)
+    function renderCompareList() {
+      const listContainer = document.getElementById("matchList");
+      const filterType = document.getElementById("filterType").value;
+      const daysCount = parseInt(document.getElementById("rangeDays").value);
+
+      const activeList = members.filter(m => m.active);
+      const total = activeList.length;
+
+      // 至少過半人數要求 (向上捨入)
+      const threshold = total > 0 ? Math.ceil(total / 2) : 999;
+      document.getElementById("thresholdNotice").innerText = `(已選 ${total} 人，至少需 ${threshold} 人成立)`;
+
+      if (total < 2) {
+        listContainer.innerHTML = `<div style="color:#718096; padding:10px;">請至少勾選 2 位參與同事進行撞假比對。</div>`;
+        return;
+      }
+
+      let matchesHtml = "";
+      let foundCount = 0;
+
+      for (let i = 0; i < daysCount; i++) {
+        const checkDate = new Date(todayObj);
+        checkDate.setDate(todayObj.getDate() + i);
+
+        const mShifts = activeList.map(m => ({
+          name: m.name,
+          shift: getMemberShiftOnDate(m, checkDate)
+        }));
+
+        const offMembers = mShifts.filter(item => isOffShift(item.shift));
+        const foodMembers = mShifts.filter(item => isEarlyOrFood(item.shift));
+
+        let isMatch = false;
+        let matchLabel = "";
+        let summaryTitle = "";
+
+        if (filterType === "holiday_only") {
+          if (offMembers.length >= threshold) {
+            isMatch = true;
+            summaryTitle = `<span class="text-off">✈️ 共同放假 (${offMembers.map(x=>x.name).join('、')})</span>`;
+          }
+        } else if (filterType === "food_only") {
+          if (foodMembers.length >= threshold) {
+            isMatch = true;
+            summaryTitle = `<span class="text-food">🍔 適合約食飯/早班 (${foodMembers.map(x=>x.name).join('、')})</span>`;
+          }
+        } else {
+          // 全部 (放假 + 9-1食飯)
+          if (offMembers.length >= threshold) {
+            isMatch = true;
+            summaryTitle = `<span class="text-off">✈️ 共同放假 (${offMembers.map(x=>x.name).join('、')})</span>`;
+          } else if (foodMembers.length >= threshold) {
+            isMatch = true;
+            summaryTitle = `<span class="text-food">🍔 適合約食飯/早班 (${foodMembers.map(x=>x.name).join('、')})</span>`;
+          }
+        }
+
+        if (isMatch) {
+          foundCount++;
+          const monthStr = checkDate.getMonth() + 1;
+          const dateStr = checkDate.getDate();
+          const dayStr = dayNames[checkDate.getDay()];
+          const isTodayTag = (i === 0) ? " (今日)" : "";
+
+          const countPassed = (filterType === "holiday_only") ? offMembers.length : foodMembers.length;
+          const badgeText = (countPassed === total) ? "全員撞期" : `${countPassed}人撞期`;
+
+          const shiftsDetail = mShifts.map(x => `<b>${x.name}</b>: ${x.shift}`).join(' ｜ ');
+
+          matchesHtml += `
+            <div class="match-card">
+              <div class="match-card-header">
+                <span class="match-date">${monthStr}月${dateStr}日 (${dayStr})${isTodayTag}</span>
+                <span class="match-badge">${badgeText}</span>
+              </div>
+              <div class="match-summary-text">${summaryTitle}</div>
+              <div class="match-shifts-row">${shiftsDetail}</div>
+            </div>
+          `;
+        }
+      }
+
+      if (foundCount === 0) {
+        matchesHtml = `<div style="color:#718096; padding:10px;">在未來 ${daysCount} 天內未找到符合過半數條件之日子。</div>`;
+      }
+
+      listContainer.innerHTML = matchesHtml;
+    }
+
+    // 渲染下部月曆
+    function renderCalendar() {
+      document.getElementById("calTitle").innerText = `${calYear} 年 ${calMonth} 月`;
+      const firstDate = new Date(calYear, calMonth - 1, 1);
+      const lastDate = new Date(calYear, calMonth, 0);
       const firstAbs = getAbsoluteWeekIndex(firstDate);
       const lastAbs = getAbsoluteWeekIndex(lastDate);
 
-      // 取得目前有勾選參與的成員
-      const activeMembers = defaultMembers.filter(m => m.active);
-      const totalActive = activeMembers.length;
-      // 過半數門檻：例如 6人需3人，3人需2人，7人需4人
-      const threshold = (totalActive === 0) ? 999 : Math.ceil(totalActive / 2);
+      const activeList = members.filter(m => m.active);
+      const total = activeList.length;
+      const threshold = total > 0 ? Math.ceil(total / 2) : 999;
 
-      let tbodyHtml = "";
-
+      let html = "";
       for (let w = firstAbs; w <= lastAbs; w++) {
-        const monday = new Date(ANCHOR_DATE);
-        monday.setDate(ANCHOR_DATE.getDate() + w * 7);
+        const mon = new Date(ANCHOR_DATE);
+        mon.setDate(ANCHOR_DATE.getDate() + w * 7);
 
-        tbodyHtml += "<tr>";
+        html += "<tr>";
         for (let d = 0; d < 7; d++) {
-          const curDate = new Date(monday);
-          curDate.setDate(monday.getDate() + d);
+          const cur = new Date(mon);
+          cur.setDate(mon.getDate() + d);
 
-          if (curDate.getMonth() + 1 === viewMonth) {
-            // 統計今日放假 (W 或 R) 的人數
-            let offNames = [];
-            activeMembers.forEach(m => {
-              const shift = getMemberShift(m, curDate);
-              if (shift === 'W' || shift === 'R') {
-                offNames.push(m.name);
-              }
+          if (cur.getMonth() + 1 === calMonth) {
+            let passedCount = 0;
+            let detail = [];
+            activeList.forEach(m => {
+              const s = getMemberShiftOnDate(m, cur);
+              if (isEarlyOrFood(s)) passedCount++;
+              detail.push(`${m.name[0]}:${s}`);
             });
 
-            const isMatched = (totalActive > 0 && offNames.length >= threshold);
-
-            tbodyHtml += `
-              <td class="${isMatched ? 'match-highlight' : ''}">
-                <div style="font-weight:bold; color:#7f8c8d;">${curDate.getDate()}</div>
-                ${isMatched ? `<div class="match-badge">🎉 撞假 ${offNames.length}/${totalActive}人</div>` : ''}
-                <div style="font-size:0.62rem; color:#555; margin-top:2px;">
-                  ${offNames.length > 0 ? '放:' + offNames.join(',') : ''}
-                </div>
+            const isMatched = (total >= 2 && passedCount >= threshold);
+            html += `
+              <td class="${isMatched ? 'cal-match-bg' : ''}">
+                <div style="font-weight:bold; color:#718096;">${cur.getDate()}</div>
+                ${isMatched ? `<div style="color:#27ae60; font-weight:bold; font-size:0.6rem;">🎉${passedCount}/${total}人</div>` : ''}
+                <div style="font-size:0.55rem; color:#888; margin-top:1px;">${detail.slice(0, 3).join(' ')}</div>
               </td>
             `;
           } else {
-            tbodyHtml += `<td style="background:#fafafa;"></td>`;
+            html += `<td style="background:#fafafa;"></td>`;
           }
         }
-        tbodyHtml += "</tr>";
+        html += "</tr>";
       }
+      document.getElementById("calTableBody").innerHTML = html;
+    }
 
-      document.getElementById("calTableBody").innerHTML = tbodyHtml;
+    window.navMonth = (delta) => {
+      calMonth += delta;
+      if (calMonth > 12) { calMonth = 1; calYear++; }
+      if (calMonth < 1) { calMonth = 12; calYear--; }
+      renderCalendar();
+    };
+
+    function renderAll() {
+      renderCompareList();
+      renderCalendar();
     }
 
     // 初始化
     renderMembersUI();
+    renderAll();
   </script>
 </body>
 </html>
