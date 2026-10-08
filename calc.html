@@ -464,9 +464,27 @@
       display: inline-block;
       width: 100%;
     }
-    .cal-shift-custom {
+        .cal-shift-custom {
       border: 1.5px solid #2980b9 !important;
       position: relative;
+    }
+    /* 有備註時的專屬醒目外框與底色 */
+    .has-note-cell {
+      border: 2px solid #3498db !important;
+      background-color: #ebf5fb !important;
+    }
+    .note-badge {
+      display: block;
+      background: #2980b9;
+      color: white;
+      font-size: 0.58rem;
+      padding: 1px 2px;
+      border-radius: 2px;
+      margin-top: 1px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-weight: bold;
     }
     .cal-week-tag-col {
       background: #fbf7fd;
@@ -694,8 +712,9 @@
 
     let currentUser = null;
     let savedRecords = [];
-    let userPhUsage = {};
+        let userPhUsage = {};
     let userShiftOverrides = {};
+    let userDayNotes = {}; // 儲存備註: { "2026-10-15": "覆診" }
 
     // ----------------- 香港官方公眾假期清單 (PH) -----------------
     const HK_PUBLIC_HOLIDAYS = {
@@ -1639,18 +1658,22 @@
             else if (finalShift && finalShift.startsWith('N')) shiftClass = 'shift-night';
             else if (finalShift === '大假' || finalShift === 'AL') shiftClass = 'shift-leave';
 
+                        const noteText = userDayNotes[dateKey] || "";
             let holidayTag = phHolidayName ? `<span class="ph-tag-holiday" title="${phHolidayName}">🔴 ${phHolidayName}</span>` : '';
             let phBadge = phHours > 0 ? `<div class="ph-hour-badge">PH:${phHours}h</div>` : '';
             let isCustomBadge = customShift ? `<span style="font-size:0.6rem; color:#2980b9; display:block;">(調)</span>` : '';
+            let noteBadge = noteText ? `<span class="note-badge" title="${noteText}">📝 ${noteText}</span>` : '';
             let isTodayBorder = (cur.toDateString() === todayObj.toDateString()) ? 'border: 2px solid #e67e22 !important;' : '';
+            let noteClass = noteText ? 'has-note-cell' : '';
 
             html += `
-              <td style="${isTodayBorder} cursor:pointer;" onclick="openCombinedModal('${dateKey}', '${defaultShift}')">
+              <td class="${noteClass}" style="${isTodayBorder} cursor:pointer;" onclick="openCombinedModal('${dateKey}', '${defaultShift}')">
                 <div class="cal-date-num">${cur.getDate()}</div>
                 ${holidayTag}
                 <div class="cal-shift-text ${shiftClass} ${customShift ? 'cal-shift-custom' : ''}">${finalShift}</div>
                 ${isCustomBadge}
                 ${phBadge}
+                ${noteBadge}
               </td>
             `;
           } else {
@@ -1711,7 +1734,7 @@
     }
 
     // ----------------- PH 及手動調更 Modal -----------------
-    window.openCombinedModal = (dateKey, defaultShift) => {
+        window.openCombinedModal = (dateKey, defaultShift) => {
       activeModalDateKey = dateKey;
       activeModalDefaultShift = defaultShift;
 
@@ -1731,6 +1754,9 @@
 
       const curShift = userShiftOverrides[dateKey] || "";
       document.getElementById("modalShiftSelect").value = curShift;
+
+      // 載入該日備註
+      document.getElementById("modalNoteInput").value = userDayNotes[dateKey] || "";
 
       document.getElementById("combinedModal").style.display = "flex";
     };
@@ -1757,9 +1783,17 @@
         delete userShiftOverrides[activeModalDateKey];
       }
 
+      const noteVal = document.getElementById("modalNoteInput").value.trim();
+      if (noteVal) {
+        userDayNotes[activeModalDateKey] = noteVal;
+      } else {
+        delete userDayNotes[activeModalDateKey];
+      }
+
       try {
         await setDoc(doc(db, "user_ph_usage", currentUser.uid), { usage: userPhUsage });
         await setDoc(doc(db, "user_shift_overrides", currentUser.uid), { overrides: userShiftOverrides });
+        await setDoc(doc(db, "user_day_notes", currentUser.uid), { notes: userDayNotes });
         closeCombinedModal();
         renderPhYearChips();
         renderUnifiedCalendar();
@@ -1772,10 +1806,12 @@
       if (!activeModalDateKey || !currentUser) return;
       delete userPhUsage[activeModalDateKey];
       delete userShiftOverrides[activeModalDateKey];
+      delete userDayNotes[activeModalDateKey];
 
       try {
         await setDoc(doc(db, "user_ph_usage", currentUser.uid), { usage: userPhUsage });
         await setDoc(doc(db, "user_shift_overrides", currentUser.uid), { overrides: userShiftOverrides });
+        await setDoc(doc(db, "user_day_notes", currentUser.uid), { notes: userDayNotes });
         closeCombinedModal();
         renderPhYearChips();
         renderUnifiedCalendar();
@@ -1849,11 +1885,18 @@
           userPhUsage = {};
         }
 
-        const ovSnap = await getDoc(doc(db, "user_shift_overrides", currentUser.uid));
+                const ovSnap = await getDoc(doc(db, "user_shift_overrides", currentUser.uid));
         if (ovSnap.exists() && ovSnap.data().overrides) {
           userShiftOverrides = ovSnap.data().overrides;
         } else {
           userShiftOverrides = {};
+        }
+
+        const noteSnap = await getDoc(doc(db, "user_day_notes", currentUser.uid));
+        if (noteSnap.exists() && noteSnap.data().notes) {
+          userDayNotes = noteSnap.data().notes;
+        } else {
+          userDayNotes = {};
         }
 
         const tlSnap = await getDoc(doc(db, "user_timeline", currentUser.uid));
@@ -2149,7 +2192,7 @@
         </select>
       </div>
 
-      <!-- 區塊 2: 手動調更 / 單日 AL -->
+            <!-- 區塊 2: 手動調更 / 單日 AL -->
       <div class="modal-section">
         <span class="modal-section-title">🔄 手動調更 / 覆寫當日班次：</span>
         <select class="select-block" id="modalShiftSelect"></select>
@@ -2157,6 +2200,13 @@
           <button type="button" style="background:#e74c3c; color:white; border:none; padding:4px 10px; border-radius:4px; font-size:0.75rem; font-weight:bold; cursor:pointer;" onclick="document.getElementById('modalShiftSelect').value='AL'">🏖️ 設為單日 AL (大假)</button>
         </div>
         <div style="font-size:0.72rem; color:#7f8c8d; margin-top:4px;">* 調更或放單日 AL 只影響當日，後續日子依然自動推算</div>
+      </div>
+
+      <!-- 區塊 3: 個人備註 -->
+      <div class="modal-section">
+        <span class="modal-section-title">📝 個人備註事項：</span>
+        <input type="text" id="modalNoteInput" placeholder="例如: 陪睇醫生、車輛驗車、兼職..." style="width:100%; padding:6px; border:1.5px solid #3498db; border-radius:6px; font-size:0.85rem;">
+        <div style="font-size:0.72rem; color:#7f8c8d; margin-top:4px;">* 加入備註後，月曆格仔會自動標註專屬顏色框框</div>
       </div>
 
       <div class="modal-btns">
