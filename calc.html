@@ -1988,9 +1988,13 @@
 
   <!-- 2. 主面板 -->
     <div class="container" id="appPanel" style="display:none;">
-    <!-- 頂部快捷重新整理 -->
-    <div style="display:flex; justify-content:flex-end; margin-bottom:6px;">
-      <button onclick="location.reload()" style="background:#34495e; color:white; border:none; padding:4px 10px; border-radius:4px; font-size:0.75rem; cursor:pointer; font-weight:bold;">🔄 重新整理頁面 (Refresh)</button>
+        <!-- 頂部頁面切換導航與快捷重新整理 -->
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; border-bottom:2px solid #eee; padding-bottom:8px; flex-wrap:wrap; gap:6px;">
+      <div style="display:flex; gap:6px;">
+        <a href="calc.html" style="padding:6px 12px; border-radius:6px; font-size:0.82rem; font-weight:bold; text-decoration:none; background:#e67e22; color:white;">📅 個人更期與PH計算</a>
+        <a href="dinner.html" style="padding:6px 12px; border-radius:6px; font-size:0.82rem; font-weight:bold; text-decoration:none; background:#f8f9fa; color:#555; border:1px solid #ccc;">🍽️ 多人約食飯／撞假對照</a>
+      </div>
+      <button onclick="location.reload()" style="background:#34495e; color:white; border:none; padding:5px 10px; border-radius:4px; font-size:0.75rem; cursor:pointer; font-weight:bold;">🔄 重新整理 (Refresh)</button>
     </div>
 
     <!-- 提示框 1：手機加至主畫面 App -->
