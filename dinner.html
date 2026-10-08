@@ -69,17 +69,49 @@
       color: #27ae60;
       margin-bottom: 6px;
     }
-    .filter-bar {
+
+    /* 點心紙篩選區 */
+    .dimsum-card {
+      background: #fffdf9;
+      border: 1.5px solid #fbd38d;
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 10px;
+      font-size: 0.82rem;
+    }
+    .dimsum-title {
+      font-weight: bold;
+      color: #c05621;
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .dimsum-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+    .dimsum-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: white;
+      border: 1px solid #fed7d7;
+      padding: 4px 6px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .dimsum-threshold-row {
       display: flex;
       align-items: center;
       flex-wrap: wrap;
-      gap: 6px;
-      font-size: 0.8rem;
-      margin-bottom: 10px;
-      background: #f8fafc;
-      padding: 6px 10px;
-      border-radius: 6px;
+      gap: 8px;
+      padding-top: 6px;
+      border-top: 1px dashed #fbd38d;
     }
+
     .match-list {
       display: flex;
       flex-direction: column;
@@ -108,9 +140,7 @@
       padding: 2px 6px;
       border-radius: 4px;
     }
-    .match-summary-text { font-size: 0.82rem; font-weight: bold; margin-bottom: 3px; }
-    .text-off { color: #319795; }
-    .text-food { color: #dd6b20; }
+    .match-summary-text { font-size: 0.82rem; font-weight: bold; margin-bottom: 3px; color: #27ae60; }
     .match-shifts-row {
       font-size: 0.75rem;
       color: #4a5568;
@@ -160,15 +190,26 @@
       align-items: center;
       flex-wrap: wrap;
       gap: 5px;
+      margin-bottom: 5px;
     }
-    select, input[type="date"] {
+    .known-vacation-box {
+      background: #f0fff4;
+      border: 1px dashed #9ae6b4;
+      border-radius: 5px;
+      padding: 5px 8px;
+      font-size: 0.75rem;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+    select, input[type="date"], input[type="number"] {
       padding: 3px 5px;
       border-radius: 4px;
       border: 1px solid #cbd5e0;
       font-size: 0.8rem;
     }
 
-    /* 逐個折疊條按鈕 */
     .member-collapse-btn {
       width: 100%;
       background: #edf2f7;
@@ -217,7 +258,6 @@
       border: 1.5px solid #27ae60 !important;
     }
 
-    /* 點擊月曆彈窗 Modal */
     .modal-overlay {
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
@@ -252,20 +292,60 @@
     <div class="compare-section">
       <div class="compare-title">📅 多人撞假 / 食飯時間交叉比對</div>
       
-      <div class="filter-bar">
-        <span>篩選：</span>
-        <select id="filterType" onchange="renderAll()">
-          <option value="all">🌟 全部 (放假 ＋ 早班/9-1食飯)</option>
-          <option value="holiday_only">✈️ 共同放假 (W / R)</option>
-          <option value="food_only">🍔 適合約食飯/早班</option>
-        </select>
-        <span>範圍：</span>
-        <select id="rangeDays" onchange="renderAll()">
-          <option value="30">未來 30 天</option>
-          <option value="60">未來 60 天</option>
-          <option value="90">未來 90 天</option>
-        </select>
-        <span style="font-size:0.75rem; color:#718096;" id="thresholdNotice"></span>
+      <!-- 點心紙篩選面板 -->
+      <div class="dimsum-card">
+        <div class="dimsum-title">
+          <span>📜 食飯點心紙（勾選當次聚會可接受之班次）：</span>
+          <span style="font-size:0.75rem; color:#718096;">
+            範圍：
+            <select id="rangeDays" onchange="renderAll()" style="font-size:0.75rem;">
+              <option value="30">未來 30 天</option>
+              <option value="60">未來 60 天</option>
+              <option value="90">未來 90 天</option>
+            </select>
+          </span>
+        </div>
+
+        <div class="dimsum-grid">
+          <label class="dimsum-item">
+            <input type="checkbox" id="shift_w" checked onchange="renderAll()">
+            <span>🌴 純放假 (W/AL)</span>
+          </label>
+          <label class="dimsum-item">
+            <input type="checkbox" id="shift_r" onchange="renderAll()">
+            <span>💤 通宵收工 (R)</span>
+          </label>
+          <label class="dimsum-item">
+            <input type="checkbox" id="shift_half" checked onchange="renderAll()">
+            <span>🌤️ 半日早班 (8/9-1)</span>
+          </label>
+          <label class="dimsum-item">
+            <input type="checkbox" id="shift_early" checked onchange="renderAll()">
+            <span>🌅 標準早更 (4-6點收)</span>
+          </label>
+          <label class="dimsum-item">
+            <input type="checkbox" id="shift_p" onchange="renderAll()">
+            <span>🌆 P更 / 中更 (1點起)</span>
+          </label>
+          <label class="dimsum-item">
+            <input type="checkbox" id="shift_n" onchange="renderAll()">
+            <span>🌙 返通宵 (N 10-8)</span>
+          </label>
+        </div>
+
+        <div class="dimsum-threshold-row">
+          <span><b>門檻要求：</b></span>
+          <label style="cursor:pointer;">
+            <input type="radio" name="thresholdMode" value="half" checked onchange="renderAll()"> 過半數人符合
+          </label>
+          <label style="cursor:pointer; display:flex; align-items:center; gap:4px;">
+            <input type="radio" name="thresholdMode" value="custom" onchange="renderAll()">
+            <span>至少</span>
+            <input type="number" id="customThresholdNum" value="3" min="1" max="10" style="width:45px;" onchange="renderAll()">
+            <span>人符合</span>
+          </label>
+          <span style="font-size:0.75rem; color:#718096; margin-left:auto;" id="thresholdNotice"></span>
+        </div>
       </div>
 
       <div class="match-list" id="matchList"></div>
@@ -274,7 +354,7 @@
     <!-- 成員設定區 (前3位常開，4至10逐個折疊) -->
     <div id="membersContainer"></div>
 
-    <!-- 底部月曆 (可點擊格仔看詳細資料) -->
+    <!-- 底部月曆 -->
     <div class="cal-controls">
       <button onclick="navMonth(-1)" style="border:none; background:#2c3e50; color:white; padding:4px 8px; border-radius:4px; cursor:pointer;">◀ 上月</button>
       <div style="font-weight:bold; color:#2c3e50;" id="calTitle"></div>
@@ -370,18 +450,18 @@
     const todayObj = new Date();
     const todayAbsWeek = getAbsoluteWeekIndex(todayObj);
 
-    // 10 位成員設定 (每個後續成員有獨立的 expanded 狀態)
+    // 10 位成員設定 (支援已知放假區間)
     const members = [
-      { name: "同事 A", group: "group2", row: 1, baseDate: "", active: true, expanded: true },
-      { name: "同事 B", group: "group3", row: 14, baseDate: "", active: true, expanded: true },
-      { name: "同事 C", group: "group4", row: 1, baseDate: "", active: true, expanded: true },
-      { name: "同事 D", group: "group2", row: 1, baseDate: "", active: false, expanded: false },
-      { name: "同事 E", group: "group3", row: 1, baseDate: "", active: false, expanded: false },
-      { name: "同事 F", group: "group4", row: 1, baseDate: "", active: false, expanded: false },
-      { name: "同事 G", group: "group2", row: 1, baseDate: "", active: false, expanded: false },
-      { name: "同事 H", group: "group3", row: 1, baseDate: "", active: false, expanded: false },
-      { name: "同事 I", group: "group4", row: 1, baseDate: "", active: false, expanded: false },
-      { name: "同事 J", group: "group2", row: 1, baseDate: "", active: false, expanded: false }
+      { name: "同事 A", group: "group2", row: 1, baseDate: "", hasVacation: false, vacStart: "", vacEnd: "", active: true, expanded: true },
+      { name: "同事 B", group: "group3", row: 14, baseDate: "", hasVacation: false, vacStart: "", vacEnd: "", active: true, expanded: true },
+      { name: "同事 C", group: "group4", row: 1, baseDate: "", hasVacation: false, vacStart: "", vacEnd: "", active: true, expanded: true },
+      { name: "同事 D", group: "group2", row: 1, baseDate: "", hasVacation: false, vacStart: "", vacEnd: "", active: false, expanded: false },
+      { name: "同事 E", group: "group3", row: 1, baseDate: "", hasVacation: false, vacStart: "", vacEnd: "", active: false, expanded: false },
+      { name: "同事 F", group: "group4", row: 1, baseDate: "", hasVacation: false, vacStart: "", vacEnd: "", active: false, expanded: false },
+      { name: "同事 G", group: "group2", row: 1, baseDate: "", hasVacation: false, vacStart: "", vacEnd: "", active: false, expanded: false },
+      { name: "同事 H", group: "group3", row: 1, baseDate: "", hasVacation: false, vacStart: "", vacEnd: "", active: false, expanded: false },
+      { name: "同事 I", group: "group4", row: 1, baseDate: "", hasVacation: false, vacStart: "", vacEnd: "", active: false, expanded: false },
+      { name: "同事 J", group: "group2", row: 1, baseDate: "", hasVacation: false, vacStart: "", vacEnd: "", active: false, expanded: false }
     ];
 
     let calYear = todayObj.getFullYear();
@@ -424,6 +504,17 @@
               <span>📅 基準日期 (留空預設今日)：</span>
               <input type="date" value="${m.baseDate}" onchange="updateMember(${idx}, 'baseDate', this.value)">
             </div>
+            <!-- 已知放假區間 (小月曆) -->
+            <div class="known-vacation-box">
+              <label style="cursor:pointer; font-weight:bold; color:#22543d;">
+                <input type="checkbox" ${m.hasVacation ? 'checked' : ''} onchange="updateMember(${idx}, 'hasVacation', this.checked)"> 已知放假區間：
+              </label>
+              <div style="${!m.hasVacation ? 'display:none;' : 'display:flex; align-items:center; gap:4px;'}">
+                <input type="date" value="${m.vacStart}" onchange="updateMember(${idx}, 'vacStart', this.value)">
+                <span>至</span>
+                <input type="date" value="${m.vacEnd}" onchange="updateMember(${idx}, 'vacEnd', this.value)">
+              </div>
+            </div>
           </div>
         `;
 
@@ -450,6 +541,7 @@
 
     window.updateMember = (idx, key, val) => {
       members[idx][key] = val;
+      if (key === 'hasVacation') renderMembersUI();
       renderAll();
     };
 
@@ -460,7 +552,17 @@
       renderAll();
     };
 
+    // 計算成員在特定日期的班次 (納入已知放假區間)
     function getMemberShiftOnDate(m, targetDate) {
+      // 1. 先檢查是否落在已知放假區間內
+      if (m.hasVacation && m.vacStart && m.vacEnd) {
+        const tStr = `${targetDate.getFullYear()}-${String(targetDate.getMonth()+1).padStart(2,'0')}-${String(targetDate.getDate()).padStart(2,'0')}`;
+        if (tStr >= m.vacStart && tStr <= m.vacEnd) {
+          return "W"; // 區間內強制標記為放假 W
+        }
+      }
+
+      // 2. 正常輪更推算
       const roster = ROSTERS[m.group];
       let baseAbs = todayAbsWeek;
 
@@ -481,21 +583,49 @@
       return roster.data[r - 1][dayIdx];
     }
 
-    function isOffShift(s) { return (s === 'W' || s === 'R'); }
-    function isEarlyOrFood(s) { return isOffShift(s) || (s === '9-1' || s === '8-1'); }
+    // 依點心紙分類判定班次
+    function checkShiftCategory(s) {
+      if (s === 'W' || s === 'AL') return 'w';
+      if (s === 'R') return 'r';
+      if (s === '9-1' || s === '8-1') return 'half';
+      if (s.startsWith('N')) return 'n';
+      // 早班收 4-6 點
+      if (['8-4','8-5','9-4','9-5','9-6','10-5'].includes(s)) return 'early';
+      // P更 / 中更
+      if (['1-9','1-10','1-11','2-10','2-11','3-10','3-11','4-10','4-11','5-10','5-11'].includes(s)) return 'p';
+      return 'other';
+    }
+
+    function isShiftAllowedByDimSum(shift) {
+      const cat = checkShiftCategory(shift);
+      if (cat === 'w' && document.getElementById('shift_w').checked) return true;
+      if (cat === 'r' && document.getElementById('shift_r').checked) return true;
+      if (cat === 'half' && document.getElementById('shift_half').checked) return true;
+      if (cat === 'early' && document.getElementById('shift_early').checked) return true;
+      if (cat === 'p' && document.getElementById('shift_p').checked) return true;
+      if (cat === 'n' && document.getElementById('shift_n').checked) return true;
+      return false;
+    }
 
     function renderCompareList() {
       const listContainer = document.getElementById("matchList");
-      const filterType = document.getElementById("filterType").value;
       const daysCount = parseInt(document.getElementById("rangeDays").value);
-
       const activeList = members.filter(m => m.active);
       const total = activeList.length;
-      const threshold = total > 0 ? Math.ceil(total / 2) : 999;
-      document.getElementById("thresholdNotice").innerText = `(已選 ${total} 人，至少需 ${threshold} 人成立)`;
+
+      // 門檻計算
+      const mode = document.querySelector('input[name="thresholdMode"]:checked').value;
+      let threshold = 1;
+      if (mode === 'half') {
+        threshold = total > 0 ? Math.ceil(total / 2) : 999;
+      } else {
+        threshold = parseInt(document.getElementById('customThresholdNum').value) || 1;
+      }
+
+      document.getElementById("thresholdNotice").innerText = `(已選 ${total} 人，需至少 ${threshold} 人符合)`;
 
       if (total < 2) {
-        listContainer.innerHTML = `<div style="color:#718096; padding:10px;">請至少勾選 2 位參與同事進行撞假比對。</div>`;
+        listContainer.innerHTML = `<div style="color:#718096; padding:10px;">請至少勾選 2 位參與同事進行比對。</div>`;
         return;
       }
 
@@ -511,41 +641,21 @@
           shift: getMemberShiftOnDate(m, checkDate)
         }));
 
-        const offMembers = mShifts.filter(item => isOffShift(item.shift));
-        const foodMembers = mShifts.filter(item => isEarlyOrFood(item.shift));
+        // 符合點心紙勾選的名單
+        const qualified = mShifts.filter(item => isShiftAllowedByDimSum(item.shift));
 
-        let isMatch = false;
-        let summaryTitle = "";
-
-        if (filterType === "holiday_only") {
-          if (offMembers.length >= threshold) {
-            isMatch = true;
-            summaryTitle = `<span class="text-off">✈️ 共同放假 (${offMembers.map(x=>x.name).join('、')})</span>`;
-          }
-        } else if (filterType === "food_only") {
-          if (foodMembers.length >= threshold) {
-            isMatch = true;
-            summaryTitle = `<span class="text-food">🍔 適合約食飯/早班 (${foodMembers.map(x=>x.name).join('、')})</span>`;
-          }
-        } else {
-          if (offMembers.length >= threshold) {
-            isMatch = true;
-            summaryTitle = `<span class="text-off">✈️ 共同放假 (${offMembers.map(x=>x.name).join('、')})</span>`;
-          } else if (foodMembers.length >= threshold) {
-            isMatch = true;
-            summaryTitle = `<span class="text-food">🍔 適合約食飯/早班 (${foodMembers.map(x=>x.name).join('、')})</span>`;
-          }
-        }
-
-        if (isMatch) {
+        if (qualified.length >= threshold) {
           foundCount++;
           const monthStr = checkDate.getMonth() + 1;
           const dateStr = checkDate.getDate();
           const dayStr = dayNames[checkDate.getDay()];
           const isTodayTag = (i === 0) ? " (今日)" : "";
-          const countPassed = (filterType === "holiday_only") ? offMembers.length : foodMembers.length;
-          const badgeText = (countPassed === total) ? "全員撞期" : `${countPassed}人撞期`;
-          const shiftsDetail = mShifts.map(x => `<b>${x.name}</b>: ${x.shift}`).join(' ｜ ');
+          const badgeText = (qualified.length === total) ? "全員符合" : `${qualified.length}/${total}人符合`;
+
+          const shiftsDetail = mShifts.map(x => {
+            const isOk = isShiftAllowedByDimSum(x.shift);
+            return `<b style="${isOk ? 'color:#27ae60;' : 'color:#a0aec0;'}">${x.name}</b>: ${x.shift}`;
+          }).join(' ｜ ');
 
           matchesHtml += `
             <div class="match-card">
@@ -553,7 +663,7 @@
                 <span class="match-date">${monthStr}月${dateStr}日 (${dayStr})${isTodayTag}</span>
                 <span class="match-badge">${badgeText}</span>
               </div>
-              <div class="match-summary-text">${summaryTitle}</div>
+              <div class="match-summary-text">✨ 符合條件：${qualified.map(x=>x.name).join('、')} (${qualified.length}人)</div>
               <div class="match-shifts-row">${shiftsDetail}</div>
             </div>
           `;
@@ -561,7 +671,7 @@
       }
 
       if (foundCount === 0) {
-        matchesHtml = `<div style="color:#718096; padding:10px;">在未來 ${daysCount} 天內未找到符合過半數條件之日子。</div>`;
+        matchesHtml = `<div style="color:#718096; padding:10px;">在未來 ${daysCount} 天內未找到符合門檻要求之日子，請嘗試放寬點心紙條件。</div>`;
       }
 
       listContainer.innerHTML = matchesHtml;
@@ -576,7 +686,9 @@
 
       const activeList = members.filter(m => m.active);
       const total = activeList.length;
-      const threshold = total > 0 ? Math.ceil(total / 2) : 999;
+
+      const mode = document.querySelector('input[name="thresholdMode"]:checked').value;
+      const threshold = (mode === 'half') ? Math.ceil(total / 2) : (parseInt(document.getElementById('customThresholdNum').value) || 1);
 
       let html = "";
       for (let w = firstAbs; w <= lastAbs; w++) {
@@ -589,19 +701,19 @@
           cur.setDate(mon.getDate() + d);
 
           if (cur.getMonth() + 1 === calMonth) {
-            let passedCount = 0;
+            let qualifiedCount = 0;
             activeList.forEach(m => {
               const s = getMemberShiftOnDate(m, cur);
-              if (isEarlyOrFood(s)) passedCount++;
+              if (isShiftAllowedByDimSum(s)) qualifiedCount++;
             });
 
-            const isMatched = (total >= 2 && passedCount >= threshold);
+            const isMatched = (total >= 2 && qualifiedCount >= threshold);
             const dateISO = `${cur.getFullYear()}-${String(cur.getMonth()+1).padStart(2,'0')}-${String(cur.getDate()).padStart(2,'0')}`;
 
             html += `
               <td class="${isMatched ? 'cal-match-bg' : ''}" onclick="openCalDetail('${dateISO}')">
                 <div style="font-weight:bold; color:#718096;">${cur.getDate()}</div>
-                ${isMatched ? `<div style="color:#27ae60; font-weight:bold; font-size:0.65rem;">🎉${passedCount}/${total}人</div>` : ''}
+                ${isMatched ? `<div style="color:#27ae60; font-weight:bold; font-size:0.65rem;">🎉${qualifiedCount}/${total}人</div>` : ''}
               </td>
             `;
           } else {
@@ -613,31 +725,28 @@
       document.getElementById("calTableBody").innerHTML = html;
     }
 
-    // 點擊月曆彈窗看所有同事資料
     window.openCalDetail = (dateISO) => {
       const parts = dateISO.split('-');
       const targetDate = new Date(parts[0], parts[1] - 1, parts[2]);
       const dayStr = dayNames[targetDate.getDay()];
 
       const activeList = members.filter(m => m.active);
-      let passedOff = [];
-      let passedFood = [];
+      let passedNames = [];
       let fullListHtml = "";
 
       activeList.forEach(m => {
         const s = getMemberShiftOnDate(m, targetDate);
-        if (isOffShift(s)) passedOff.push(m.name);
-        else if (s === '9-1' || s === '8-1') passedFood.push(m.name);
+        const isOk = isShiftAllowedByDimSum(s);
+        if (isOk) passedNames.push(m.name);
 
-        fullListHtml += `<div><b>${m.name}</b> (${ROSTERS[m.group].name})：<span style="color:#d35400; font-weight:bold;">${s}</span></div>`;
+        fullListHtml += `<div><b>${m.name}</b> (${ROSTERS[m.group].name})：<span style="font-weight:bold; ${isOk ? 'color:#27ae60;' : 'color:#e53e3e;'}">${s}</span> ${isOk ? '✅' : '❌'}</div>`;
       });
 
       document.getElementById("modalCalDate").innerText = `📅 ${parts[0]}年${parts[1]}月${parts[2]}日 (${dayStr})`;
       
-      let summaryText = "";
-      if (passedOff.length > 0) summaryText += `✈️ 放假：${passedOff.join('、')}<br>`;
-      if (passedFood.length > 0) summaryText += `🍔 早班收工：${passedFood.join('、')}<br>`;
-      if (!summaryText) summaryText = `<span style="color:#888;">當天未有人放假或早班</span>`;
+      let summaryText = passedNames.length > 0 
+        ? `<span style="color:#27ae60;">🎉 符合點心紙條件：${passedNames.join('、')} (${passedNames.length}人)</span>`
+        : `<span style="color:#888;">當天無人符合所選點心紙條件</span>`;
 
       document.getElementById("modalCalSummary").innerHTML = summaryText;
       document.getElementById("modalCalList").innerHTML = fullListHtml;
