@@ -8,7 +8,6 @@
     :root {
       --primary: #2c3e50;
       --accent: #e67e22;
-      --success: #27ae60;
       --card-border: #2ecc71;
     }
     * { box-sizing: border-box; }
@@ -28,10 +27,10 @@
     }
     .page-title {
       text-align: center;
-      font-size: 1.25rem;
+      font-size: 1.2rem;
       font-weight: bold;
       color: #2c3e50;
-      margin: 5px 0 12px 0;
+      margin: 4px 0 10px 0;
     }
     .nav-tabs {
       display: flex;
@@ -56,50 +55,43 @@
       border-color: var(--accent);
     }
 
-    /* 圖2：頂部比對卡片盒 */
+    /* 頂部比對卡片 */
     .compare-section {
       background: white;
       border: 2px solid var(--card-border);
       border-radius: 12px;
       padding: 12px;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
     }
     .compare-title {
       font-size: 1.05rem;
       font-weight: bold;
       color: #27ae60;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
     .filter-bar {
       display: flex;
       align-items: center;
       flex-wrap: wrap;
-      gap: 8px;
-      font-size: 0.82rem;
-      margin-bottom: 12px;
+      gap: 6px;
+      font-size: 0.8rem;
+      margin-bottom: 10px;
       background: #f8fafc;
       padding: 6px 10px;
       border-radius: 6px;
     }
-
-    /* 比對結果清單卡片 */
     .match-list {
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      max-height: 520px;
+      gap: 8px;
+      max-height: 480px;
       overflow-y: auto;
-      padding-right: 2px;
     }
     .match-card {
       background: #ffffff;
       border: 1px solid #e2e8f0;
       border-radius: 8px;
-      padding: 10px 12px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+      padding: 8px 10px;
     }
     .match-card-header {
       display: flex;
@@ -107,42 +99,34 @@
       align-items: center;
       margin-bottom: 4px;
     }
-    .match-date {
-      font-size: 0.95rem;
-      font-weight: bold;
-      color: #1a202c;
-    }
+    .match-date { font-size: 0.9rem; font-weight: bold; }
     .match-badge {
       background: #3182ce;
       color: white;
-      font-size: 0.7rem;
+      font-size: 0.68rem;
       font-weight: bold;
       padding: 2px 6px;
       border-radius: 4px;
     }
-    .match-summary-text {
-      font-size: 0.85rem;
-      font-weight: bold;
-      margin-bottom: 4px;
-    }
+    .match-summary-text { font-size: 0.82rem; font-weight: bold; margin-bottom: 3px; }
     .text-off { color: #319795; }
     .text-food { color: #dd6b20; }
     .match-shifts-row {
-      font-size: 0.78rem;
+      font-size: 0.75rem;
       color: #4a5568;
       background: #f7fafc;
-      padding: 4px 8px;
+      padding: 4px 6px;
       border-radius: 4px;
-      line-height: 1.4;
+      line-height: 1.35;
     }
 
-    /* 下部：成員設定卡片 (圖2下方樣式) */
+    /* 成員卡片 */
     .member-box {
       background: #ffffff;
       border: 1.5px solid #cbd5e0;
-      border-radius: 10px;
-      padding: 10px 12px;
-      margin-bottom: 10px;
+      border-radius: 8px;
+      padding: 8px 10px;
+      margin-bottom: 8px;
     }
     .member-box-header {
       display: flex;
@@ -151,53 +135,58 @@
       margin-bottom: 6px;
     }
     .member-name-input {
-      font-size: 1rem;
+      font-size: 0.95rem;
       font-weight: bold;
-      color: #2d3748;
       border: 1px solid #cbd5e0;
-      border-radius: 6px;
-      padding: 3px 6px;
-      width: 110px;
+      border-radius: 5px;
+      padding: 2px 6px;
+      width: 105px;
     }
     .field-row {
       display: flex;
       align-items: center;
       flex-wrap: wrap;
       gap: 6px;
-      font-size: 0.82rem;
-      margin-bottom: 6px;
+      font-size: 0.8rem;
+      margin-bottom: 5px;
     }
     .custom-date-box {
       background: #ebf8ff;
       border: 1px dashed #bee3f8;
-      border-radius: 6px;
-      padding: 6px 8px;
-      font-size: 0.78rem;
+      border-radius: 5px;
+      padding: 5px 8px;
+      font-size: 0.75rem;
       display: flex;
       align-items: center;
       flex-wrap: wrap;
-      gap: 6px;
+      gap: 5px;
     }
     select, input[type="date"] {
-      padding: 3px 6px;
-      border-radius: 5px;
+      padding: 3px 5px;
+      border-radius: 4px;
       border: 1px solid #cbd5e0;
       font-size: 0.8rem;
     }
-    .btn-toggle-members {
+
+    /* 逐個折疊條按鈕 */
+    .member-collapse-btn {
       width: 100%;
       background: #edf2f7;
       color: #4a5568;
-      border: 1px dashed #cbd5e0;
-      padding: 8px;
+      border: 1px solid #cbd5e0;
       border-radius: 6px;
-      cursor: pointer;
-      font-size: 0.85rem;
+      padding: 6px 10px;
+      font-size: 0.8rem;
       font-weight: bold;
-      margin: 10px 0;
+      text-align: left;
+      cursor: pointer;
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
 
-    /* 底部月曆 */
+    /* 月曆 */
     .cal-controls {
       display: flex;
       justify-content: space-between;
@@ -214,17 +203,38 @@
       text-align: center;
       font-size: 0.72rem;
     }
-    .month-table th { background: #f1f2f6; padding: 5px 1px; }
+    .month-table th { background: #f1f2f6; padding: 4px 1px; }
     .month-table td {
       border: 1px solid #eee;
-      height: 56px;
+      height: 52px;
       vertical-align: top;
       padding: 2px 1px;
-      word-break: break-all;
+      cursor: pointer;
     }
+    .month-table td:active { background: #edf2f7; }
     .cal-match-bg {
       background: #e8f8f5 !important;
       border: 1.5px solid #27ae60 !important;
+    }
+
+    /* 點擊月曆彈窗 Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+    .modal-card {
+      background: white;
+      border-radius: 12px;
+      width: 88%;
+      max-width: 330px;
+      padding: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      text-align: left;
     }
   </style>
 </head>
@@ -238,14 +248,12 @@
 
     <div class="page-title">多人輪班更期對照與推算系統</div>
 
-    <!-- 🌟 圖2頂部：撞假 / 食飯時間交叉比對卡片 -->
+    <!-- 頂部：撞假 / 食飯交叉比對 -->
     <div class="compare-section">
-      <div class="compare-title">
-        📅 多人撞假 / 食飯時間交叉比對
-      </div>
+      <div class="compare-title">📅 多人撞假 / 食飯時間交叉比對</div>
       
       <div class="filter-bar">
-        <span>篩選條件：</span>
+        <span>篩選：</span>
         <select id="filterType" onchange="renderAll()">
           <option value="all">🌟 全部 (放假 ＋ 早班/9-1食飯)</option>
           <option value="holiday_only">✈️ 共同放假 (W / R)</option>
@@ -260,23 +268,19 @@
         <span style="font-size:0.75rem; color:#718096;" id="thresholdNotice"></span>
       </div>
 
-      <!-- 交叉比對清單 -->
       <div class="match-list" id="matchList"></div>
     </div>
 
-    <!-- 🌟 圖2下方：成員名單設定（預設同事 A、B、C 打開，其餘 4 至 10 摺疊） -->
+    <!-- 成員設定區 (前3位常開，4至10逐個折疊) -->
     <div id="membersContainer"></div>
 
-    <button class="btn-toggle-members" id="btnToggleMembers" onclick="toggleExtraMembers()">
-      ➕ 展開其餘同事名額 (第 4 至 10 位)
-    </button>
-
-    <!-- 底部月曆 -->
+    <!-- 底部月曆 (可點擊格仔看詳細資料) -->
     <div class="cal-controls">
       <button onclick="navMonth(-1)" style="border:none; background:#2c3e50; color:white; padding:4px 8px; border-radius:4px; cursor:pointer;">◀ 上月</button>
       <div style="font-weight:bold; color:#2c3e50;" id="calTitle"></div>
       <button onclick="navMonth(1)" style="border:none; background:#2c3e50; color:white; padding:4px 8px; border-radius:4px; cursor:pointer;">下月 ▶</button>
     </div>
+    <div style="font-size:0.72rem; color:#718096; margin-bottom:4px;">💡 提示：點擊月曆任一日，即可彈出查看當天所有同事的完整更期及名單。</div>
     <div style="overflow-x:auto;">
       <table class="month-table">
         <thead>
@@ -286,6 +290,16 @@
       </table>
     </div>
 
+  </div>
+
+  <!-- 點擊月曆詳細資料彈窗 -->
+  <div class="modal-overlay" id="calDetailModal">
+    <div class="modal-card">
+      <h3 style="margin-top:0; color:#2c3e50; font-size:1rem; border-bottom:1px solid #edf2f7; padding-bottom:6px;" id="modalCalDate">當天詳細更期</h3>
+      <div id="modalCalSummary" style="font-size:0.85rem; font-weight:bold; margin-bottom:10px;"></div>
+      <div id="modalCalList" style="font-size:0.8rem; background:#f7fafc; padding:8px; border-radius:6px; line-height:1.6; max-height:260px; overflow-y:auto;"></div>
+      <button onclick="closeCalModal()" style="width:100%; margin-top:12px; background:#2c3e50; color:white; border:none; padding:7px; border-radius:6px; cursor:pointer; font-weight:bold;">關閉</button>
+    </div>
   </div>
 
   <script>
@@ -342,7 +356,7 @@
     };
 
     const dayNames = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
-    const ANCHOR_DATE = new Date(2026, 0, 5); // 2026-01-05 Monday
+    const ANCHOR_DATE = new Date(2026, 0, 5);
 
     function getAbsoluteWeekIndex(dateObj) {
       const d = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
@@ -356,21 +370,20 @@
     const todayObj = new Date();
     const todayAbsWeek = getAbsoluteWeekIndex(todayObj);
 
-    // 10 位同事預設名單 (前 3 位打開，後 7 位摺疊)
+    // 10 位成員設定 (每個後續成員有獨立的 expanded 狀態)
     const members = [
-      { name: "同事 A", group: "group2", row: 1, baseDate: "", active: true },
-      { name: "同事 B", group: "group3", row: 14, baseDate: "", active: true },
-      { name: "同事 C", group: "group4", row: 1, baseDate: "", active: true },
-      { name: "同事 D", group: "group2", row: 1, baseDate: "", active: false },
-      { name: "同事 E", group: "group3", row: 1, baseDate: "", active: false },
-      { name: "同事 F", group: "group4", row: 1, baseDate: "", active: false },
-      { name: "同事 G", group: "group2", row: 1, baseDate: "", active: false },
-      { name: "同事 H", group: "group3", row: 1, baseDate: "", active: false },
-      { name: "同事 I", group: "group4", row: 1, baseDate: "", active: false },
-      { name: "同事 J", group: "group2", row: 1, baseDate: "", active: false }
+      { name: "同事 A", group: "group2", row: 1, baseDate: "", active: true, expanded: true },
+      { name: "同事 B", group: "group3", row: 14, baseDate: "", active: true, expanded: true },
+      { name: "同事 C", group: "group4", row: 1, baseDate: "", active: true, expanded: true },
+      { name: "同事 D", group: "group2", row: 1, baseDate: "", active: false, expanded: false },
+      { name: "同事 E", group: "group3", row: 1, baseDate: "", active: false, expanded: false },
+      { name: "同事 F", group: "group4", row: 1, baseDate: "", active: false, expanded: false },
+      { name: "同事 G", group: "group2", row: 1, baseDate: "", active: false, expanded: false },
+      { name: "同事 H", group: "group3", row: 1, baseDate: "", active: false, expanded: false },
+      { name: "同事 I", group: "group4", row: 1, baseDate: "", active: false, expanded: false },
+      { name: "同事 J", group: "group2", row: 1, baseDate: "", active: false, expanded: false }
     ];
 
-    let showAllMembers = false;
     let calYear = todayObj.getFullYear();
     let calMonth = todayObj.getMonth() + 1;
 
@@ -379,16 +392,16 @@
       box.innerHTML = "";
 
       members.forEach((m, idx) => {
-        if (!showAllMembers && idx >= 3) return;
-
         let rowOptions = "";
         const maxR = ROSTERS[m.group].totalRows;
         for (let r = 1; r <= maxR; r++) {
           rowOptions += `<option value="${r}" ${r === m.row ? 'selected' : ''}>第 ${r} 行</option>`;
         }
 
-        box.innerHTML += `
-          <div class="member-box">
+        const isAlwaysOpen = (idx < 3);
+
+        let cardHtml = `
+          <div class="member-box" id="memberCard_${idx}" style="${(!isAlwaysOpen && !m.expanded) ? 'display:none;' : ''}">
             <div class="member-box-header">
               <input type="text" class="member-name-input" value="${m.name}" onchange="updateMember(${idx}, 'name', this.value)">
               <label style="font-size:0.8rem; cursor:pointer;">
@@ -402,27 +415,38 @@
                 <option value="group3" ${m.group==='group3'?'selected':''}>3組 (14行)</option>
                 <option value="group4" ${m.group==='group4'?'selected':''}>4組 (5行)</option>
               </select>
-              <span>基準日當天處於：</span>
+              <span>基準日處於：</span>
               <select onchange="updateMember(${idx}, 'row', parseInt(this.value))">
                 ${rowOptions}
               </select>
             </div>
             <div class="custom-date-box">
-              <span>📅 基準日期 (若留空則預設今日)：</span>
+              <span>📅 基準日期 (留空預設今日)：</span>
               <input type="date" value="${m.baseDate}" onchange="updateMember(${idx}, 'baseDate', this.value)">
             </div>
           </div>
         `;
+
+        if (!isAlwaysOpen) {
+          box.innerHTML += `
+            <div>
+              <button class="member-collapse-btn" onclick="toggleSingleMember(${idx})">
+                <span>👤 ${m.name} (${m.active ? '已勾選參與' : '未參與'})</span>
+                <span>${m.expanded ? '▲ 收起' : '▼ 展開編輯'}</span>
+              </button>
+              ${cardHtml}
+            </div>
+          `;
+        } else {
+          box.innerHTML += cardHtml;
+        }
       });
     }
 
-    function toggleExtraMembers() {
-      showAllMembers = !showAllMembers;
-      document.getElementById("btnToggleMembers").innerText = showAllMembers 
-        ? "▲ 摺疊其餘名額 (只顯示前 3 位)" 
-        : "➕ 展開其餘同事名額 (第 4 至 10 位)";
+    window.toggleSingleMember = (idx) => {
+      members[idx].expanded = !members[idx].expanded;
       renderMembersUI();
-    }
+    };
 
     window.updateMember = (idx, key, val) => {
       members[idx][key] = val;
@@ -436,7 +460,6 @@
       renderAll();
     };
 
-    // 計算成員在特定日期的班次
     function getMemberShiftOnDate(m, targetDate) {
       const roster = ROSTERS[m.group];
       let baseAbs = todayAbsWeek;
@@ -458,19 +481,9 @@
       return roster.data[r - 1][dayIdx];
     }
 
-    // 判斷是否為放假 (W / R)
-    function isOffShift(s) {
-      return (s === 'W' || s === 'R');
-    }
+    function isOffShift(s) { return (s === 'W' || s === 'R'); }
+    function isEarlyOrFood(s) { return isOffShift(s) || (s === '9-1' || s === '8-1'); }
 
-    // 判斷是否為適合約食飯早班 (放假 或 1點收工)
-    function isEarlyOrFood(s) {
-      if (isOffShift(s)) return true;
-      if (s === '9-1' || s === '8-1') return true;
-      return false;
-    }
-
-    // 渲染頂部比對清單 (圖2核心邏輯)
     function renderCompareList() {
       const listContainer = document.getElementById("matchList");
       const filterType = document.getElementById("filterType").value;
@@ -478,8 +491,6 @@
 
       const activeList = members.filter(m => m.active);
       const total = activeList.length;
-
-      // 至少過半人數要求 (向上捨入)
       const threshold = total > 0 ? Math.ceil(total / 2) : 999;
       document.getElementById("thresholdNotice").innerText = `(已選 ${total} 人，至少需 ${threshold} 人成立)`;
 
@@ -504,7 +515,6 @@
         const foodMembers = mShifts.filter(item => isEarlyOrFood(item.shift));
 
         let isMatch = false;
-        let matchLabel = "";
         let summaryTitle = "";
 
         if (filterType === "holiday_only") {
@@ -518,7 +528,6 @@
             summaryTitle = `<span class="text-food">🍔 適合約食飯/早班 (${foodMembers.map(x=>x.name).join('、')})</span>`;
           }
         } else {
-          // 全部 (放假 + 9-1食飯)
           if (offMembers.length >= threshold) {
             isMatch = true;
             summaryTitle = `<span class="text-off">✈️ 共同放假 (${offMembers.map(x=>x.name).join('、')})</span>`;
@@ -534,10 +543,8 @@
           const dateStr = checkDate.getDate();
           const dayStr = dayNames[checkDate.getDay()];
           const isTodayTag = (i === 0) ? " (今日)" : "";
-
           const countPassed = (filterType === "holiday_only") ? offMembers.length : foodMembers.length;
           const badgeText = (countPassed === total) ? "全員撞期" : `${countPassed}人撞期`;
-
           const shiftsDetail = mShifts.map(x => `<b>${x.name}</b>: ${x.shift}`).join(' ｜ ');
 
           matchesHtml += `
@@ -560,7 +567,6 @@
       listContainer.innerHTML = matchesHtml;
     }
 
-    // 渲染下部月曆
     function renderCalendar() {
       document.getElementById("calTitle").innerText = `${calYear} 年 ${calMonth} 月`;
       const firstDate = new Date(calYear, calMonth - 1, 1);
@@ -584,19 +590,18 @@
 
           if (cur.getMonth() + 1 === calMonth) {
             let passedCount = 0;
-            let detail = [];
             activeList.forEach(m => {
               const s = getMemberShiftOnDate(m, cur);
               if (isEarlyOrFood(s)) passedCount++;
-              detail.push(`${m.name[0]}:${s}`);
             });
 
             const isMatched = (total >= 2 && passedCount >= threshold);
+            const dateISO = `${cur.getFullYear()}-${String(cur.getMonth()+1).padStart(2,'0')}-${String(cur.getDate()).padStart(2,'0')}`;
+
             html += `
-              <td class="${isMatched ? 'cal-match-bg' : ''}">
+              <td class="${isMatched ? 'cal-match-bg' : ''}" onclick="openCalDetail('${dateISO}')">
                 <div style="font-weight:bold; color:#718096;">${cur.getDate()}</div>
-                ${isMatched ? `<div style="color:#27ae60; font-weight:bold; font-size:0.6rem;">🎉${passedCount}/${total}人</div>` : ''}
-                <div style="font-size:0.55rem; color:#888; margin-top:1px;">${detail.slice(0, 3).join(' ')}</div>
+                ${isMatched ? `<div style="color:#27ae60; font-weight:bold; font-size:0.65rem;">🎉${passedCount}/${total}人</div>` : ''}
               </td>
             `;
           } else {
@@ -607,6 +612,41 @@
       }
       document.getElementById("calTableBody").innerHTML = html;
     }
+
+    // 點擊月曆彈窗看所有同事資料
+    window.openCalDetail = (dateISO) => {
+      const parts = dateISO.split('-');
+      const targetDate = new Date(parts[0], parts[1] - 1, parts[2]);
+      const dayStr = dayNames[targetDate.getDay()];
+
+      const activeList = members.filter(m => m.active);
+      let passedOff = [];
+      let passedFood = [];
+      let fullListHtml = "";
+
+      activeList.forEach(m => {
+        const s = getMemberShiftOnDate(m, targetDate);
+        if (isOffShift(s)) passedOff.push(m.name);
+        else if (s === '9-1' || s === '8-1') passedFood.push(m.name);
+
+        fullListHtml += `<div><b>${m.name}</b> (${ROSTERS[m.group].name})：<span style="color:#d35400; font-weight:bold;">${s}</span></div>`;
+      });
+
+      document.getElementById("modalCalDate").innerText = `📅 ${parts[0]}年${parts[1]}月${parts[2]}日 (${dayStr})`;
+      
+      let summaryText = "";
+      if (passedOff.length > 0) summaryText += `✈️ 放假：${passedOff.join('、')}<br>`;
+      if (passedFood.length > 0) summaryText += `🍔 早班收工：${passedFood.join('、')}<br>`;
+      if (!summaryText) summaryText = `<span style="color:#888;">當天未有人放假或早班</span>`;
+
+      document.getElementById("modalCalSummary").innerHTML = summaryText;
+      document.getElementById("modalCalList").innerHTML = fullListHtml;
+      document.getElementById("calDetailModal").style.display = "flex";
+    };
+
+    window.closeCalModal = () => {
+      document.getElementById("calDetailModal").style.display = "none";
+    };
 
     window.navMonth = (delta) => {
       calMonth += delta;
@@ -620,7 +660,6 @@
       renderCalendar();
     }
 
-    // 初始化
     renderMembersUI();
     renderAll();
   </script>
