@@ -1193,13 +1193,13 @@
             </div>
 
             <!-- ① 組別與基準行數 (同一行並排) -->
-            <div class="field-row" style="${c.useKnownDate ? 'display:none;' : ''}">
-              <div style="display:flex; align-items:center; gap:3px;">
+                          <div style="display:flex; align-items:center; gap:3px;">
                 <span>組別:</span>
                 <select onchange="updateColleagueGroup(${idx}, this.value)" style="max-width:98px;">
                   <option value="group2" ${c.group==='group2'?'selected':''}>2組 (12行)</option>
                   <option value="group3" ${c.group==='group3'?'selected':''}>3組 (14行)</option>
                   <option value="group4" ${c.group==='group4'?'selected':''}>4組 (5行)</option>
+                  <option value="groupCell" ${c.group==='groupCell'?'selected':''}>Cell組 (6行)</option>
                 </select>
               </div>
               <div style="display:flex; align-items:center; gap:3px;">
@@ -1220,12 +1220,13 @@
                 </div>
               </div>
               <div class="field-row">
-                <div style="display:flex; align-items:center; gap:3px;">
+                                <div style="display:flex; align-items:center; gap:3px;">
                   <span>當時組:</span>
                   <select onchange="updateColleagueKnownGroup(${idx}, this.value)" style="max-width:95px;">
                     <option value="group2" ${c.knownGroup==='group2'?'selected':''}>2組 (12行)</option>
                     <option value="group3" ${c.knownGroup==='group3'?'selected':''}>3組 (14行)</option>
                     <option value="group4" ${c.knownGroup==='group4'?'selected':''}>4組 (5行)</option>
+                    <option value="groupCell" ${c.knownGroup==='groupCell'?'selected':''}>Cell組 (6行)</option>
                   </select>
                 </div>
                 <div style="display:flex; align-items:center; gap:3px;">
@@ -1986,14 +1987,20 @@
   </div>
 
   <!-- 2. 主面板 -->
-  <div class="container" id="appPanel" style="display:none;">
-    <div style="background:#fff3cd; border-left:4px solid #ffc107; padding:6px 10px; margin-bottom:10px; border-radius:4px; font-size:0.8rem; color:#856404;">
-      📢 <b>溫馨提示：</b>首次註冊成功後系統數據或有短暫延遲，如未即時顯示更期或個人資料，請先 <b>重新整理 (Refresh)</b> 頁面一次。
+    <div class="container" id="appPanel" style="display:none;">
+    <!-- 頂部快捷重新整理 -->
+    <div style="display:flex; justify-content:flex-end; margin-bottom:6px;">
+      <button onclick="location.reload()" style="background:#34495e; color:white; border:none; padding:4px 10px; border-radius:4px; font-size:0.75rem; cursor:pointer; font-weight:bold;">🔄 重新整理頁面 (Refresh)</button>
     </div>
-        <!-- 頂部頁面切換導航 -->
-    <div style="display:flex; gap:8px; margin-bottom:12px; border-bottom:2px solid #eee; padding-bottom:8px;">
-      <a href="calc.html" style="padding:7px 12px; border-radius:6px; font-size:0.85rem; font-weight:bold; text-decoration:none; background:#e67e22; color:white;">📅 個人更期與PH計算</a>
-      <a href="dinner.html" style="padding:7px 12px; border-radius:6px; font-size:0.85rem; font-weight:bold; text-decoration:none; background:#f8f9fa; color:#555; border:1px solid #ccc;">🍽️ 多人約食飯／撞假對照</a>
+
+    <!-- 提示框 1：手機加至主畫面 App -->
+    <div style="background:#e8f4fd; border-left:4px solid #3498db; padding:6px 10px; margin-bottom:6px; border-radius:4px; font-size:0.8rem; color:#2980b9; line-height:1.4;">
+      📲 <b>手機安裝技巧：</b>在手機瀏覽器點擊下方「<b>分享</b>」圖示（或右上角設定），然後選擇「<b>加至主畫面 (Add to Home Screen)</b>」，即可當作獨立 App 隨時點開使用！
+    </div>
+
+    <!-- 提示框 2：註冊延遲提示 -->
+    <div style="background:#fff3cd; border-left:4px solid #ffc107; padding:6px 10px; margin-bottom:10px; border-radius:4px; font-size:0.8rem; color:#856404;">
+      📢 <b>溫馨提示：</b>首次註冊成功後系統數據或有短暫延遲，如未即時顯示更期或個人資料，請點擊上方按鈕重新整理一次。
     </div>
     <div class="top-bar">
       <div>
@@ -2175,9 +2182,14 @@
             <div style="font-size:0.75rem; color:#7d3c98;">折合總日數 (8h=1日)</div>
             <div class="ph-stat-val" style="color:#c0392b;" id="phStatTotalDays">0.00 日</div>
           </div>
-        </div>
+                </div>
       </div>
 
+    </div>
+
+    <!-- 底部快捷重新整理 -->
+    <div style="text-align:center; margin-top:20px; padding:10px 0;">
+      <button onclick="location.reload()" style="background:#34495e; color:white; border:none; padding:8px 18px; border-radius:6px; font-size:0.85rem; cursor:pointer; font-weight:bold;">🔄 重新整理頁面 (Refresh)</button>
     </div>
 
   </div>
