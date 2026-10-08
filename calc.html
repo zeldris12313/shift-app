@@ -1173,7 +1173,7 @@
           knownDayName = `(${dayNames[dIdx]})`;
         }
 
-        container.innerHTML += `
+                container.innerHTML += `
           <div class="colleague-card">
             <div class="colleague-title">
               <input type="text" value="${c.name}" onchange="updateColleague(${idx}, 'name', this.value)" style="width:105px; font-weight:bold;">
@@ -1184,7 +1184,7 @@
 
             <!-- 模式選擇 -->
             <div style="background:#edf2f7; padding:4px 6px; border-radius:5px; margin-bottom:6px; font-size:0.75rem;">
-              <label style="margin-right:8px; cursor:pointer;">
+              <label style="margin-right:10px; cursor:pointer;">
                 <input type="radio" name="mode_${idx}" ${!c.useKnownDate ? 'checked' : ''} onchange="updateColleague(${idx}, 'useKnownDate', false)"> 以今日行數推算
               </label>
               <label style="cursor:pointer;">
@@ -1193,7 +1193,8 @@
             </div>
 
             <!-- ① 組別與基準行數 (同一行並排) -->
-                          <div style="display:flex; align-items:center; gap:3px;">
+            <div class="field-row" style="${c.useKnownDate ? 'display:none;' : ''}">
+              <div style="display:flex; align-items:center; gap:3px;">
                 <span>組別:</span>
                 <select onchange="updateColleagueGroup(${idx}, this.value)" style="max-width:98px;">
                   <option value="group2" ${c.group==='group2'?'selected':''}>2組 (12行)</option>
@@ -1210,7 +1211,7 @@
               </div>
             </div>
 
-            <!-- ② 已知何年何月何日在那一組那一行 (自動計算星期幾) -->
+            <!-- ② 已知某日設定 -->
             <div style="${!c.useKnownDate ? 'display:none;' : ''} background:#fff9e6; border:1px solid #fed330; border-radius:5px; padding:6px; margin-bottom:6px;">
               <div class="field-row" style="margin-bottom:4px;">
                 <span style="color:#b7791f; font-weight:bold;">已知日期:</span>
@@ -1220,7 +1221,7 @@
                 </div>
               </div>
               <div class="field-row">
-                                <div style="display:flex; align-items:center; gap:3px;">
+                <div style="display:flex; align-items:center; gap:3px;">
                   <span>當時組:</span>
                   <select onchange="updateColleagueKnownGroup(${idx}, this.value)" style="max-width:95px;">
                     <option value="group2" ${c.knownGroup==='group2'?'selected':''}>2組 (12行)</option>
@@ -1238,7 +1239,7 @@
               </div>
             </div>
 
-                        <!-- 放假時間設定 (包在卡片內) -->
+            <!-- 放假時間設定 (完全包在 card 內部) -->
             <div class="field-row">
               <span style="color:#d35400; font-weight:bold;">放假首日:</span>
               <input type="date" value="${c.leaveDate}" onchange="onColleagueDateChange(${idx}, this.value)">
