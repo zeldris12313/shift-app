@@ -1238,7 +1238,7 @@
               </div>
             </div>
 
-            <!-- 放假時間設定 -->
+                        <!-- 放假時間設定 (包在卡片內) -->
             <div class="field-row">
               <span style="color:#d35400; font-weight:bold;">放假首日:</span>
               <input type="date" value="${c.leaveDate}" onchange="onColleagueDateChange(${idx}, this.value)">
@@ -1987,25 +1987,28 @@
   </div>
 
   <!-- 2. 主面板 -->
-    <div class="container" id="appPanel" style="display:none;">
-        <!-- 頂部頁面切換導航與快捷重新整理 -->
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; border-bottom:2px solid #eee; padding-bottom:8px; flex-wrap:wrap; gap:6px;">
-      <div style="display:flex; gap:6px;">
-        <a href="calc.html" style="padding:6px 12px; border-radius:6px; font-size:0.82rem; font-weight:bold; text-decoration:none; background:#e67e22; color:white;">📅 個人更期與PH計算</a>
-        <a href="dinner.html" style="padding:6px 12px; border-radius:6px; font-size:0.82rem; font-weight:bold; text-decoration:none; background:#f8f9fa; color:#555; border:1px solid #ccc;">🍽️ 多人約食飯／撞假對照</a>
-      </div>
-      <button onclick="location.reload()" style="background:#34495e; color:white; border:none; padding:5px 10px; border-radius:4px; font-size:0.75rem; cursor:pointer; font-weight:bold;">🔄 重新整理 (Refresh)</button>
+      <div class="container" id="appPanel" style="display:none;">
+    <!-- 1. 最頂置中重新整理按鈕 -->
+    <div style="text-align:center; margin-bottom:10px;">
+      <button onclick="location.reload()" style="background:#34495e; color:white; border:none; padding:6px 16px; border-radius:6px; font-size:0.8rem; cursor:pointer; font-weight:bold;">🔄 重新整理 (Refresh)</button>
     </div>
 
-    <!-- 提示框 1：手機加至主畫面 App -->
-    <div style="background:#e8f4fd; border-left:4px solid #3498db; padding:6px 10px; margin-bottom:6px; border-radius:4px; font-size:0.8rem; color:#2980b9; line-height:1.4;">
+    <!-- 2. 手機安裝技巧提示框 -->
+    <div style="background:#e8f4fd; border-left:4px solid #3498db; padding:6px 10px; margin-bottom:8px; border-radius:4px; font-size:0.8rem; color:#2980b9; line-height:1.4;">
       📲 <b>手機安裝技巧：</b>在手機瀏覽器點擊下方「<b>分享</b>」圖示（或右上角設定），然後選擇「<b>加至主畫面 (Add to Home Screen)</b>」，即可當作獨立 App 隨時點開使用！
     </div>
 
-    <!-- 提示框 2：註冊延遲提示 -->
-    <div style="background:#fff3cd; border-left:4px solid #ffc107; padding:6px 10px; margin-bottom:10px; border-radius:4px; font-size:0.8rem; color:#856404;">
+    <!-- 3. 頁面切換按鈕 (夾在兩個提示框之間) -->
+    <div style="display:flex; justify-content:center; gap:8px; margin-bottom:8px;">
+      <a href="calc.html" style="padding:6px 12px; border-radius:6px; font-size:0.82rem; font-weight:bold; text-decoration:none; background:#e67e22; color:white;">📅 個人更期與PH計算</a>
+      <a href="dinner.html" style="padding:6px 12px; border-radius:6px; font-size:0.82rem; font-weight:bold; text-decoration:none; background:#f8f9fa; color:#555; border:1px solid #ccc;">🍽️ 多人約食飯／撞假對照</a>
+    </div>
+
+    <!-- 4. 溫馨提示框 -->
+    <div style="background:#fff3cd; border-left:4px solid #ffc107; padding:6px 10px; margin-bottom:12px; border-radius:4px; font-size:0.8rem; color:#856404;">
       📢 <b>溫馨提示：</b>首次註冊成功後系統數據或有短暫延遲，如未即時顯示更期或個人資料，請點擊上方按鈕重新整理一次。
     </div>
+
     <div class="top-bar">
       <div>
         👤 目前用戶：<b id="userLabel" style="color:var(--highlight);"></b>
