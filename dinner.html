@@ -280,19 +280,21 @@
 </head>
 <body>
 
-    <div class="container">
-    <!-- 頂部頁面切換導航與快捷重新整理 -->
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; border-bottom:2px solid #edf2f7; padding-bottom:8px; flex-wrap:wrap; gap:6px;">
-      <div class="nav-tabs" style="margin-bottom:0; border-bottom:none; padding-bottom:0;">
-        <a href="calc.html" class="tab-btn">📅 個人更期與PH計算</a>
-        <a href="dinner.html" class="tab-btn active">🍽️ 多人約食飯／撞假對照</a>
-      </div>
-      <button onclick="location.reload()" style="background:#34495e; color:white; border:none; padding:5px 10px; border-radius:4px; font-size:0.75rem; cursor:pointer; font-weight:bold;">🔄 重新整理 (Refresh)</button>
+      <div class="container">
+    <!-- 1. 最頂置中重新整理按鈕 -->
+    <div style="text-align:center; margin-bottom:10px;">
+      <button onclick="location.reload()" style="background:#34495e; color:white; border:none; padding:6px 16px; border-radius:6px; font-size:0.8rem; cursor:pointer; font-weight:bold;">🔄 重新整理 (Refresh)</button>
     </div>
 
-    <!-- 提示框：手機加至主畫面 App -->
-    <div style="background:#e8f4fd; border-left:4px solid #3498db; padding:6px 10px; margin-bottom:10px; border-radius:4px; font-size:0.8rem; color:#2980b9; line-height:1.4;">
-      📲 <b>手機安裝技巧：</b>在手機瀏覽器點擊下方「<b>分享</b>」圖示，然後選擇「<b>加至主畫面 (Add to Home Screen)</b>」，即可當作獨立 App 隨時點開使用！
+    <!-- 2. 手機安裝技巧提示框 -->
+    <div style="background:#e8f4fd; border-left:4px solid #3498db; padding:6px 10px; margin-bottom:8px; border-radius:4px; font-size:0.8rem; color:#2980b9; line-height:1.4;">
+      📲 <b>手機安裝技巧：</b>在手機瀏覽器點擊下方「<b>分享</b>」圖示（或右上角設定），然後選擇「<b>加至主畫面 (Add to Home Screen)</b>」，即可當作獨立 App 隨時點開使用！
+    </div>
+
+    <!-- 3. 頁面切換按鈕 -->
+    <div style="display:flex; justify-content:center; gap:8px; margin-bottom:12px;">
+      <a href="calc.html" class="tab-btn">📅 個人更期與PH計算</a>
+      <a href="dinner.html" class="tab-btn active">🍽️ 多人約食飯／撞假對照</a>
     </div>
 
     <div class="page-title">多人輪班更期對照與推算系統</div>
