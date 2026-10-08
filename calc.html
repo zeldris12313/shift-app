@@ -1898,8 +1898,8 @@
 <body>
 
   <!-- 1. 登入面板 -->
-  <div class="auth-container" id="authPanel">
-    <h2 id="authTitle" style="color:var(--primary-color); margin-top:0;">🔒 登入推算系統</h2>
+    <!-- 1. 登入面板 (預設隱藏，避免已登入切換時閃屏) -->
+  <div class="auth-container" id="authPanel" style="display:none;">
     <input type="text" id="authUsername" placeholder="帳戶名稱 (例如: peter888)">
     <input type="password" id="authPassword" placeholder="密碼 (最少6位)">
     
