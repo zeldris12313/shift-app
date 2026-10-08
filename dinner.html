@@ -280,10 +280,19 @@
 </head>
 <body>
 
-  <div class="container">
-    <div class="nav-tabs">
-      <a href="calc.html" class="tab-btn">📅 個人更期與PH計算</a>
-      <a href="dinner.html" class="tab-btn active">🍽️ 多人約食飯／撞假對照</a>
+    <div class="container">
+    <!-- 頂部頁面切換導航與快捷重新整理 -->
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; border-bottom:2px solid #edf2f7; padding-bottom:8px; flex-wrap:wrap; gap:6px;">
+      <div class="nav-tabs" style="margin-bottom:0; border-bottom:none; padding-bottom:0;">
+        <a href="calc.html" class="tab-btn">📅 個人更期與PH計算</a>
+        <a href="dinner.html" class="tab-btn active">🍽️ 多人約食飯／撞假對照</a>
+      </div>
+      <button onclick="location.reload()" style="background:#34495e; color:white; border:none; padding:5px 10px; border-radius:4px; font-size:0.75rem; cursor:pointer; font-weight:bold;">🔄 重新整理 (Refresh)</button>
+    </div>
+
+    <!-- 提示框：手機加至主畫面 App -->
+    <div style="background:#e8f4fd; border-left:4px solid #3498db; padding:6px 10px; margin-bottom:10px; border-radius:4px; font-size:0.8rem; color:#2980b9; line-height:1.4;">
+      📲 <b>手機安裝技巧：</b>在手機瀏覽器點擊下方「<b>分享</b>」圖示，然後選擇「<b>加至主畫面 (Add to Home Screen)</b>」，即可當作獨立 App 隨時點開使用！
     </div>
 
     <div class="page-title">多人輪班更期對照與推算系統</div>
@@ -361,13 +370,18 @@
       <button onclick="navMonth(1)" style="border:none; background:#2c3e50; color:white; padding:4px 8px; border-radius:4px; cursor:pointer;">下月 ▶</button>
     </div>
     <div style="font-size:0.72rem; color:#718096; margin-bottom:4px;">💡 提示：點擊月曆任一日，即可彈出查看當天所有同事的完整更期及名單。</div>
-    <div style="overflow-x:auto;">
+        <div style="overflow-x:auto;">
       <table class="month-table">
         <thead>
           <tr><th>MON</th><th>TUE</th><th>WED</th><th>THU</th><th>FRI</th><th>SAT</th><th>SUN</th></tr>
         </thead>
         <tbody id="calTableBody"></tbody>
       </table>
+    </div>
+
+    <!-- 底部快捷重新整理 -->
+    <div style="text-align:center; margin-top:16px; padding:8px 0;">
+      <button onclick="location.reload()" style="background:#34495e; color:white; border:none; padding:8px 18px; border-radius:6px; font-size:0.85rem; cursor:pointer; font-weight:bold;">🔄 重新整理頁面 (Refresh)</button>
     </div>
 
   </div>
@@ -430,7 +444,19 @@
           ["9-5", "9-5", "9-5", "2-10", "9-1", "W", "8-4"],
           ["9-4", "8-1", "W", "8-4", "9-5", "1-11", "5-11"],
           ["10-5", "9-1", "1-11", "5-11", "W", "9-6", "9-5"],
-          ["8-4", "10-5", "9-6", "1-11", "4-10", "9-1", "W"]
+                    ["8-4", "10-5", "9-6", "1-11", "4-10", "9-1", "W"]
+        ]
+      },
+      groupCell: {
+        name: "Cell組 (6行)",
+        totalRows: 6,
+        data: [
+          ["9-5", "9-5", "9-5", "8-5", "9-1", "W", "9-4"],
+          ["9-1", "9-5", "9-5", "9-6", "9-4", "8-4", "W"],
+          ["8-4", "8-4", "8-4", "9-1", "W", "8-4", "9-5"],
+          ["9-6", "W", "9-6", "4-11", "4-11", "9-5", "9-1"],
+          ["9-5", "9-5", "W", "9-5", "9-5", "9-5", "9-1"],
+          ["1-11", "5-11", "5-11", "W", "9-6", "9-6", "9-1"]
         ]
       }
     };
@@ -489,11 +515,12 @@
               </label>
             </div>
             <div class="field-row">
-              <span>組別：</span>
+                            <span>組別：</span>
               <select onchange="updateMemberGroup(${idx}, this.value)">
                 <option value="group2" ${m.group==='group2'?'selected':''}>2組 (12行)</option>
                 <option value="group3" ${m.group==='group3'?'selected':''}>3組 (14行)</option>
                 <option value="group4" ${m.group==='group4'?'selected':''}>4組 (5行)</option>
+                <option value="groupCell" ${m.group==='groupCell'?'selected':''}>Cell組 (6行)</option>
               </select>
               <span>基準日處於：</span>
               <select onchange="updateMember(${idx}, 'row', parseInt(this.value))">
