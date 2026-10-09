@@ -1107,9 +1107,48 @@
       window.calculateAll();
     };
 
-    window.updateMyRow = (r) => {
+        window.updateMyRow = (r) => {
       myStatus.currentRow = parseInt(r);
       window.calculateAll();
+    };
+
+    // 按鈕 1：將目前組別及行數直接導入個人月曆
+    window.applyMyStatusToCalendar = async () => {
+      timelineAnchors = timelineAnchors.filter(a => a.absWeek !== todayAbsWeek);
+      timelineAnchors.push({
+        absWeek: todayAbsWeek,
+        group: myStatus.group,
+        startRow: myStatus.currentRow,
+        manual: true
+      });
+      timelineAnchors.sort((a,b) => a.absWeek - b.absWeek);
+
+      viewCalYear = todayObj.getFullYear();
+      viewCalMonth = todayObj.getMonth() + 1;
+
+      await saveUserTimeline();
+      renderUnifiedCalendar();
+
+      const calElem = document.getElementById("unifiedCalAnchor");
+      if (calElem) calElem.scrollIntoView({ behavior: 'smooth' });
+      alert(`✅ 已成功導入月曆！\n由本週起設定為：${ROSTERS[myStatus.group].name} 第 ${myStatus.currentRow} 行。`);
+    };
+
+    // 按鈕 2：一鍵把選中之大假週自動轉為月曆大假週
+    window.applyMyLeaveWeekToVacation = async () => {
+      const targetAbs = getAbsIndexFromYearWeek(myStatus.leaveYear, myStatus.leaveWeek);
+      vacationWeeks.add(targetAbs);
+
+      viewCalYear = myStatus.leaveYear;
+      const targetInfo = getWeekInfoFromAbsIndex(targetAbs);
+      viewCalMonth = targetInfo.monday.getMonth() + 1;
+
+      await saveUserTimeline();
+      renderUnifiedCalendar();
+
+      const calElem = document.getElementById("unifiedCalAnchor");
+      if (calElem) calElem.scrollIntoView({ behavior: 'smooth' });
+      alert(`🏖️ 已將 ${myStatus.leaveYear} 年 Week ${myStatus.leaveWeek} 成功標記為整週大假！\n後續更期已自動截停。`);
     };
 
     window.onMyLeaveDateChange = (val) => {
@@ -2021,16 +2060,17 @@
       </div>
     </div>
 
-    <!-- 我的現時更期定位 -->
+        <!-- 我的現時更期定位 -->
     <div class="my-status-card">
-      <div style="font-weight:bold; color:#2980b9; font-size:0.95rem; margin-bottom:4px;">
+      <div style="font-weight:bold; color:#2980b9; font-size:0.95rem; margin-bottom:6px;">
         📍 步驟推算：設定你自己何時放大假
       </div>
       
-      <div class="step-grid">
-        <div class="step-box">
+      <!-- ① 與 ② 縮成同一排 -->
+      <div style="display:flex; gap:8px; margin-bottom:8px;">
+        <div class="step-box" style="flex:1;">
           <span class="step-title">① 我的組別</span>
-                    <select id="myGroupSelect" onchange="updateMyGroup(this.value)" style="width:100%;">
+          <select id="myGroupSelect" onchange="updateMyGroup(this.value)" style="width:100%;">
             <option value="group2">2組 (12行)</option>
             <option value="group3" selected>3組 (14行)</option>
             <option value="group4">4組 (5行)</option>
@@ -2038,28 +2078,45 @@
           </select>
         </div>
 
-        <div class="step-box">
+        <div class="step-box" style="flex:1;">
           <span class="step-title">② 今日我正處於</span>
           <select id="myRowSelect" onchange="updateMyRow(this.value)" style="width:100%;"></select>
         </div>
+      </div>
 
-        <div class="step-box">
+      <!-- 入完以上兩樣嘢直接導入月曆按鈕 -->
+      <div style="margin-bottom:10px;">
+        <button type="button" onclick="applyMyStatusToCalendar()" style="width:100%; background:#2980b9; color:white; border:none; padding:8px; border-radius:6px; font-size:0.85rem; font-weight:bold; cursor:pointer;">
+          📥 將目前組別及行數直接導入下面月曆
+        </button>
+      </div>
+
+      <!-- ③ 與 ④ 兩項（右邊加入一鍵自動變大假按鈕） -->
+      <div style="display:flex; gap:8px; align-items:stretch; margin-bottom:6px;">
+        <div class="step-box" style="flex:1;">
           <span class="step-title">③ 幾號開始放假 (小日曆)</span>
-          <input type="date" id="myLeaveDateInput" onchange="onMyLeaveDateChange(this.value)" style="width:90%;">
-        </div>
-
-        <div class="step-box">
-          <span class="step-title">④ 或選放哪一週大假</span>
-          <div style="display:flex; gap:4px;">
-            <select id="myLeaveYearSelect" onchange="onMyLeaveWeekChange()">
-              <option value="2026">2026年</option>
-              <option value="2027">2027年</option>
-              <option value="2028">2028年</option>
-            </select>
-            <select id="myLeaveWeekSelect" onchange="onMyLeaveWeekChange()"></select>
+          <input type="date" id="myLeaveDateInput" onchange="onMyLeaveDateChange(this.value)" style="width:100%;">
+          
+          <div style="margin-top:6px;">
+            <span class="step-title">④ 或選放哪一週大假</span>
+            <div style="display:flex; gap:4px;">
+              <select id="myLeaveYearSelect" onchange="onMyLeaveWeekChange()" style="flex:1;">
+                <option value="2026">2026年</option>
+                <option value="2027">2027年</option>
+                <option value="2028">2028年</option>
+              </select>
+              <select id="myLeaveWeekSelect" onchange="onMyLeaveWeekChange()" style="flex:1.2;"></select>
+            </div>
           </div>
         </div>
+
+        <!-- 右邊一鍵設大假按鈕 -->
+        <button type="button" onclick="applyMyLeaveWeekToVacation()" style="width:110px; background:#e74c3c; color:white; border:none; padding:8px 6px; border-radius:6px; font-size:0.82rem; font-weight:bold; cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; line-height:1.3; box-shadow:0 2px 5px rgba(231,76,60,0.2);">
+          <span style="font-size:1.2rem;">🏖️</span>
+          <span>一鍵將該週<br>設為大假</span>
+        </button>
       </div>
+
       <div id="myWeekTip" style="font-size:0.75rem; color:#555; margin-top:4px; font-weight:bold;"></div>
     </div>
 
