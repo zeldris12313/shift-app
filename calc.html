@@ -865,11 +865,16 @@
       leaveWeek: 44
     };
 
-    let colleagues = [
-      { id: 1, name: "同事 A", useKnownDate: false, knownDate: "2026-10-05", knownGroup: "group3", knownRow: 3, group: "group3", baseRow: 3, targetYear: 2026, targetWeek: 45, leaveDate: "2026-11-02", enabled: true },
-      { id: 2, name: "同事 B", useKnownDate: false, knownDate: "2026-10-05", knownGroup: "group2", knownRow: 1, group: "group2", baseRow: 1, targetYear: 2026, targetWeek: 45, leaveDate: "2026-11-02", enabled: true },
-      { id: 3, name: "同事 C", useKnownDate: false, knownDate: "2026-10-05", knownGroup: "group4", knownRow: 1, group: "group4", baseRow: 1, targetYear: 2026, targetWeek: 45, leaveDate: "2026-11-02", enabled: false }
+        let colleagues = [
+      { id: 1, name: "同事 A", useKnownDate: false, knownDate: "2026-10-05", knownGroup: "group3", knownRow: 3, group: "group3", baseRow: 3, targetYear: 2026, targetWeek: 45, leaveDate: "2026-11-02", enabled: true, expanded: true },
+      { id: 2, name: "同事 B", useKnownDate: false, knownDate: "2026-10-05", knownGroup: "group2", knownRow: 1, group: "group2", baseRow: 1, targetYear: 2026, targetWeek: 45, leaveDate: "2026-11-02", enabled: true, expanded: false },
+      { id: 3, name: "同事 C", useKnownDate: false, knownDate: "2026-10-05", knownGroup: "group4", knownRow: 1, group: "group4", baseRow: 1, targetYear: 2026, targetWeek: 45, leaveDate: "2026-11-02", enabled: false, expanded: false }
     ];
+
+    window.toggleColleagueAccordion = (idx) => {
+      colleagues[idx].expanded = !colleagues[idx].expanded;
+      initColleaguesUI();
+    };
 
     let middleRosterGroup = "group3";
     let currentCandidates = [];
@@ -1182,7 +1187,7 @@
     };
 
     // ----------------- 同事 UI (同一行並排 + 已知某日推算) -----------------
-    function initColleaguesUI() {
+        function initColleaguesUI() {
       const container = document.getElementById("colleaguesList");
       container.innerHTML = "";
 
@@ -1212,92 +1217,108 @@
           knownDayName = `(${dayNames[dIdx]})`;
         }
 
-                container.innerHTML += `
-          <div class="colleague-card">
-            <div class="colleague-title">
-              <input type="text" value="${c.name}" onchange="updateColleague(${idx}, 'name', this.value)" style="width:105px; font-weight:bold;">
-              <label style="font-size:0.8rem; cursor:pointer;">
-                <input type="checkbox" ${c.enabled ? 'checked' : ''} onchange="updateColleague(${idx}, 'enabled', this.checked)"> 加入計算
-              </label>
-            </div>
+        // 同事 B (idx=1) 及 同事 C (idx=2) 預設摺疊
+        const isCollapsed = (idx > 0 && !c.expanded);
 
-            <!-- 模式選擇 -->
-            <div style="background:#edf2f7; padding:4px 6px; border-radius:5px; margin-bottom:6px; font-size:0.75rem;">
-              <label style="margin-right:10px; cursor:pointer;">
-                <input type="radio" name="mode_${idx}" ${!c.useKnownDate ? 'checked' : ''} onchange="updateColleague(${idx}, 'useKnownDate', false)"> 以今日行數推算
-              </label>
-              <label style="cursor:pointer;">
-                <input type="radio" name="mode_${idx}" ${c.useKnownDate ? 'checked' : ''} onchange="updateColleague(${idx}, 'useKnownDate', true)"> 指定已知某日行數
-              </label>
+        let toggleBtnHtml = "";
+        if (idx > 0) {
+          toggleBtnHtml = `
+            <div onclick="toggleColleagueAccordion(${idx})" style="background:#eef2f7; border:1px solid #cbd5e1; border-radius:6px; padding:7px 10px; margin-bottom:5px; font-size:0.82rem; font-weight:bold; color:#334155; cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+              <span>👤 ${c.name} (${c.enabled ? '已加入計算' : '未計算'})</span>
+              <span style="color:#2563eb; font-size:0.75rem;">${c.expanded ? '▲ 點按收起' : '▼ 點按打開設定'}</span>
             </div>
+          `;
+        }
 
-            <!-- ① 組別與基準行數 (同一行並排) -->
-            <div class="field-row" style="${c.useKnownDate ? 'display:none;' : ''}">
-              <div style="display:flex; align-items:center; gap:3px;">
-                <span>組別:</span>
-                <select onchange="updateColleagueGroup(${idx}, this.value)" style="max-width:98px;">
-                  <option value="group2" ${c.group==='group2'?'selected':''}>2組 (12行)</option>
-                  <option value="group3" ${c.group==='group3'?'selected':''}>3組 (14行)</option>
-                  <option value="group4" ${c.group==='group4'?'selected':''}>4組 (5行)</option>
-                  <option value="groupCell" ${c.group==='groupCell'?'selected':''}>Cell組 (6行)</option>
-                </select>
+        container.innerHTML += `
+          <div style="margin-bottom:8px;">
+            ${toggleBtnHtml}
+            <div class="colleague-card" style="${isCollapsed ? 'display:none;' : ''}">
+              <div class="colleague-title">
+                <input type="text" value="${c.name}" onchange="updateColleague(${idx}, 'name', this.value)" style="width:105px; font-weight:bold;">
+                <label style="font-size:0.8rem; cursor:pointer;">
+                  <input type="checkbox" ${c.enabled ? 'checked' : ''} onchange="updateColleague(${idx}, 'enabled', this.checked)"> 加入計算
+                </label>
               </div>
-              <div style="display:flex; align-items:center; gap:3px;">
-                <span>今日行數:</span>
-                <select onchange="updateColleague(${idx}, 'baseRow', parseInt(this.value))">
-                  ${rowOptions}
-                </select>
-              </div>
-            </div>
 
-            <!-- ② 已知某日設定 -->
-            <div style="${!c.useKnownDate ? 'display:none;' : ''} background:#fff9e6; border:1px solid #fed330; border-radius:5px; padding:6px; margin-bottom:6px;">
-              <div class="field-row" style="margin-bottom:4px;">
-                <span style="color:#b7791f; font-weight:bold;">已知日期:</span>
+              <!-- 模式選擇 -->
+              <div style="background:#edf2f7; padding:4px 6px; border-radius:5px; margin-bottom:6px; font-size:0.75rem;">
+                <label style="margin-right:8px; cursor:pointer;">
+                  <input type="radio" name="mode_${idx}" ${!c.useKnownDate ? 'checked' : ''} onchange="updateColleague(${idx}, 'useKnownDate', false)"> 以今日行數推算
+                </label>
+                <label style="cursor:pointer;">
+                  <input type="radio" name="mode_${idx}" ${c.useKnownDate ? 'checked' : ''} onchange="updateColleague(${idx}, 'useKnownDate', true)"> 指定已知某日行數
+                </label>
+              </div>
+
+              <!-- ① 組別與基準行數 (同一行並排) -->
+              <div class="field-row" style="${c.useKnownDate ? 'display:none;' : ''}">
                 <div style="display:flex; align-items:center; gap:3px;">
-                  <input type="date" value="${c.knownDate}" onchange="updateColleagueKnownDate(${idx}, this.value)" style="padding:2px 4px;">
-                  <span style="font-size:0.75rem; color:#d63031; font-weight:bold;">${knownDayName}</span>
+                  <span>組別:</span>
+                  <select onchange="updateColleagueGroup(${idx}, this.value)" style="max-width:98px;">
+                    <option value="group2" ${c.group==='group2'?'selected':''}>2組 (12行)</option>
+                    <option value="group3" ${c.group==='group3'?'selected':''}>3組 (14行)</option>
+                    <option value="group4" ${c.group==='group4'?'selected':''}>4組 (5行)</option>
+                    <option value="groupCell" ${c.group==='groupCell'?'selected':''}>Cell組 (6行)</option>
+                  </select>
                 </div>
+                <div style="display:flex; align-items:center; gap:3px;">
+                  <span>今日行數:</span>
+                  <select onchange="updateColleague(${idx}, 'baseRow', parseInt(this.value))">
+                    ${rowOptions}
+                  </select>
+                </div>
+              </div>
+
+              <!-- ② 已知何年何月何日在那一組那一行 (自動計算星期幾) -->
+              <div style="${!c.useKnownDate ? 'display:none;' : ''} background:#fff9e6; border:1px solid #fed330; border-radius:5px; padding:6px; margin-bottom:6px;">
+                <div class="field-row" style="margin-bottom:4px;">
+                  <span style="color:#b7791f; font-weight:bold;">已知日期:</span>
+                  <div style="display:flex; align-items:center; gap:3px;">
+                    <input type="date" value="${c.knownDate}" onchange="updateColleagueKnownDate(${idx}, this.value)" style="padding:2px 4px;">
+                    <span style="font-size:0.75rem; color:#d63031; font-weight:bold;">${knownDayName}</span>
+                  </div>
+                </div>
+                <div class="field-row">
+                  <div style="display:flex; align-items:center; gap:3px;">
+                    <span>當時組:</span>
+                    <select onchange="updateColleagueKnownGroup(${idx}, this.value)" style="max-width:95px;">
+                      <option value="group2" ${c.knownGroup==='group2'?'selected':''}>2組 (12行)</option>
+                      <option value="group3" ${c.knownGroup==='group3'?'selected':''}>3組 (14行)</option>
+                      <option value="group4" ${c.knownGroup==='group4'?'selected':''}>4組 (5行)</option>
+                      <option value="groupCell" ${c.knownGroup==='groupCell'?'selected':''}>Cell組 (6行)</option>
+                    </select>
+                  </div>
+                  <div style="display:flex; align-items:center; gap:3px;">
+                    <span>當時行:</span>
+                    <select onchange="updateColleague(${idx}, 'knownRow', parseInt(this.value))">
+                      ${knownRowOptions}
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 放假時間設定 (完全包在卡片內) -->
+              <div class="field-row">
+                <span style="color:#d35400; font-weight:bold;">放假首日:</span>
+                <input type="date" value="${c.leaveDate}" onchange="onColleagueDateChange(${idx}, this.value)">
               </div>
               <div class="field-row">
-                <div style="display:flex; align-items:center; gap:3px;">
-                  <span>當時組:</span>
-                  <select onchange="updateColleagueKnownGroup(${idx}, this.value)" style="max-width:95px;">
-                    <option value="group2" ${c.knownGroup==='group2'?'selected':''}>2組 (12行)</option>
-                    <option value="group3" ${c.knownGroup==='group3'?'selected':''}>3組 (14行)</option>
-                    <option value="group4" ${c.knownGroup==='group4'?'selected':''}>4組 (5行)</option>
-                    <option value="groupCell" ${c.knownGroup==='groupCell'?'selected':''}>Cell組 (6行)</option>
+                <span style="color:#d35400; font-weight:bold;">或邊個Week:</span>
+                <div style="display:flex; gap:3px;">
+                  <select id="colleagueYear_${idx}" onchange="onColleagueWeekChange(${idx})">
+                    <option value="2026" ${c.targetYear===2026?'selected':''}>2026年</option>
+                    <option value="2027" ${c.targetYear===2027?'selected':''}>2027年</option>
+                    <option value="2028" ${c.targetYear===2028?'selected':''}>2028年</option>
+                    <option value="2029" ${c.targetYear===2029?'selected':''}>2029年</option>
                   </select>
-                </div>
-                <div style="display:flex; align-items:center; gap:3px;">
-                  <span>當時行:</span>
-                  <select onchange="updateColleague(${idx}, 'knownRow', parseInt(this.value))">
-                    ${knownRowOptions}
+                  <select id="colleagueWeek_${idx}" onchange="onColleagueWeekChange(${idx})">
+                    ${weekOptions}
                   </select>
                 </div>
               </div>
+              <div id="colleagueTip_${idx}" style="font-size:0.72rem; color:#7f8c8d; text-align:right; margin-top:2px;"></div>
             </div>
-
-            <!-- 放假時間設定 (完全包在 card 內部) -->
-            <div class="field-row">
-              <span style="color:#d35400; font-weight:bold;">放假首日:</span>
-              <input type="date" value="${c.leaveDate}" onchange="onColleagueDateChange(${idx}, this.value)">
-            </div>
-            <div class="field-row">
-              <span style="color:#d35400; font-weight:bold;">或邊個Week:</span>
-              <div style="display:flex; gap:3px;">
-                <select id="colleagueYear_${idx}" onchange="onColleagueWeekChange(${idx})">
-                  <option value="2026" ${c.targetYear===2026?'selected':''}>2026年</option>
-                  <option value="2027" ${c.targetYear===2027?'selected':''}>2027年</option>
-                  <option value="2028" ${c.targetYear===2028?'selected':''}>2028年</option>
-                  <option value="2029" ${c.targetYear===2029?'selected':''}>2029年</option>
-                </select>
-                <select id="colleagueWeek_${idx}" onchange="onColleagueWeekChange(${idx})">
-                  ${weekOptions}
-                </select>
-              </div>
-            </div>
-            <div id="colleagueTip_${idx}" style="font-size:0.72rem; color:#7f8c8d; text-align:right; margin-top:2px;"></div>
           </div>
         `;
       });
