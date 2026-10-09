@@ -2049,7 +2049,7 @@
       📢 <b>溫馨提示：</b>首次註冊成功後系統數據或有短暫延遲，如未即時顯示更期或個人資料，請點擊上方按鈕重新整理一次。
     </div>
 
-    <div class="top-bar">
+        <div class="top-bar" style="margin-bottom:6px;">
       <div>
         👤 目前用戶：<b id="userLabel" style="color:var(--highlight);"></b>
         <div style="color:#e74c3c; font-size:0.75rem; font-weight:bold; margin-top:2px;">⚠️ 測試版本 (Beta)</div>
@@ -2060,7 +2060,15 @@
       </div>
     </div>
 
-        <!-- 我的現時更期定位 -->
+    <!-- 🌟 目前帳號下方的一鍵直達個人月曆長按鈕 -->
+    <div style="margin-bottom:12px;">
+      <button type="button" onclick="document.getElementById('unifiedCalAnchor').scrollIntoView({ behavior: 'smooth' })" style="width:100%; background:linear-gradient(135deg, #8e44ad, #6c3483); color:white; border:none; padding:10px 14px; border-radius:8px; font-size:0.88rem; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 3px 10px rgba(142,68,173,0.25);">
+        <span>📅 一鍵跳至「個人一體化更期月曆」</span>
+        <span style="font-size:0.75rem; opacity:0.85;">(班次推算・手動調更・PH記錄) ▼</span>
+      </button>
+    </div>
+
+    <!-- 我的現時更期定位 -->
     <div class="my-status-card">
       <div style="font-weight:bold; color:#2980b9; font-size:0.95rem; margin-bottom:6px;">
         📍 步驟推算：設定你自己何時放大假
@@ -2068,9 +2076,9 @@
       
       <!-- ① 與 ② 縮成同一排 -->
       <div style="display:flex; gap:8px; margin-bottom:8px;">
-        <div class="step-box" style="flex:1;">
+        <div class="step-box" style="flex:1; min-width:0;">
           <span class="step-title">① 我的組別</span>
-          <select id="myGroupSelect" onchange="updateMyGroup(this.value)" style="width:100%;">
+          <select id="myGroupSelect" onchange="updateMyGroup(this.value)" style="width:100%; max-width:100%; box-sizing:border-box;">
             <option value="group2">2組 (12行)</option>
             <option value="group3" selected>3組 (14行)</option>
             <option value="group4">4組 (5行)</option>
@@ -2078,9 +2086,9 @@
           </select>
         </div>
 
-        <div class="step-box" style="flex:1;">
+        <div class="step-box" style="flex:1; min-width:0;">
           <span class="step-title">② 今日我正處於</span>
-          <select id="myRowSelect" onchange="updateMyRow(this.value)" style="width:100%;"></select>
+          <select id="myRowSelect" onchange="updateMyRow(this.value)" style="width:100%; max-width:100%; box-sizing:border-box;"></select>
         </div>
       </div>
 
@@ -2091,27 +2099,27 @@
         </button>
       </div>
 
-      <!-- ③ 與 ④ 兩項（右邊加入一鍵自動變大假按鈕） -->
+      <!-- ③ 與 ④ 兩項（修正日曆框寬度防突圍 + 緊貼右邊一鍵設大假掣） -->
       <div style="display:flex; gap:8px; align-items:stretch; margin-bottom:6px;">
-        <div class="step-box" style="flex:1;">
+        <div class="step-box" style="flex:1; min-width:0; overflow:hidden;">
           <span class="step-title">③ 幾號開始放假 (小日曆)</span>
-          <input type="date" id="myLeaveDateInput" onchange="onMyLeaveDateChange(this.value)" style="width:100%;">
+          <input type="date" id="myLeaveDateInput" onchange="onMyLeaveDateChange(this.value)" style="width:100%; max-width:100%; box-sizing:border-box; display:block;">
           
           <div style="margin-top:6px;">
             <span class="step-title">④ 或選放哪一週大假</span>
             <div style="display:flex; gap:4px;">
-              <select id="myLeaveYearSelect" onchange="onMyLeaveWeekChange()" style="flex:1;">
+              <select id="myLeaveYearSelect" onchange="onMyLeaveWeekChange()" style="flex:1; min-width:0; max-width:100%; box-sizing:border-box;">
                 <option value="2026">2026年</option>
                 <option value="2027">2027年</option>
                 <option value="2028">2028年</option>
               </select>
-              <select id="myLeaveWeekSelect" onchange="onMyLeaveWeekChange()" style="flex:1.2;"></select>
+              <select id="myLeaveWeekSelect" onchange="onMyLeaveWeekChange()" style="flex:1.2; min-width:0; max-width:100%; box-sizing:border-box;"></select>
             </div>
           </div>
         </div>
 
         <!-- 右邊一鍵設大假按鈕 -->
-        <button type="button" onclick="applyMyLeaveWeekToVacation()" style="width:110px; background:#e74c3c; color:white; border:none; padding:8px 6px; border-radius:6px; font-size:0.82rem; font-weight:bold; cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; line-height:1.3; box-shadow:0 2px 5px rgba(231,76,60,0.2);">
+        <button type="button" onclick="applyMyLeaveWeekToVacation()" style="width:100px; flex-shrink:0; background:#e74c3c; color:white; border:none; padding:8px 4px; border-radius:6px; font-size:0.8rem; font-weight:bold; cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; line-height:1.25; box-shadow:0 2px 5px rgba(231,76,60,0.2);">
           <span style="font-size:1.2rem;">🏖️</span>
           <span>一鍵將該週<br>設為大假</span>
         </button>
