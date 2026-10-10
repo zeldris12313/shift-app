@@ -810,7 +810,7 @@
                     ["8-4", "10-5", "9-6", "1-11", "4-10", "9-1", "W"]
         ]
       },
-      groupCell: {
+            groupCell: {
         name: "Cell組 (6行)",
         totalRows: 6,
         data: [
@@ -823,6 +823,38 @@
         ]
       }
     };
+
+        // 3組專用 Duty 與是否有*標記 [duty, hasStar] (MON=0 至 SUN=6)
+    const GROUP3_DUTIES = [
+      // 第 1 行: N, R, W, 9-5*, 9-5, 1-11*, 2-10
+      [["", false], ["", false], ["", false], ["OPD", true], ["e", false], ["f", true], ["OPD/MP", false]],
+      // 第 2 行: W, 9-6, 8-5, 9-5, 1-10*, 1-10, W
+      [["", false], ["c", false], ["e", false], ["e", false], ["OPD%/MP", true], ["OPD/MP", false], ["", false]],
+      // 第 3 行: 9-6, 2-10*, 1-11*, N, R, W, 9-4*
+      [["a", false], ["MP", true], ["f", true], ["", false], ["", false], ["", false], ["a", true]],
+      // 第 4 行: 9-4*, 9-5, 8-4*, 9-1, 8-5*, 9-5, W
+      [["b (#1)", true], ["e (#1)", false], ["d(#1)", true], ["MP (#1)", false], ["OPD(#1)", true], ["e (#1)", false], ["", false]],
+      // 第 5 行: 1-10*, N, R, W, 8-4*, 8-5*, 9-5*
+      [["f", true], ["", false], ["", false], ["", false], ["b", true], ["d", true], ["c (#1)", true]],
+      // 第 6 行: 9-5, 3-11*, 3-11*, W, 8-4, 9-5, 9-1
+      [["e", false], ["OPD%/MP", true], ["OPD/MP", true], ["", false], ["c", false], ["c", false], ["MP", false]],
+      // 第 7 行: 4-11*, 1-11*, N, R, W, 9-6, 9-5*
+      [["OPD/MP", true], ["f", true], ["", false], ["", false], ["", false], ["a", false], ["b (#2)", true]],
+      // 第 8 行: 9-6, 8-1, 9-4*, 3-11, 1-11*, W, 8-1
+      [["c", false], ["OPD", false], ["MP(FS)", true], ["OPD%/MP", false], ["MP", true], ["", false], ["OPD", false]],
+      // 第 9 行: 8-4*, 9-6*, 10-5, 1-11*, N, R, W
+      [["d", true], ["a", true], ["c", false], ["f", true], ["", false], ["", false], ["", false]],
+      // 第 10 行: 2-11*, 3-10, 9-1, 9-6, 8-4*, 9-4*, W
+      [["MP", true], ["OPD/MP", false], ["OPD", false], ["a", false], ["d", true], ["b", true], ["", false]],
+      // 第 11 行: 9-5*, 9-4, 9-6*, W, 1-11*, N, R
+      [["OPD (#2)", true], ["b", false], ["a", true], ["", false], ["f", true], ["", false], ["", false]],
+      // 第 12 行: W, 8-4*, 9-4*, 9-5, 9-4, 8-4*, 4-10
+      [["", false], ["d (#2)", true], ["b (#2)", true], ["d (#2)", false], ["MP/R (#2)", false], ["OPD (#2)", true], ["OPD", false]],
+      // 第 13 行: 1-10*, W, 9-4*, 9-4, 10-5, 9-1, N
+      [["%/MP", true], ["", false], ["NW", true], ["c", false], ["g/%", false], ["MP", false], ["", false]],
+      // 第 14 行: R, W, 8-4*, 8-4*, 9-6, 1-10, 1-11
+      [["", false], ["", false], ["OPD", true], ["b", true], ["a", false], ["%/MP", false], ["f", false]]
+    ];
 
     // 依特定次序排列：AL(單日) ➔ 半日(1點收) ➔ 早更 ➔ P更(1點起) ➔ N更 ➔ R ➔ W
     const ALL_SHIFT_OPTIONS = [
@@ -1838,7 +1870,8 @@
             let noteClass = noteText ? 'has-note-cell' : '';
 
             html += `
-              <td class="${noteClass}" style="${isTodayBorder} cursor:pointer;" onclick="openCombinedModal('${dateKey}', '${defaultShift}')">
+                          html += `
+              <td class="${noteClass}" style="${isTodayBorder} cursor:pointer;" onclick="openCombinedModal('${dateKey}', '${defaultShift}', '${currentGroup}', ${currentRow}, ${d})">
                 <div class="cal-date-num">${cur.getDate()}</div>
                 ${holidayTag}
                 <div class="cal-shift-text ${shiftClass} ${customShift ? 'cal-shift-custom' : ''}">${finalShift}</div>
@@ -1905,7 +1938,7 @@
     }
 
     // ----------------- PH 及手動調更 Modal -----------------
-        window.openCombinedModal = (dateKey, defaultShift) => {
+                window.openCombinedModal = (dateKey, defaultShift, groupKey = "group3", rowNum = 1, dayOfWeek = 0) => {
       activeModalDateKey = dateKey;
       activeModalDefaultShift = defaultShift;
 
@@ -1919,6 +1952,43 @@
       }
 
       document.getElementById("modalDateTitle").innerText = `📅 設定 ${dateKey} 之紀錄：`;
+
+      // 判定 Duty 與食飯輪次
+      let dutyText = "";
+      let mealText = "";
+      const isSunday = (dayOfWeek === 6); // 星期日 (MON=0 ... SUN=6)
+
+      // 定義 P 更 (1點起上班至深夜)
+      const isPShift = ['1-9','1-10','1-11','2-10','2-11','3-10','3-11','4-10','4-11','5-10','5-11'].includes(defaultShift);
+
+      if (groupKey === "group3" && rowNum >= 1 && rowNum <= 14) {
+        const dutyInfo = GROUP3_DUTIES[rowNum - 1][dayOfWeek];
+        if (dutyInfo) {
+          const dutyCode = dutyInfo[0];
+          const hasStar = dutyInfo[1];
+
+          if (dutyCode) {
+            dutyText = `【Duty: ${dutyCode}】`;
+          }
+
+          // 食飯輪次規則：
+          // 1. 星期日返 P 更 ➔ 直接沒有食飯輪次
+          // 2. W (放假)、R (通宵後收工)、N (當晚通宵) ➔ 不計算日間食飯
+          if (isSunday && isPShift) {
+            mealText = "";
+          } else if (defaultShift !== "W" && defaultShift !== "R" && !defaultShift.startsWith("N")) {
+            mealText = hasStar ? "食「1輪」" : "食「2輪」";
+          }
+        }
+      }
+
+      const dutyDisplayElem = document.getElementById("modalDutyInfo");
+      if (dutyDisplayElem) {
+        let fullInfo = `今日：<b>${defaultShift}</b>`;
+        if (dutyText) fullInfo += ` ${dutyText}`;
+        if (mealText) fullInfo += ` <b>${mealText}</b>`;
+        dutyDisplayElem.innerHTML = fullInfo;
+      }
       
       const curPh = userPhUsage[dateKey] || 0;
       document.getElementById("phHourSelect").value = curPh;
@@ -2417,8 +2487,11 @@
 
   <!-- PH 時數及手動調更 Modal 視窗 -->
   <div class="modal-overlay" id="combinedModal">
-    <div class="modal-card">
-      <div id="modalHolidayBanner" class="modal-holiday-banner" style="display:none;"></div>
+        <div class="modal-card">
+      <div id="modalHolidayBanner" class="modal-holiday-banner" style="display:none; background:#fed7d7; color:#c53030; padding:6px 10px; border-radius:6px; font-weight:bold; font-size:0.85rem; margin-bottom:8px;"></div>
+      <div class="modal-section-title" id="modalDateTitle" style="font-size:0.95rem;"></div>
+      <!-- 🌟 今日班次、Duty 與食飯輪次顯示區 -->
+      <div id="modalDutyInfo" style="background:#edf2f7; border-left:4px solid #3182ce; padding:6px 10px; margin-bottom:10px; border-radius:4px; font-size:0.85rem; color:#2d3748; line-height:1.4;"></div>
 
       <h3 style="margin-top:0; color:#8e44ad; font-size:0.95rem;" id="modalDateTitle">設定該日紀錄</h3>
 
