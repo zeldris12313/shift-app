@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PHARMACY DUTY ROTA 實體更表推算與調更</title>
   <style>
-    :root {
+        :root {
       --primary: #2c3e50;
       --accent: #2980b9;
       --highlight: #e67e22;
-      --bg: #f4f7f6;
-      --card-bg: #ffffff;
-      --border-color: #cbd5e1;
+      --bg: #f6f3ee; /* 淺米色背景 */
+      --card-bg: #fdfbf7; /* 淺米白卡片底色 */
+      --border-color: #dcd3c9;
     }
     * { box-sizing: border-box; }
     body {
@@ -27,7 +27,7 @@
       background: var(--card-bg);
       padding: 12px;
       border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
     }
     /* 頂部三頁導航 */
     .nav-tabs {
@@ -43,9 +43,9 @@
       font-size: 0.8rem;
       font-weight: bold;
       text-decoration: none;
-      background: #f8f9fa;
+      background: #eee8e0;
       color: #555;
-      border: 1px solid #ccc;
+      border: 1px solid #d4c9bd;
     }
     .tab-btn.active {
       background: #8e44ad;
@@ -55,7 +55,7 @@
 
     /* 控制面板區塊 */
     .ctrl-box {
-      background: #f8fafc;
+      background: #fbf9f5;
       border: 1px solid var(--border-color);
       border-radius: 8px;
       padding: 10px;
@@ -79,8 +79,9 @@
     .rota-wrapper {
       overflow-x: auto;
       border: 1.5px solid #2c3e50;
-      background: white;
-      margin-top: 10px;
+      background: #ffffff;
+      margin-top: 6px;
+      position: relative;
     }
     .rota-header-title {
       text-align: center;
@@ -101,27 +102,44 @@
     }
     .rota-table {
       width: 100%;
-      border-collapse: collapse;
+      border-collapse: separate;
+      border-spacing: 0;
       font-size: 0.82rem;
       text-align: center;
     }
     .rota-table th, .rota-table td {
-      border: 1px solid #7f8c8d;
-      padding: 4px 2px;
+      border-right: 1px solid #7f8c8d;
+      border-bottom: 1px solid #7f8c8d;
+      padding: 5px 3px;
       white-space: nowrap;
+      background-clip: padding-box;
     }
     .rota-table th {
-      background: #f1f5f9;
+      background: #ede6dc;
       color: #000;
       font-weight: bold;
       font-size: 0.8rem;
+      border-top: 1px solid #7f8c8d;
     }
+
+    /* 🌟 鎖死固定人名欄 (Sticky Column) */
     .name-col {
-      width: 130px;
-      min-width: 120px;
+      width: 90px;
+      min-width: 85px;
+      max-width: 95px;
       text-align: left;
       padding-left: 6px !important;
       font-weight: bold;
+      position: sticky;
+      left: 0;
+      background: #f7f3ec !important;
+      z-index: 5;
+      box-shadow: 2px 0 4px rgba(0,0,0,0.1);
+      border-left: 1px solid #7f8c8d;
+    }
+    th.name-col {
+      z-index: 6;
+      background: #e5ded3 !important;
     }
     .name-input {
       width: 100%;
@@ -130,6 +148,7 @@
       padding: 2px 4px;
       font-size: 0.8rem;
       font-weight: bold;
+      background: #fff;
     }
 
     /* 直框高亮 (所選日子整行突出) */
@@ -274,7 +293,7 @@
       }
     }
 
-    function initDefaultData() {
+        function initDefaultData() {
       currentViewAbsWeek = getAbsIndex(baseYear, baseWeek);
       const total = ROSTERS[selectedGroup].totalRows;
       colleagueNames = Array(total).fill("");
@@ -284,7 +303,7 @@
           colleagueNames[i] = MY_LABEL;
         } else {
           const letter = String.fromCharCode(65 + i);
-          colleagueNames[i] = `同事 ${letter}`;
+          colleagueNames[i] = letter; // 純英文字母 A, B, C...
         }
       }
     }
@@ -344,12 +363,15 @@
       updateRowSelectOptions();
       const total = ROSTERS[selectedGroup].totalRows;
 
-      // 強制檢查長度與清除舊名字殘留，確保「自己」位置準確
+            // 強制檢查長度與清除舊名字殘留，確保「自己」位置準確
       if (!colleagueNames || colleagueNames.length !== total) {
         initDefaultData();
       } else {
-        // 如果舊資料存了舊人名，強制修正為「自己」
-        colleagueNames[myBaseRow - 1] = MY_LABEL;
+        // 自動過濾舊緩存中的「同事 」前綴
+        colleagueNames = colleagueNames.map((name, i) => {
+          if (i === myBaseRow - 1) return MY_LABEL;
+          return name.replace(/^同事\s*/, '') || String.fromCharCode(65 + i);
+        });
         currentViewAbsWeek = getAbsIndex(baseYear, baseWeek);
       }
       renderUI();
@@ -544,26 +566,20 @@
       <a href="swap.html" class="tab-btn active">🔄 實體更表模擬與調更</a>
     </div>
 
-    <!-- 頂部操控列 -->
+        <!-- 頂部操控列 -->
     <div class="ctrl-box">
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
         <button id="toggleLockBtn" class="btn btn-primary" onclick="toggleLock()">🔒 已鎖定名單</button>
-        
-        <div style="display:flex; gap:6px;">
-          <button class="btn btn-purple" onclick="prevWeek()">◀ 上一週</button>
-          <button class="btn btn-purple" onclick="resetThisWeek()">📅 本週</button>
-          <button class="btn btn-purple" onclick="nextWeek()">下一週 ▶</button>
-        </div>
       </div>
       <div id="lockNotice" style="font-size:0.75rem; margin-top:6px; font-weight:bold;"></div>
 
       <!-- 快速跳日子區塊 (選中即出直框) -->
       <div style="display:flex; align-items:center; gap:6px; margin-top:8px; padding-top:8px; border-top:1px dashed #cbd5e1; flex-wrap:wrap;">
         <span style="font-size:0.82rem; font-weight:bold; color:#2c3e50;">🎯 快速跳至指定日子 (以直框顯示)：</span>
-        <input type="date" id="jumpDatePicker" onchange="onJumpDateChange(this.value)" style="padding:4px 6px; border:1px solid #ccc; border-radius:4px; font-size:0.82rem;">
+        <input type="date" id="jumpDatePicker" onchange="onJumpDateChange(this.value)" style="padding:4px 6px; border:1px solid #ccc; border-radius:4px; font-size:0.82rem; background:#fff;">
       </div>
 
-                  <!-- 設定我的基準定位 (直接固定為「自己」，無需手動入名) -->
+      <!-- 設定我的基準定位 (可折疊收起) -->
       <details style="margin-top:8px; font-size:0.8rem; background:#fff; padding:6px 10px; border-radius:6px; border:1px solid #e2e8f0;">
         <summary style="cursor:pointer; font-weight:bold; color:#2980b9;">⚙️ 設定組別與基準週定位 (點此展開)</summary>
         <div style="display:flex; gap:8px; align-items:center; margin-top:8px; flex-wrap:wrap;">
@@ -579,6 +595,13 @@
           <button class="btn btn-primary" onclick="updateMyInfo()">儲存設定</button>
         </div>
       </details>
+    </div>
+
+    <!-- 🌟 更表上方置中的翻週控制器 -->
+    <div style="display:flex; justify-content:center; align-items:center; gap:8px; margin:12px 0 6px 0;">
+      <button class="btn btn-purple" onclick="prevWeek()" style="padding:7px 14px; font-size:0.85rem;">◀ 上一週</button>
+      <button class="btn btn-purple" onclick="resetThisWeek()" style="padding:7px 16px; font-size:0.85rem;">📅 本週</button>
+      <button class="btn btn-purple" onclick="nextWeek()" style="padding:7px 14px; font-size:0.85rem;">下一週 ▶</button>
     </div>
 
     <!-- 🌟 紙本 ROTA 表格區 -->
