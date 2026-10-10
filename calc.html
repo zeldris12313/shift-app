@@ -739,7 +739,9 @@
     const db = getFirestore(app);
     const googleProvider = new GoogleAuthProvider();
 
-    let currentUser = null;
+        let currentUser = null;
+    const ADMIN_USERNAME = "zeldris12313"; // 管理員帳號名稱
+    let currentAnnouncementId = null;
     let savedRecords = [];
         let userPhUsage = {};
     let userShiftOverrides = {};
@@ -1182,9 +1184,73 @@
       await saveUserTimeline();
       renderUnifiedCalendar();
 
-      const calElem = document.getElementById("unifiedCalAnchor");
+            const calElem = document.getElementById("unifiedCalAnchor");
       if (calElem) calElem.scrollIntoView({ behavior: 'smooth' });
       alert(`🏖️ 已將 ${myStatus.leaveYear} 年 Week ${myStatus.leaveWeek} 成功標記為整週大假！\n後續更期已自動截停。`);
+    };
+
+    // 檢查並顯示最新公告 (兼判定管理員發布權限)
+    async function checkPublicAnnouncement(username) {
+      if (username && username.toLowerCase() === ADMIN_USERNAME.toLowerCase()) {
+        const adminBox = document.getElementById("adminAnnouncementBox");
+        if (adminBox) adminBox.style.display = "block";
+      }
+
+      try {
+        const noticeSnap = await getDoc(doc(db, "system_configs", "latest_announcement"));
+        if (noticeSnap.exists()) {
+          const data = noticeSnap.data();
+          if (data && data.enabled) {
+            currentAnnouncementId = data.versionId;
+            const lastReadId = localStorage.getItem("last_read_announcement_id");
+
+            // 若本地未記錄過此版本號，代表有新公告，彈出顯示
+            if (lastReadId !== currentAnnouncementId) {
+              document.getElementById("popNoticeTitle").innerText = data.title || "最新公告";
+              document.getElementById("popNoticeContent").innerText = data.content || "";
+              document.getElementById("announcementModal").style.display = "flex";
+            }
+          }
+        }
+      } catch (e) {
+        console.error("載入公告出錯:", e);
+      }
+    }
+
+    // 同事按「我知道了」寫入本地已讀記錄
+    window.dismissAnnouncement = () => {
+      if (currentAnnouncementId) {
+        localStorage.setItem("last_read_announcement_id", currentAnnouncementId);
+      }
+      document.getElementById("announcementModal").style.display = "none";
+    };
+
+    // 管理員發布公告 (自動寫入 Firebase 並生成新版本號)
+    window.publishNewAnnouncement = async () => {
+      const title = document.getElementById("adminNoticeTitle").value.trim();
+      const content = document.getElementById("adminNoticeContent").value.trim();
+      if (!title || !content) {
+        alert("請輸入公告標題及內容！");
+        return;
+      }
+
+      if (!confirm("確定要向全體同事發布此公告？發布後所有同事下次開網頁均會彈出此視窗一次！")) return;
+
+      try {
+        const newVersionId = "v_" + Date.now();
+        await setDoc(doc(db, "system_configs", "latest_announcement"), {
+          title,
+          content,
+          versionId: newVersionId,
+          enabled: true,
+          updatedAt: new Date().toISOString()
+        });
+
+        alert("🎉 公告發布成功！全部同事重新進入時均會彈出一次。");
+        localStorage.setItem("last_read_announcement_id", newVersionId);
+      } catch (e) {
+        alert("發布失敗: " + e.message);
+      }
     };
 
     window.onMyLeaveDateChange = (val) => {
