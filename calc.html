@@ -1870,8 +1870,8 @@
             let noteClass = noteText ? 'has-note-cell' : '';
 
             html += `
-                          html += `
-              <td class="${noteClass}" style="${isTodayBorder} cursor:pointer;" onclick="openCombinedModal('${dateKey}', '${defaultShift}', '${currentGroup}', ${currentRow}, ${d})">
+                                      html += `
+              <td class="${noteClass}" style="${isTodayBorder} cursor:pointer;" onclick="openCombinedModal('${dateKey}', '${defaultShift}', '${activeGroup}', ${activeRow}, ${d})">
                 <div class="cal-date-num">${cur.getDate()}</div>
                 ${holidayTag}
                 <div class="cal-shift-text ${shiftClass} ${customShift ? 'cal-shift-custom' : ''}">${finalShift}</div>
@@ -1938,17 +1938,28 @@
     }
 
     // ----------------- PH 及手動調更 Modal -----------------
-                window.openCombinedModal = (dateKey, defaultShift, groupKey = "group3", rowNum = 1, dayOfWeek = 0) => {
+                    window.openCombinedModal = (dateKey, defaultShift, groupKey = "group3", rowNum = 1, dayOfWeek = null) => {
       activeModalDateKey = dateKey;
       activeModalDefaultShift = defaultShift;
 
+      // 自動從 dateKey 推算星期索引 (0=MON ... 6=SUN)，防止未傳入時出錯
+      let dIdx = dayOfWeek;
+      if (dIdx === null || dIdx === undefined) {
+        const parts = dateKey.split('-');
+        const dt = new Date(parts[0], parts[1] - 1, parts[2]);
+        const getD = dt.getDay();
+        dIdx = getD === 0 ? 6 : getD - 1;
+      }
+
       const phHolidayName = HK_PUBLIC_HOLIDAYS[dateKey];
       const banner = document.getElementById("modalHolidayBanner");
-      if (phHolidayName) {
-        banner.style.display = "block";
-        banner.innerText = `🔴 公眾假期：${phHolidayName}`;
-      } else {
-        banner.style.display = "none";
+      if (banner) {
+        if (phHolidayName) {
+          banner.style.display = "block";
+          banner.innerText = `🔴 公眾假期：${phHolidayName}`;
+        } else {
+          banner.style.display = "none";
+        }
       }
 
       document.getElementById("modalDateTitle").innerText = `📅 設定 ${dateKey} 之紀錄：`;
@@ -1956,13 +1967,12 @@
       // 判定 Duty 與食飯輪次
       let dutyText = "";
       let mealText = "";
-      const isSunday = (dayOfWeek === 6); // 星期日 (MON=0 ... SUN=6)
+      const isSunday = (dIdx === 6); // 星期日
 
-      // 定義 P 更 (1點起上班至深夜)
       const isPShift = ['1-9','1-10','1-11','2-10','2-11','3-10','3-11','4-10','4-11','5-10','5-11'].includes(defaultShift);
 
-      if (groupKey === "group3" && rowNum >= 1 && rowNum <= 14) {
-        const dutyInfo = GROUP3_DUTIES[rowNum - 1][dayOfWeek];
+      if (groupKey === "group3" && rowNum >= 1 && rowNum <= 14 && typeof GROUP3_DUTIES !== 'undefined') {
+        const dutyInfo = GROUP3_DUTIES[rowNum - 1][dIdx];
         if (dutyInfo) {
           const dutyCode = dutyInfo[0];
           const hasStar = dutyInfo[1];
@@ -1971,9 +1981,6 @@
             dutyText = `【Duty: ${dutyCode}】`;
           }
 
-          // 食飯輪次規則：
-          // 1. 星期日返 P 更 ➔ 直接沒有食飯輪次
-          // 2. W (放假)、R (通宵後收工)、N (當晚通宵) ➔ 不計算日間食飯
           if (isSunday && isPShift) {
             mealText = "";
           } else if (defaultShift !== "W" && defaultShift !== "R" && !defaultShift.startsWith("N")) {
