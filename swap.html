@@ -172,8 +172,26 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // 班次資料
+        // 完整 4 個組別的班次資料
     const ROSTERS = {
+      group2: {
+        name: "2組 (12行)",
+        totalRows: 12,
+        data: [
+          ["9-5", "9-5", "9-5", "8-5", "9-1", "W", "9-4"],
+          ["9-1", "9-5", "9-5", "9-6", "9-4", "8-4", "W"],
+          ["8-4", "8-4", "8-4", "9-1", "W", "8-4", "9-5"],
+          ["9-6", "W", "9-6", "4-11", "4-11", "9-5", "9-1"],
+          ["9-5", "9-5", "W", "9-5", "9-5", "9-5", "9-1"],
+          ["1-11", "5-11", "5-11", "W", "9-6", "9-6", "9-1"],
+          ["9-5", "9-5", "9-5", "8-5", "9-1", "W", "9-4"],
+          ["9-1", "9-5", "9-5", "9-6", "9-4", "8-4", "W"],
+          ["8-4", "8-4", "8-4", "9-1", "W", "8-4", "9-5"],
+          ["9-6", "W", "9-6", "4-11", "4-11", "9-5", "9-1"],
+          ["9-5", "9-5", "W", "9-5", "9-5", "9-5", "9-1"],
+          ["1-11", "5-11", "5-11", "W", "9-6", "9-6", "9-1"]
+        ]
+      },
       group3: {
         name: "3組 (14行)",
         totalRows: 14,
@@ -193,22 +211,45 @@
           ["1-10", "W", "9-4", "9-4", "10-5", "9-1", "N"],
           ["R", "W", "8-4", "8-4", "9-6", "1-10", "1-11"]
         ]
+      },
+      group4: {
+        name: "4組 (5行)",
+        totalRows: 5,
+        data: [
+          ["9-6", "1-11", "8-4", "W", "10-5", "9-1", "9-6"],
+          ["W", "8-4", "1-11", "9-6", "9-1", "8-4", "10-5"],
+          ["1-11", "9-6", "W", "8-4", "9-6", "10-5", "9-1"],
+          ["10-5", "W", "9-6", "9-1", "8-4", "W", "8-4"],
+          ["8-4", "10-5", "9-6", "1-11", "4-10", "9-1", "W"]
+        ]
+      },
+      groupCell: {
+        name: "Cell組 (6行)",
+        totalRows: 6,
+        data: [
+          ["9-5", "9-5", "9-5", "8-5", "9-1", "W", "9-4"],
+          ["9-1", "9-5", "9-5", "9-6", "9-4", "8-4", "W"],
+          ["8-4", "8-4", "8-4", "9-1", "W", "8-4", "9-5"],
+          ["9-6", "W", "9-6", "4-11", "4-11", "9-5", "9-1"],
+          ["9-5", "9-5", "W", "9-5", "9-5", "9-5", "9-1"],
+          ["1-11", "5-11", "5-11", "W", "9-6", "9-6", "9-1"]
+        ]
       }
     };
 
     // 狀態存儲
     let currentUser = null;
     let isLocked = true;
+    let selectedGroup = "group3";
     let baseYear = 2026;
-    let baseWeek = 41; // 例如 2026-10-05 當週為第 41 週
+    let baseWeek = 41; // 2026-10-05 當週為第 41 週
     let myBaseRow = 14;
-    let myName = "MAK SIU HONG";
-    let colleagueNames = Array(14).fill("");
+    const MY_LABEL = "自己";
+    let colleagueNames = [];
 
-    let currentViewAbsWeek = 0; // 當前檢視的週索引
-    let highlightDayIdx = null; // 0=MON ... 6=SUN (高亮直框)
+    let currentViewAbsWeek = 0;
+    let highlightDayIdx = null;
 
-    // 絕對週次推算輔助
     function getMondayOfWeek(year, week) {
       const jan4 = new Date(year, 0, 4);
       const day = jan4.getDay() || 7;
@@ -221,29 +262,40 @@
       return (year - 2026) * 52 + week;
     }
 
+    // 更新行數下拉選單
+    function updateRowSelectOptions() {
+      const total = ROSTERS[selectedGroup].totalRows;
+      const sel = document.getElementById("mySelfRow");
+      if (!sel) return;
+      sel.innerHTML = "";
+      if (myBaseRow > total) myBaseRow = total;
+      for (let r = 1; r <= total; r++) {
+        sel.innerHTML += `<option value="${r}" ${r === myBaseRow ? 'selected' : ''}>第 ${r} 行</option>`;
+      }
+    }
+
     function initDefaultData() {
       currentViewAbsWeek = getAbsIndex(baseYear, baseWeek);
-      // 自動以 ABC 填補空名
-      for (let i = 0; i < 14; i++) {
-        if (!colleagueNames[i]) {
-          if (i === myBaseRow - 1) {
-            colleagueNames[i] = myName;
-          } else {
-            const letter = String.fromCharCode(65 + i);
-            colleagueNames[i] = `同事 ${letter}`;
-          }
+      const total = ROSTERS[selectedGroup].totalRows;
+      colleagueNames = Array(total).fill("");
+
+      for (let i = 0; i < total; i++) {
+        if (i === myBaseRow - 1) {
+          colleagueNames[i] = MY_LABEL;
+        } else {
+          const letter = String.fromCharCode(65 + i);
+          colleagueNames[i] = `同事 ${letter}`;
         }
       }
     }
 
-    // 自動儲存到 Firebase 及 LocalStorage
     async function autoSaveData() {
       const dataToSave = {
         isLocked,
+        selectedGroup,
         baseYear,
         baseWeek,
         myBaseRow,
-        myName,
         colleagueNames
       };
       localStorage.setItem("swap_rota_data", JSON.stringify(dataToSave));
@@ -257,20 +309,17 @@
       }
     }
 
-    // 載入資料
     async function loadSavedData() {
       const local = localStorage.getItem("swap_rota_data");
       if (local) {
         try {
           const parsed = JSON.parse(local);
           isLocked = parsed.isLocked ?? true;
+          selectedGroup = parsed.selectedGroup || "group3";
           baseYear = parsed.baseYear || 2026;
           baseWeek = parsed.baseWeek || 41;
           myBaseRow = parsed.myBaseRow || 14;
-          myName = parsed.myName || "MAK SIU HONG";
-          if (Array.isArray(parsed.colleagueNames) && parsed.colleagueNames.length === 14) {
-            colleagueNames = parsed.colleagueNames;
-          }
+          if (Array.isArray(parsed.colleagueNames)) colleagueNames = parsed.colleagueNames;
         } catch(e){}
       }
 
@@ -280,15 +329,25 @@
           if (snap.exists()) {
             const d = snap.data();
             isLocked = d.isLocked ?? isLocked;
+            selectedGroup = d.selectedGroup || selectedGroup;
             baseYear = d.baseYear || baseYear;
             baseWeek = d.baseWeek || baseWeek;
             myBaseRow = d.myBaseRow || myBaseRow;
-            myName = d.myName || myName;
             if (Array.isArray(d.colleagueNames)) colleagueNames = d.colleagueNames;
           }
         } catch(e){}
       }
-      initDefaultData();
+
+      const grpSel = document.getElementById("groupSelect");
+      if (grpSel) grpSel.value = selectedGroup;
+
+      updateRowSelectOptions();
+      const total = ROSTERS[selectedGroup].totalRows;
+      if (colleagueNames.length !== total) {
+        initDefaultData();
+      } else {
+        currentViewAbsWeek = getAbsIndex(baseYear, baseWeek);
+      }
       renderUI();
     }
 
@@ -339,40 +398,40 @@
         }
       }
 
-      // 4. 生成 14 行表格資料
+            // 4. 根據所選組別動態生成表格資料
+      const totalRows = ROSTERS[selectedGroup].totalRows;
       const tbody = document.getElementById("rotaTableBody");
       tbody.innerHTML = "";
 
-      for (let rowIdx = 0; rowIdx < 14; rowIdx++) {
+      for (let rowIdx = 0; rowIdx < totalRows; rowIdx++) {
         // 如果鎖定：人名跟隨週期滾動！
-        // 週期公式：在第 weekDiff 週，原本第 r 行的成員會跑到第 ((r - 1 + weekDiff) % 14 + 1) 行
         let effectiveName = "";
         if (isLocked) {
-          const originalRowIdx = (rowIdx - (weekDiff % 14) + 14) % 14;
+          const originalRowIdx = (rowIdx - (weekDiff % totalRows) + totalRows) % totalRows;
           effectiveName = colleagueNames[originalRowIdx] || `第 ${rowIdx + 1} 行同事`;
         } else {
           effectiveName = colleagueNames[rowIdx] || "";
         }
 
-        const isMyRow = (effectiveName === myName);
+        const isMyRow = (effectiveName === MY_LABEL);
         const trClass = isMyRow ? "my-row-highlight" : "";
 
         let rowHtml = `<tr class="${trClass}">`;
 
         // 姓名欄 (解鎖時允許輸入，鎖定時純文字)
         if (isLocked) {
-          rowHtml += `<td class="name-col">${effectiveName} ${isMyRow ? '📍(我)' : ''}</td>`;
+          rowHtml += `<td class="name-col">${effectiveName} ${isMyRow ? '📍' : ''}</td>`;
         } else {
           rowHtml += `<td class="name-col"><input class="name-input" type="text" value="${effectiveName}" onchange="updateName(${rowIdx}, this.value)"></td>`;
         }
 
         // 7天班次
-        const shiftRow = ROSTERS.group3.data[rowIdx];
+        const shiftRow = ROSTERS[selectedGroup].data[rowIdx];
         for (let d = 0; d < 7; d++) {
           const shift = shiftRow[d];
           let shiftClass = "";
           if (shift === "W") shiftClass = "shift-w";
-          else if (shift.startsWith("1-") || shift.startsWith("2-") || shift.startsWith("3-") || shift.startsWith("4-")) shiftClass = "shift-p";
+          else if (shift.startsWith("1-") || shift.startsWith("2-") || shift.startsWith("3-") || shift.startsWith("4-") || shift.startsWith("5-")) shiftClass = "shift-p";
           else if (shift === "N") shiftClass = "shift-n";
 
           const isHighCol = (highlightDayIdx === d) ? "col-highlight" : "";
@@ -391,6 +450,15 @@
       return `${d}-${m}-${y}`;
     }
 
+    // 切換組別
+    window.onGroupChange = (grp) => {
+      selectedGroup = grp;
+      updateRowSelectOptions();
+      initDefaultData();
+      autoSaveData();
+      renderUI();
+    };
+
     // 全域操作函式
     window.toggleLock = () => {
       isLocked = !isLocked;
@@ -405,7 +473,7 @@
 
     window.prevWeek = () => {
       currentViewAbsWeek--;
-      highlightDayIdx = null; // 清除特定日直框
+      highlightDayIdx = null;
       renderUI();
     };
 
@@ -426,11 +494,9 @@
       const parts = val.split('-');
       const targetDate = new Date(parts[0], parts[1] - 1, parts[2]);
 
-      // 取得星期幾 (0=MON ... 6=SUN)
       const day = targetDate.getDay();
       highlightDayIdx = (day === 0) ? 6 : day - 1;
 
-      // 推算該日期屬於邊個週一
       const monday = new Date(targetDate);
       monday.setDate(targetDate.getDate() - highlightDayIdx);
 
@@ -441,14 +507,12 @@
       currentViewAbsWeek = getAbsIndex(baseYear, baseWeek) + diffWeeks;
       renderUI();
 
-      // 自動平滑滾動到表格
       document.getElementById("rotaTableWrapper").scrollIntoView({ behavior: 'smooth' });
     };
 
     window.updateMyInfo = () => {
-      myName = document.getElementById("mySelfName").value.trim() || "MAK SIU HONG";
       myBaseRow = parseInt(document.getElementById("mySelfRow").value);
-      colleagueNames[myBaseRow - 1] = myName;
+      initDefaultData();
       autoSaveData();
       renderUI();
       alert("✅ 已更新並自動儲存！");
@@ -490,20 +554,19 @@
         <input type="date" id="jumpDatePicker" onchange="onJumpDateChange(this.value)" style="padding:4px 6px; border:1px solid #ccc; border-radius:4px; font-size:0.82rem;">
       </div>
 
-      <!-- 設定我的基準定位 (可折疊收起) -->
+            <!-- 設定我的基準定位 (可折疊收起) -->
       <details style="margin-top:8px; font-size:0.8rem; background:#fff; padding:6px 10px; border-radius:6px; border:1px solid #e2e8f0;">
-        <summary style="cursor:pointer; font-weight:bold; color:#2980b9;">⚙️ 設定基準日我本人的名字與行數 (點此展開)</summary>
+        <summary style="cursor:pointer; font-weight:bold; color:#2980b9;">⚙️ 設定組別與基準週定位 (點此展開)</summary>
         <div style="display:flex; gap:8px; align-items:center; margin-top:8px; flex-wrap:wrap;">
-          <span>我的名字：</span>
-          <input type="text" id="mySelfName" value="MAK SIU HONG" style="width:120px; padding:3px 6px;">
-          <span>基準週我處於：</span>
-          <select id="mySelfRow" style="padding:3px;">
-            <option value="1">第 1 行</option><option value="2">第 2 行</option><option value="3">第 3 行</option>
-            <option value="4">第 4 行</option><option value="5">第 5 行</option><option value="6">第 6 行</option>
-            <option value="7">第 7 行</option><option value="8">第 8 行</option><option value="9">第 9 行</option>
-            <option value="10">第 10 行</option><option value="11">第 11 行</option><option value="12">第 12 行</option>
-            <option value="13">第 13 行</option><option value="14" selected>第 14 行</option>
+          <span>我的組別：</span>
+          <select id="groupSelect" onchange="onGroupChange(this.value)" style="padding:3px 6px; font-weight:bold;">
+            <option value="group2">2組 (12行)</option>
+            <option value="group3" selected>3組 (14行)</option>
+            <option value="group4">4組 (5行)</option>
+            <option value="groupCell">Cell組 (6行)</option>
           </select>
+          <span>基準週「自己」處於：</span>
+          <select id="mySelfRow" style="padding:3px; font-weight:bold;"></select>
           <button class="btn btn-primary" onclick="updateMyInfo()">儲存設定</button>
         </div>
       </details>
