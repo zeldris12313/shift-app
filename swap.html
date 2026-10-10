@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PHARMACY DUTY ROTA 實體更表推算與調更</title>
+  <style>
+    :root {
+      --primary: #2c3e50;
+      --accent: #2980b9;
+      --highlight: #e67e22;
+      --bg: #f4f7f6;
+      --card-bg: #ffffff;
+      --border-color: #cbd5e1;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: var(--bg);
+      color: #333;
+      margin: 0;
+      padding: 10px;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: var(--card-bg);
+      padding: 12px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    /* 頂部三頁導航 */
+    .nav-tabs {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+    .tab-btn {
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      text-decoration: none;
+      background: #f8f9fa;
+      color: #555;
+      border: 1px solid #ccc;
+    }
+    .tab-btn.active {
+      background: #8e44ad;
+      color: white;
+      border-color: #8e44ad;
+    }
+
+    /* 控制面板區塊 */
+    .ctrl-box {
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 12px;
+    }
+    .btn {
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
+      padding: 6px 12px;
+      font-size: 0.82rem;
+      font-weight: bold;
+      transition: opacity 0.2s;
+    }
+    .btn:active { opacity: 0.8; }
+    .btn-primary { background: var(--accent); color: white; }
+    .btn-warning { background: #d35400; color: white; }
+    .btn-purple { background: #8e44ad; color: white; }
+
+    /* 紙本 ROTA 表格樣式 */
+    .rota-wrapper {
+      overflow-x: auto;
+      border: 1.5px solid #2c3e50;
+      background: white;
+      margin-top: 10px;
+    }
+    .rota-header-title {
+      text-align: center;
+      font-weight: 900;
+      font-size: 1.15rem;
+      letter-spacing: 1px;
+      padding-top: 8px;
+      margin: 0;
+      color: #000;
+    }
+    .rota-header-sub {
+      text-align: center;
+      font-weight: bold;
+      font-size: 0.95rem;
+      padding-bottom: 6px;
+      margin: 0;
+      color: #333;
+    }
+    .rota-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+      text-align: center;
+    }
+    .rota-table th, .rota-table td {
+      border: 1px solid #7f8c8d;
+      padding: 4px 2px;
+      white-space: nowrap;
+    }
+    .rota-table th {
+      background: #f1f5f9;
+      color: #000;
+      font-weight: bold;
+      font-size: 0.8rem;
+    }
+    .name-col {
+      width: 130px;
+      min-width: 120px;
+      text-align: left;
+      padding-left: 6px !important;
+      font-weight: bold;
+    }
+    .name-input {
+      width: 100%;
+      border: 1px solid #cbd5e1;
+      border-radius: 3px;
+      padding: 2px 4px;
+      font-size: 0.8rem;
+      font-weight: bold;
+    }
+
+    /* 直框高亮 (所選日子整行突出) */
+    .col-highlight {
+      background-color: #fef9c3 !important;
+      border-left: 2.5px solid #eab308 !important;
+      border-right: 2.5px solid #eab308 !important;
+    }
+    th.col-highlight {
+      background-color: #fef08a !important;
+      border-top: 2.5px solid #eab308 !important;
+    }
+
+    /* 班次特殊顏色 */
+    .shift-w { color: #e74c3c; font-weight: bold; }
+    .shift-p { color: #2980b9; font-weight: bold; }
+    .shift-n { color: #8e44ad; font-weight: bold; }
+    .my-row-highlight {
+      background: #e0f2fe;
+    }
+  </style>
+
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    // 與原本 calc.html 一致的 Firebase 配置
+    const firebaseConfig = {
+      apiKey: "AIzaSyDummyKeyReplaceIfNeed",
+      authDomain: "shift-app.firebaseapp.com",
+      projectId: "shift-app",
+      storageBucket: "shift-app.appspot.com",
+      messagingSenderId: "123456789",
+      appId: "1:123456789:web:abcdef"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // 班次資料
+    const ROSTERS = {
+      group3: {
+        name: "3組 (14行)",
+        totalRows: 14,
+        data: [
+          ["N", "R", "W", "9-5", "9-5", "1-11", "2-10"],
+          ["W", "9-6", "8-5", "9-5", "1-10", "1-10", "W"],
+          ["9-6", "2-10", "1-11", "N", "R", "W", "9-4"],
+          ["9-4", "9-5", "8-4", "9-1", "8-5", "9-5", "W"],
+          ["1-10", "N", "R", "W", "8-4", "8-5", "9-5"],
+          ["9-5", "3-11", "3-11", "W", "8-4", "9-5", "9-1"],
+          ["4-11", "1-11", "N", "R", "W", "9-6", "9-5"],
+          ["9-6", "8-1", "9-4", "3-11", "1-11", "W", "8-1"],
+          ["8-4", "9-6", "10-5", "1-11", "N", "R", "W"],
+          ["2-11", "3-10", "9-1", "9-6", "8-4", "9-4", "W"],
+          ["9-5", "9-4", "9-6", "W", "1-11", "N", "R"],
+          ["W", "8-4", "9-4", "9-5", "9-4", "8-4", "4-10"],
+          ["1-10", "W", "9-4", "9-4", "10-5", "9-1", "N"],
+          ["R", "W", "8-4", "8-4", "9-6", "1-10", "1-11"]
+        ]
+      }
+    };
+
+    // 狀態存儲
+    let currentUser = null;
+    let isLocked = true;
+    let baseYear = 2026;
+    let baseWeek = 41; // 例如 2026-10-05 當週為第 41 週
+    let myBaseRow = 14;
+    let myName = "MAK SIU HONG";
+    let colleagueNames = Array(14).fill("");
+
+    let currentViewAbsWeek = 0; // 當前檢視的週索引
+    let highlightDayIdx = null; // 0=MON ... 6=SUN (高亮直框)
+
+    // 絕對週次推算輔助
+    function getMondayOfWeek(year, week) {
+      const jan4 = new Date(year, 0, 4);
+      const day = jan4.getDay() || 7;
+      const mon = new Date(jan4);
+      mon.setDate(jan4.getDate() - day + 1 + (week - 1) * 7);
+      return mon;
+    }
+
+    function getAbsIndex(year, week) {
+      return (year - 2026) * 52 + week;
+    }
+
+    function initDefaultData() {
+      currentViewAbsWeek = getAbsIndex(baseYear, baseWeek);
+      // 自動以 ABC 填補空名
+      for (let i = 0; i < 14; i++) {
+        if (!colleagueNames[i]) {
+          if (i === myBaseRow - 1) {
+            colleagueNames[i] = myName;
+          } else {
+            const letter = String.fromCharCode(65 + i);
+            colleagueNames[i] = `同事 ${letter}`;
+          }
+        }
+      }
+    }
+
+    // 自動儲存到 Firebase 及 LocalStorage
+    async function autoSaveData() {
+      const dataToSave = {
+        isLocked,
+        baseYear,
+        baseWeek,
+        myBaseRow,
+        myName,
+        colleagueNames
+      };
+      localStorage.setItem("swap_rota_data", JSON.stringify(dataToSave));
+
+      if (currentUser) {
+        try {
+          await setDoc(doc(db, "users", currentUser.uid, "swap_config", "main"), dataToSave);
+        } catch (e) {
+          console.error("雲端自動儲存出錯:", e);
+        }
+      }
+    }
+
+    // 載入資料
+    async function loadSavedData() {
+      const local = localStorage.getItem("swap_rota_data");
+      if (local) {
+        try {
+          const parsed = JSON.parse(local);
+          isLocked = parsed.isLocked ?? true;
+          baseYear = parsed.baseYear || 2026;
+          baseWeek = parsed.baseWeek || 41;
+          myBaseRow = parsed.myBaseRow || 14;
+          myName = parsed.myName || "MAK SIU HONG";
+          if (Array.isArray(parsed.colleagueNames) && parsed.colleagueNames.length === 14) {
+            colleagueNames = parsed.colleagueNames;
+          }
+        } catch(e){}
+      }
+
+      if (currentUser) {
+        try {
+          const snap = await getDoc(doc(db, "users", currentUser.uid, "swap_config", "main"));
+          if (snap.exists()) {
+            const d = snap.data();
+            isLocked = d.isLocked ?? isLocked;
+            baseYear = d.baseYear || baseYear;
+            baseWeek = d.baseWeek || baseWeek;
+            myBaseRow = d.myBaseRow || myBaseRow;
+            myName = d.myName || myName;
+            if (Array.isArray(d.colleagueNames)) colleagueNames = d.colleagueNames;
+          }
+        } catch(e){}
+      }
+      initDefaultData();
+      renderUI();
+    }
+
+    // 渲染主畫面
+    function renderUI() {
+      // 1. 更新鎖定狀態提示
+      const lockBtn = document.getElementById("toggleLockBtn");
+      const lockNotice = document.getElementById("lockNotice");
+      if (isLocked) {
+        lockBtn.innerHTML = "🔒 已鎖定名單 (點擊解鎖)";
+        lockBtn.className = "btn btn-primary";
+        lockNotice.innerText = "✅ 人名已鎖死：左右翻週時，同事名單會自動跟隨輪班週期順序滾動！";
+        lockNotice.style.color = "#27ae60";
+      } else {
+        lockBtn.innerHTML = "🔓 已解鎖編輯 (點擊鎖定)";
+        lockBtn.className = "btn btn-warning";
+        lockNotice.innerText = "⚠️ 人名已解鎖：可自由修改名單。在此模式下翻週人名不會自動滾動。";
+        lockNotice.style.color = "#d35400";
+      }
+
+      // 2. 計算目前瀏覽週的日期範圍
+      const baseAbs = getAbsIndex(baseYear, baseWeek);
+      const weekDiff = currentViewAbsWeek - baseAbs;
+
+      // 推算目前的週一
+      const currentMon = getMondayOfWeek(baseYear, baseWeek);
+      currentMon.setDate(currentMon.getDate() + weekDiff * 7);
+
+      const monStr = formatDateShort(currentMon);
+      const sunDate = new Date(currentMon);
+      sunDate.setDate(sunDate.getDate() + 6);
+      const sunStr = formatDateShort(sunDate);
+
+      document.getElementById("rotaDateTitle").innerText = `${monStr} - ${sunStr}`;
+
+      // 3. 生成星期標題列日期
+      for (let d = 0; d < 7; d++) {
+        const curD = new Date(currentMon);
+        curD.setDate(curD.getDate() + d);
+        const dateSpan = document.getElementById(`dayHeaderDate_${d}`);
+        if (dateSpan) dateSpan.innerText = formatDateShort(curD);
+
+        const thElem = document.getElementById(`thDay_${d}`);
+        if (highlightDayIdx === d) {
+          thElem.classList.add("col-highlight");
+        } else {
+          thElem.classList.remove("col-highlight");
+        }
+      }
+
+      // 4. 生成 14 行表格資料
+      const tbody = document.getElementById("rotaTableBody");
+      tbody.innerHTML = "";
+
+      for (let rowIdx = 0; rowIdx < 14; rowIdx++) {
+        // 如果鎖定：人名跟隨週期滾動！
+        // 週期公式：在第 weekDiff 週，原本第 r 行的成員會跑到第 ((r - 1 + weekDiff) % 14 + 1) 行
+        let effectiveName = "";
+        if (isLocked) {
+          const originalRowIdx = (rowIdx - (weekDiff % 14) + 14) % 14;
+          effectiveName = colleagueNames[originalRowIdx] || `第 ${rowIdx + 1} 行同事`;
+        } else {
+          effectiveName = colleagueNames[rowIdx] || "";
+        }
+
+        const isMyRow = (effectiveName === myName);
+        const trClass = isMyRow ? "my-row-highlight" : "";
+
+        let rowHtml = `<tr class="${trClass}">`;
+
+        // 姓名欄 (解鎖時允許輸入，鎖定時純文字)
+        if (isLocked) {
+          rowHtml += `<td class="name-col">${effectiveName} ${isMyRow ? '📍(我)' : ''}</td>`;
+        } else {
+          rowHtml += `<td class="name-col"><input class="name-input" type="text" value="${effectiveName}" onchange="updateName(${rowIdx}, this.value)"></td>`;
+        }
+
+        // 7天班次
+        const shiftRow = ROSTERS.group3.data[rowIdx];
+        for (let d = 0; d < 7; d++) {
+          const shift = shiftRow[d];
+          let shiftClass = "";
+          if (shift === "W") shiftClass = "shift-w";
+          else if (shift.startsWith("1-") || shift.startsWith("2-") || shift.startsWith("3-") || shift.startsWith("4-")) shiftClass = "shift-p";
+          else if (shift === "N") shiftClass = "shift-n";
+
+          const isHighCol = (highlightDayIdx === d) ? "col-highlight" : "";
+          rowHtml += `<td class="${isHighCol} ${shiftClass}">${shift}</td>`;
+        }
+
+        rowHtml += `</tr>`;
+        tbody.innerHTML += rowHtml;
+      }
+    }
+
+    function formatDateShort(dt) {
+      const d = String(dt.getDate()).padStart(2, '0');
+      const m = String(dt.getMonth() + 1).padStart(2, '0');
+      const y = dt.getFullYear();
+      return `${d}-${m}-${y}`;
+    }
+
+    // 全域操作函式
+    window.toggleLock = () => {
+      isLocked = !isLocked;
+      autoSaveData();
+      renderUI();
+    };
+
+    window.updateName = (idx, val) => {
+      colleagueNames[idx] = val.trim();
+      autoSaveData();
+    };
+
+    window.prevWeek = () => {
+      currentViewAbsWeek--;
+      highlightDayIdx = null; // 清除特定日直框
+      renderUI();
+    };
+
+    window.nextWeek = () => {
+      currentViewAbsWeek++;
+      highlightDayIdx = null;
+      renderUI();
+    };
+
+    window.resetThisWeek = () => {
+      currentViewAbsWeek = getAbsIndex(baseYear, baseWeek);
+      highlightDayIdx = null;
+      renderUI();
+    };
+
+    window.onJumpDateChange = (val) => {
+      if (!val) return;
+      const parts = val.split('-');
+      const targetDate = new Date(parts[0], parts[1] - 1, parts[2]);
+
+      // 取得星期幾 (0=MON ... 6=SUN)
+      const day = targetDate.getDay();
+      highlightDayIdx = (day === 0) ? 6 : day - 1;
+
+      // 推算該日期屬於邊個週一
+      const monday = new Date(targetDate);
+      monday.setDate(targetDate.getDate() - highlightDayIdx);
+
+      const baseMon = getMondayOfWeek(baseYear, baseWeek);
+      const diffDays = Math.round((monday - baseMon) / (1000 * 60 * 60 * 24));
+      const diffWeeks = Math.round(diffDays / 7);
+
+      currentViewAbsWeek = getAbsIndex(baseYear, baseWeek) + diffWeeks;
+      renderUI();
+
+      // 自動平滑滾動到表格
+      document.getElementById("rotaTableWrapper").scrollIntoView({ behavior: 'smooth' });
+    };
+
+    window.updateMyInfo = () => {
+      myName = document.getElementById("mySelfName").value.trim() || "MAK SIU HONG";
+      myBaseRow = parseInt(document.getElementById("mySelfRow").value);
+      colleagueNames[myBaseRow - 1] = myName;
+      autoSaveData();
+      renderUI();
+      alert("✅ 已更新並自動儲存！");
+    };
+
+    // 啟動登入監聽
+    onAuthStateChanged(auth, async (user) => {
+      currentUser = user;
+      await loadSavedData();
+    });
+  </script>
+</head>
+<body>
+
+  <div class="container">
+    <!-- 頂部頁面切換導航 -->
+    <div class="nav-tabs">
+      <a href="calc.html" class="tab-btn">📅 個人更期與PH計算</a>
+      <a href="dinner.html" class="tab-btn">🍽️ 多人約食飯／撞假對照</a>
+      <a href="swap.html" class="tab-btn active">🔄 實體更表模擬與調更</a>
+    </div>
+
+    <!-- 頂部操控列 -->
+    <div class="ctrl-box">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+        <button id="toggleLockBtn" class="btn btn-primary" onclick="toggleLock()">🔒 已鎖定名單</button>
+        
+        <div style="display:flex; gap:6px;">
+          <button class="btn btn-purple" onclick="prevWeek()">◀ 上一週</button>
+          <button class="btn btn-purple" onclick="resetThisWeek()">📅 本週</button>
+          <button class="btn btn-purple" onclick="nextWeek()">下一週 ▶</button>
+        </div>
+      </div>
+      <div id="lockNotice" style="font-size:0.75rem; margin-top:6px; font-weight:bold;"></div>
+
+      <!-- 快速跳日子區塊 (選中即出直框) -->
+      <div style="display:flex; align-items:center; gap:6px; margin-top:8px; padding-top:8px; border-top:1px dashed #cbd5e1; flex-wrap:wrap;">
+        <span style="font-size:0.82rem; font-weight:bold; color:#2c3e50;">🎯 快速跳至指定日子 (以直框顯示)：</span>
+        <input type="date" id="jumpDatePicker" onchange="onJumpDateChange(this.value)" style="padding:4px 6px; border:1px solid #ccc; border-radius:4px; font-size:0.82rem;">
+      </div>
+
+      <!-- 設定我的基準定位 (可折疊收起) -->
+      <details style="margin-top:8px; font-size:0.8rem; background:#fff; padding:6px 10px; border-radius:6px; border:1px solid #e2e8f0;">
+        <summary style="cursor:pointer; font-weight:bold; color:#2980b9;">⚙️ 設定基準日我本人的名字與行數 (點此展開)</summary>
+        <div style="display:flex; gap:8px; align-items:center; margin-top:8px; flex-wrap:wrap;">
+          <span>我的名字：</span>
+          <input type="text" id="mySelfName" value="MAK SIU HONG" style="width:120px; padding:3px 6px;">
+          <span>基準週我處於：</span>
+          <select id="mySelfRow" style="padding:3px;">
+            <option value="1">第 1 行</option><option value="2">第 2 行</option><option value="3">第 3 行</option>
+            <option value="4">第 4 行</option><option value="5">第 5 行</option><option value="6">第 6 行</option>
+            <option value="7">第 7 行</option><option value="8">第 8 行</option><option value="9">第 9 行</option>
+            <option value="10">第 10 行</option><option value="11">第 11 行</option><option value="12">第 12 行</option>
+            <option value="13">第 13 行</option><option value="14" selected>第 14 行</option>
+          </select>
+          <button class="btn btn-primary" onclick="updateMyInfo()">儲存設定</button>
+        </div>
+      </details>
+    </div>
+
+    <!-- 🌟 紙本 ROTA 表格區 -->
+    <div class="rota-wrapper" id="rotaTableWrapper">
+      <h2 class="rota-header-title">PHARMACY DUTY ROTA</h2>
+      <div class="rota-header-sub" id="rotaDateTitle">05 OCT 2026 - 11 OCT 2026</div>
+
+      <table class="rota-table">
+        <thead>
+          <tr>
+            <th class="name-col">NAME/DATE</th>
+            <th id="thDay_0">MON<br><span id="dayHeaderDate_0" style="font-size:0.7rem; font-weight:normal;"></span></th>
+            <th id="thDay_1">TUE<br><span id="dayHeaderDate_1" style="font-size:0.7rem; font-weight:normal;"></span></th>
+            <th id="thDay_2">WED<br><span id="dayHeaderDate_2" style="font-size:0.7rem; font-weight:normal;"></span></th>
+            <th id="thDay_3">THU<br><span id="dayHeaderDate_3" style="font-size:0.7rem; font-weight:normal;"></span></th>
+            <th id="thDay_4">FRI<br><span id="dayHeaderDate_4" style="font-size:0.7rem; font-weight:normal;"></span></th>
+            <th id="thDay_5">SAT<br><span id="dayHeaderDate_5" style="font-size:0.7rem; font-weight:normal;"></span></th>
+            <th id="thDay_6">SUN<br><span id="dayHeaderDate_6" style="font-size:0.7rem; font-weight:normal;"></span></th>
+          </tr>
+        </thead>
+        <tbody id="rotaTableBody">
+          <!-- 14行數據由 JS 自動渲染 -->
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+</body>
+</html>
