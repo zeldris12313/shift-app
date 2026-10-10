@@ -824,7 +824,7 @@
       }
     };
 
-        // 3組專用 Duty 與是否有*標記 [duty, hasStar] (MON=0 至 SUN=6)
+            // 3組專用 Duty 與是否有*標記 [duty, hasStar] (MON=0 至 SUN=6)
     const GROUP3_DUTIES = [
       // 第 1 行: N, R, W, 9-5*, 9-5, 1-11*, 2-10
       [["", false], ["", false], ["", false], ["OPD", true], ["e", false], ["f", true], ["OPD/MP", false]],
@@ -838,7 +838,7 @@
       [["f", true], ["", false], ["", false], ["", false], ["b", true], ["d", true], ["c (#1)", true]],
       // 第 6 行: 9-5, 3-11*, 3-11*, W, 8-4, 9-5, 9-1
       [["e", false], ["OPD%/MP", true], ["OPD/MP", true], ["", false], ["c", false], ["c", false], ["MP", false]],
-      // 第 7 行: 4-11*, 1-11*, N, R, W, 9-6, 9-5*
+      // 第 7 行: 4-11*, 1-11*, N, R, W, 9-6, 9-5*  (已修正 TUE 為食 1 輪)
       [["OPD/MP", true], ["f", true], ["", false], ["", false], ["", false], ["a", false], ["b (#2)", true]],
       // 第 8 行: 9-6, 8-1, 9-4*, 3-11, 1-11*, W, 8-1
       [["c", false], ["OPD", false], ["MP(FS)", true], ["OPD%/MP", false], ["MP", true], ["", false], ["OPD", false]],
@@ -852,8 +852,8 @@
       [["", false], ["d (#2)", true], ["b (#2)", true], ["d (#2)", false], ["MP/R (#2)", false], ["OPD (#2)", true], ["OPD", false]],
       // 第 13 行: 1-10*, W, 9-4*, 9-4, 10-5, 9-1, N
       [["%/MP", true], ["", false], ["NW", true], ["c", false], ["g/%", false], ["MP", false], ["", false]],
-      // 第 14 行: R, W, 8-4*, 8-4*, 9-6, 1-10, 1-11
-      [["", false], ["", false], ["OPD", true], ["b", true], ["a", false], ["%/MP", false], ["f", false]]
+      // 第 14 行: R, W, 8-4*, 8-4*, 9-6, 1-10*, 1-11  (已修正 SAT 為食 1 輪)
+      [["", false], ["", false], ["OPD", true], ["b", true], ["a", false], ["%/MP", true], ["f", false]]
     ];
 
     // 依特定次序排列：AL(單日) ➔ 半日(1點收) ➔ 早更 ➔ P更(1點起) ➔ N更 ➔ R ➔ W
