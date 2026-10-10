@@ -473,7 +473,7 @@
       border: 2px solid #3498db !important;
       background-color: #ebf5fb !important;
     }
-    .note-badge {
+        .note-badge {
       display: block;
       background: #2980b9;
       color: white;
@@ -485,6 +485,35 @@
       overflow: hidden;
       text-overflow: ellipsis;
       font-weight: bold;
+    }
+    /* 公告彈窗樣式 */
+    .announcement-modal {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.65);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100000;
+    }
+    .announcement-card {
+      background: white;
+      border-radius: 12px;
+      width: 88%;
+      max-width: 360px;
+      padding: 18px;
+      box-shadow: 0 5px 25px rgba(0,0,0,0.3);
+      text-align: left;
+      border-top: 5px solid #e67e22;
+    }
+    /* 管理員專用發布框 (預設隱藏，僅管理員登入才顯示) */
+    .admin-announcement-panel {
+      display: none;
+      background: #fdf2e9;
+      border: 1.5px dashed #e67e22;
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 12px;
     }
     .cal-week-tag-col {
       background: #fbf7fd;
@@ -887,11 +916,13 @@
 
     onAuthStateChanged(auth, async (user) => {
       if (user) {
-        currentUser = user;
+                currentUser = user;
+        const uname = user.email ? user.email.replace("@shift.local", "") : "使用者";
+        document.getElementById("userLabel").innerText = uname;
         document.getElementById("authPanel").style.display = "none";
         document.getElementById("appPanel").style.display = "block";
-        document.getElementById("userLabel").innerText = user.email ? user.email.replace("@shift.local", "") : "已登入用戶";
         await loadUserData();
+        checkPublicAnnouncement(uname);
         initDynamicYears();
         initMyStatusUI();
         initColleaguesUI();
@@ -2048,7 +2079,21 @@
   </div>
 
   <!-- 2. 主面板 -->
-      <div class="container" id="appPanel" style="display:none;">
+        <div class="container" id="appPanel" style="display:none;">
+    <!-- 👑 管理員專用公告發布區（僅 zeldris12313 登入時可見，其他同事完全隱藏） -->
+    <div id="adminAnnouncementBox" class="admin-announcement-panel">
+      <div style="font-weight:bold; color:#d35400; font-size:0.85rem; margin-bottom:6px;">
+        👑 管理員專用：發布全體新公告
+      </div>
+      <input type="text" id="adminNoticeTitle" placeholder="公告標題 (例如: 系統更新或假期通知)" style="width:100%; padding:6px; margin-bottom:6px; font-size:0.82rem; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;">
+      <textarea id="adminNoticeContent" placeholder="輸入公告內容... (支援換行)" rows="3" style="width:100%; padding:6px; font-size:0.82rem; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;"></textarea>
+      <div style="text-align:right; margin-top:6px;">
+        <button onclick="publishNewAnnouncement()" style="background:#e67e22; color:white; border:none; padding:6px 14px; border-radius:4px; font-size:0.8rem; font-weight:bold; cursor:pointer;">
+          🚀 發布新公告（所有同事下次進入將彈出一次）
+        </button>
+      </div>
+    </div>
+
     <!-- 1. 最頂置中重新整理按鈕 -->
     <div style="text-align:center; margin-bottom:10px;">
       <button onclick="location.reload()" style="background:#34495e; color:white; border:none; padding:6px 16px; border-radius:6px; font-size:0.8rem; cursor:pointer; font-weight:bold;">🔄 重新整理 (Refresh)</button>
@@ -2283,11 +2328,25 @@
 
     </div>
 
-    <!-- 底部快捷重新整理 -->
+        <!-- 底部快捷重新整理 -->
     <div style="text-align:center; margin-top:20px; padding:10px 0;">
       <button onclick="location.reload()" style="background:#34495e; color:white; border:none; padding:8px 18px; border-radius:6px; font-size:0.85rem; cursor:pointer; font-weight:bold;">🔄 重新整理頁面 (Refresh)</button>
     </div>
 
+  </div>
+
+  <!-- 📢 全體新公告彈窗 (按了已讀後不會再彈出) -->
+  <div class="announcement-modal" id="announcementModal">
+    <div class="announcement-card">
+      <div style="display:flex; align-items:center; gap:6px; margin-bottom:8px;">
+        <span style="font-size:1.3rem;">📢</span>
+        <h3 id="popNoticeTitle" style="margin:0; font-size:1rem; color:#2c3e50;">最新系統公告</h3>
+      </div>
+      <div id="popNoticeContent" style="font-size:0.85rem; color:#4a5568; line-height:1.6; white-space:pre-wrap; max-height:260px; overflow-y:auto; background:#f8fafc; padding:10px; border-radius:6px; border:1px solid #edf2f7; margin-bottom:14px;"></div>
+      <button onclick="dismissAnnouncement()" style="width:100%; background:#27ae60; color:white; border:none; padding:9px; border-radius:6px; font-weight:bold; font-size:0.88rem; cursor:pointer;">
+        ✅ 我知道了 (不再顯示)
+      </button>
+    </div>
   </div>
 
   <!-- PH 時數及手動調更 Modal 視窗 -->
