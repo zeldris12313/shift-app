@@ -309,7 +309,7 @@
       }
     }
 
-    async function loadSavedData() {
+        async function loadSavedData() {
       const local = localStorage.getItem("swap_rota_data");
       if (local) {
         try {
@@ -343,9 +343,13 @@
 
       updateRowSelectOptions();
       const total = ROSTERS[selectedGroup].totalRows;
-      if (colleagueNames.length !== total) {
+
+      // 強制檢查長度與清除舊名字殘留，確保「自己」位置準確
+      if (!colleagueNames || colleagueNames.length !== total) {
         initDefaultData();
       } else {
+        // 如果舊資料存了舊人名，強制修正為「自己」
+        colleagueNames[myBaseRow - 1] = MY_LABEL;
         currentViewAbsWeek = getAbsIndex(baseYear, baseWeek);
       }
       renderUI();
@@ -527,8 +531,13 @@
 </head>
 <body>
 
-  <div class="container">
-    <!-- 頂部頁面切換導航 -->
+    <div class="container">
+    <!-- 1. 最頂置中重新整理按鈕 -->
+    <div style="text-align:center; margin-bottom:10px;">
+      <button onclick="location.reload(true)" style="background:#34495e; color:white; border:none; padding:6px 16px; border-radius:6px; font-size:0.8rem; cursor:pointer; font-weight:bold;">🔄 重新整理 (Refresh)</button>
+    </div>
+
+    <!-- 2. 頂部頁面切換導航 (三頁互通) -->
     <div class="nav-tabs">
       <a href="calc.html" class="tab-btn">📅 個人更期與PH計算</a>
       <a href="dinner.html" class="tab-btn">🍽️ 多人約食飯／撞假對照</a>
@@ -554,19 +563,19 @@
         <input type="date" id="jumpDatePicker" onchange="onJumpDateChange(this.value)" style="padding:4px 6px; border:1px solid #ccc; border-radius:4px; font-size:0.82rem;">
       </div>
 
-            <!-- 設定我的基準定位 (可折疊收起) -->
+                  <!-- 設定我的基準定位 (直接固定為「自己」，無需手動入名) -->
       <details style="margin-top:8px; font-size:0.8rem; background:#fff; padding:6px 10px; border-radius:6px; border:1px solid #e2e8f0;">
         <summary style="cursor:pointer; font-weight:bold; color:#2980b9;">⚙️ 設定組別與基準週定位 (點此展開)</summary>
         <div style="display:flex; gap:8px; align-items:center; margin-top:8px; flex-wrap:wrap;">
-          <span>我的組別：</span>
-          <select id="groupSelect" onchange="onGroupChange(this.value)" style="padding:3px 6px; font-weight:bold;">
+          <span>組別：</span>
+          <select id="groupSelect" onchange="onGroupChange(this.value)" style="padding:4px 6px; font-weight:bold; border:1px solid #ccc; border-radius:4px;">
             <option value="group2">2組 (12行)</option>
             <option value="group3" selected>3組 (14行)</option>
             <option value="group4">4組 (5行)</option>
             <option value="groupCell">Cell組 (6行)</option>
           </select>
           <span>基準週「自己」處於：</span>
-          <select id="mySelfRow" style="padding:3px; font-weight:bold;"></select>
+          <select id="mySelfRow" style="padding:4px 6px; font-weight:bold; border:1px solid #ccc; border-radius:4px;"></select>
           <button class="btn btn-primary" onclick="updateMyInfo()">儲存設定</button>
         </div>
       </details>
