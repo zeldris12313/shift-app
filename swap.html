@@ -566,42 +566,53 @@
       <a href="swap.html" class="tab-btn active">🔄 實體更表模擬與調更</a>
     </div>
 
-        <!-- 頂部操控列 -->
-    <div class="ctrl-box">
-      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-        <button id="toggleLockBtn" class="btn btn-primary" onclick="toggleLock()">🔒 已鎖定名單</button>
-      </div>
-      <div id="lockNotice" style="font-size:0.75rem; margin-top:6px; font-weight:bold;"></div>
-
-      <!-- 快速跳日子區塊 (選中即出直框) -->
-      <div style="display:flex; align-items:center; gap:6px; margin-top:8px; padding-top:8px; border-top:1px dashed #cbd5e1; flex-wrap:wrap;">
-        <span style="font-size:0.82rem; font-weight:bold; color:#2c3e50;">🎯 快速跳至指定日子 (以直框顯示)：</span>
-        <input type="date" id="jumpDatePicker" onchange="onJumpDateChange(this.value)" style="padding:4px 6px; border:1px solid #ccc; border-radius:4px; font-size:0.82rem; background:#fff;">
+            <!-- 頂部設定卡片 (常駐固定顯示，採用 calc.html 鮮明風格) -->
+    <div style="background:#ffffff; border:1.5px solid #3182ce; border-radius:10px; padding:12px; margin-bottom:12px; box-shadow:0 3px 8px rgba(49,130,206,0.12);">
+      <div style="font-weight:bold; color:#2b6cb0; font-size:0.92rem; margin-bottom:8px; display:flex; align-items:center; gap:5px;">
+        ⚙️ 基準定位與跳日設定
       </div>
 
-      <!-- 設定我的基準定位 (可折疊收起) -->
-      <details style="margin-top:8px; font-size:0.8rem; background:#fff; padding:6px 10px; border-radius:6px; border:1px solid #e2e8f0;">
-        <summary style="cursor:pointer; font-weight:bold; color:#2980b9;">⚙️ 設定組別與基準週定位 (點此展開)</summary>
-        <div style="display:flex; gap:8px; align-items:center; margin-top:8px; flex-wrap:wrap;">
-          <span>組別：</span>
-          <select id="groupSelect" onchange="onGroupChange(this.value)" style="padding:4px 6px; font-weight:bold; border:1px solid #ccc; border-radius:4px;">
+      <!-- ① 組別與基準行數 (並排) -->
+      <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px; flex-wrap:wrap; background:#ebf8ff; padding:8px; border-radius:6px; border:1px solid #bee3f8;">
+        <div style="display:flex; align-items:center; gap:4px;">
+          <span style="font-size:0.82rem; font-weight:bold; color:#2c5282;">組別：</span>
+          <select id="groupSelect" onchange="onGroupChange(this.value)" style="padding:4px 6px; font-weight:bold; border:1px solid #90cdf4; border-radius:5px; background:#fff; font-size:0.82rem;">
             <option value="group2">2組 (12行)</option>
             <option value="group3" selected>3組 (14行)</option>
             <option value="group4">4組 (5行)</option>
             <option value="groupCell">Cell組 (6行)</option>
           </select>
-          <span>基準週「自己」處於：</span>
-          <select id="mySelfRow" style="padding:4px 6px; font-weight:bold; border:1px solid #ccc; border-radius:4px;"></select>
-          <button class="btn btn-primary" onclick="updateMyInfo()">儲存設定</button>
         </div>
-      </details>
+
+        <div style="display:flex; align-items:center; gap:4px;">
+          <span style="font-size:0.82rem; font-weight:bold; color:#2c5282;">基準週「自己」處於：</span>
+          <select id="mySelfRow" style="padding:4px 6px; font-weight:bold; border:1px solid #90cdf4; border-radius:5px; background:#fff; font-size:0.82rem;"></select>
+        </div>
+
+        <button class="btn" onclick="updateMyInfo()" style="background:#3182ce; color:white; padding:5px 12px; border-radius:5px; font-size:0.82rem;">儲存設定</button>
+      </div>
+
+      <!-- ② 快速跳指定日子 -->
+      <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+        <span style="font-size:0.82rem; font-weight:bold; color:#2d3748;">🎯 快速跳至指定日子 (以直框顯示)：</span>
+        <input type="date" id="jumpDatePicker" onchange="onJumpDateChange(this.value)" style="padding:4px 6px; border:1px solid #cbd5e1; border-radius:5px; font-size:0.82rem; background:#fff;">
+      </div>
     </div>
 
-    <!-- 🌟 更表上方置中的翻週控制器 -->
-    <div style="display:flex; justify-content:center; align-items:center; gap:8px; margin:12px 0 6px 0;">
-      <button class="btn btn-purple" onclick="prevWeek()" style="padding:7px 14px; font-size:0.85rem;">◀ 上一週</button>
-      <button class="btn btn-purple" onclick="resetThisWeek()" style="padding:7px 16px; font-size:0.85rem;">📅 本週</button>
-      <button class="btn btn-purple" onclick="nextWeek()" style="padding:7px 14px; font-size:0.85rem;">下一週 ▶</button>
+    <!-- 🌟 更表操作列 (鎖定按鈕置於本週按鈕正上方) -->
+    <div style="display:flex; flex-direction:column; align-items:center; gap:6px; margin:10px 0;">
+      <!-- 鎖定按鈕置中 -->
+      <div>
+        <button id="toggleLockBtn" class="btn btn-primary" onclick="toggleLock()" style="padding:6px 16px; font-size:0.85rem; box-shadow:0 2px 5px rgba(0,0,0,0.1);">🔒 已鎖定名單</button>
+      </div>
+      <div id="lockNotice" style="font-size:0.75rem; font-weight:bold; text-align:center;"></div>
+
+      <!-- 上週 / 本週 / 下週 翻週按鈕 -->
+      <div style="display:flex; justify-content:center; align-items:center; gap:8px;">
+        <button class="btn btn-purple" onclick="prevWeek()" style="padding:6px 14px; font-size:0.85rem;">◀ 上一週</button>
+        <button class="btn btn-purple" onclick="resetThisWeek()" style="padding:6px 16px; font-size:0.85rem;">📅 本週</button>
+        <button class="btn btn-purple" onclick="nextWeek()" style="padding:6px 14px; font-size:0.85rem;">下一週 ▶</button>
+      </div>
     </div>
 
     <!-- 🌟 紙本 ROTA 表格區 -->
