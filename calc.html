@@ -2032,7 +2032,37 @@
         });
       } catch (e) { console.error(e); }
     }
+    async function loadUserData() {
+      if (!currentUser) return;
+      try {
+        const phSnap = await getDoc(doc(db, "user_ph_usage", currentUser.uid));
+        if (phSnap.exists() && phSnap.data().usage) {
+          userPhUsage = phSnap.data().usage;
+        } else {
+          userPhUsage = {};
+        }
 
+        const ovSnap = await getDoc(doc(db, "user_shift_overrides", currentUser.uid));
+        if (ovSnap.exists() && ovSnap.data().overrides) {
+          userShiftOverrides = ovSnap.data().overrides;
+        } else {
+          userShiftOverrides = {};
+        }
+
+        const noteSnap = await getDoc(doc(db, "user_day_notes", currentUser.uid));
+        if (noteSnap.exists() && noteSnap.data().notes) {
+          userDayNotes = noteSnap.data().notes;
+        } else {
+          userDayNotes = {};
+        }
+
+        const tlSnap = await getDoc(doc(db, "user_timeline", currentUser.uid));
+        if (tlSnap.exists() && tlSnap.data().anchors) {
+          timelineAnchors = tlSnap.data().anchors;
+          vacationWeeks = new Set(tlSnap.data().vacations || []);
+        }
+      } catch (e) { console.error(e); }
+    }
     window.onAnchorGroupChange = (grp) => {
       const select = document.getElementById("anchorRowSelect");
       const totalR = ROSTERS[grp].totalRows;
