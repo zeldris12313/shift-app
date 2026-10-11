@@ -2033,103 +2033,6 @@
       } catch (e) { console.error(e); }
     }
 
-    window.saveCurrentCalc = async () => {
-      if (!currentUser) return;
-      const title = document.getElementById("recordTitleInput").value.trim() || "大假推算紀錄";
-      const summary = document.getElementById("summaryText").innerText;
-
-      const newRec = {
-        id: "rec_" + Date.now(),
-        title,
-        desc: summary,
-        date: new Date().toLocaleDateString()
-      };
-
-      savedRecords.unshift(newRec);
-      if (savedRecords.length > 10) savedRecords.pop();
-
-      try {
-        await setDoc(doc(db, "user_records", currentUser.uid), { records: savedRecords });
-        document.getElementById("recordTitleInput").value = "";
-        renderRecords();
-        alert("已成功保存記錄！");
-      } catch (e) {
-        alert("儲存失敗: " + e.message);
-      }
-    };
-
-    window.deleteRecordByIndex = async (index) => {
-      if (!confirm("確定要刪除這條備忘記錄嗎？")) return;
-      savedRecords.splice(index, 1);
-      try {
-        await setDoc(doc(db, "user_records", currentUser.uid), { records: savedRecords });
-        renderRecords();
-      } catch (e) {
-        alert("刪除失敗: " + e.message);
-      }
-    };
-
-    async function loadUserData() {
-      if (!currentUser) return;
-      try {
-        const recSnap = await getDoc(doc(db, "user_records", currentUser.uid));
-        if (recSnap.exists() && recSnap.data().records) {
-          savedRecords = recSnap.data().records;
-        } else {
-          savedRecords = [];
-        }
-        renderRecords();
-
-        const phSnap = await getDoc(doc(db, "user_ph_usage", currentUser.uid));
-        if (phSnap.exists() && phSnap.data().usage) {
-          userPhUsage = phSnap.data().usage;
-        } else {
-          userPhUsage = {};
-        }
-
-                const ovSnap = await getDoc(doc(db, "user_shift_overrides", currentUser.uid));
-        if (ovSnap.exists() && ovSnap.data().overrides) {
-          userShiftOverrides = ovSnap.data().overrides;
-        } else {
-          userShiftOverrides = {};
-        }
-
-        const noteSnap = await getDoc(doc(db, "user_day_notes", currentUser.uid));
-        if (noteSnap.exists() && noteSnap.data().notes) {
-          userDayNotes = noteSnap.data().notes;
-        } else {
-          userDayNotes = {};
-        }
-
-        const tlSnap = await getDoc(doc(db, "user_timeline", currentUser.uid));
-        if (tlSnap.exists() && tlSnap.data().anchors) {
-          timelineAnchors = tlSnap.data().anchors;
-          vacationWeeks = new Set(tlSnap.data().vacations || []);
-        }
-      } catch (e) { console.error(e); }
-    }
-
-    function renderRecords() {
-      const box = document.getElementById("recordsList");
-      if (!box) return;
-      box.innerHTML = "";
-      if (savedRecords.length === 0) {
-        box.innerHTML = `<div style="color:#7f8c8d; font-size:0.85rem;">暫無儲存紀錄。</div>`;
-        return;
-      }
-      savedRecords.forEach((rec, idx) => {
-        box.innerHTML += `
-          <div class="record-item">
-            <div>
-              <b>${rec.title}</b> (${rec.date})<br>
-              <span style="color:#555; font-size:0.8rem;">${rec.desc}</span>
-            </div>
-            <button class="btn-del-record" onclick="deleteRecordByIndex(${idx})">🗑️ 刪除</button>
-          </div>
-        `;
-      });
-    }
-
     window.onAnchorGroupChange = (grp) => {
       const select = document.getElementById("anchorRowSelect");
       const totalR = ROSTERS[grp].totalRows;
@@ -2290,10 +2193,6 @@
     
     <!-- 分析結果摘要與儲存 -->
     <div class="result-alert" id="summaryText">載入分析中...</div>
-    <div style="display:flex; gap:6px; align-items:center; margin-bottom:12px; flex-wrap:wrap;">
-      <input type="text" id="recordTitleInput" placeholder="輸入備忘標題 (例如: 接替入位備忘)" style="flex:1; min-width:160px; padding:6px;">
-      <button class="btn-save-record" onclick="saveCurrentCalc()">💾 儲存此推算結果</button>
-    </div>
 
     <!-- 中部主角：完整大更期月曆表 -->
     <div class="big-roster-section">
@@ -2315,12 +2214,6 @@
       <div class="table-container">
         <table id="bigRosterTable"></table>
       </div>
-    </div>
-
-    <!-- 雲端個人備忘記錄 -->
-    <div class="records-box">
-      <div style="font-weight:bold; color:var(--primary-color); margin-bottom:6px; font-size:0.85rem;">📁 我的雲端推算歷史備忘：</div>
-      <div id="recordsList">載入中...</div>
     </div>
 
     <!-- 分隔線 -->
