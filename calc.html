@@ -1129,8 +1129,10 @@
       syncMyLeaveWeekFromDate(myStatus.leaveDate);
     }
 
-    function updateMyRowSelect() {
-      const rowSelect = document.getElementById("myRowSelect");
+        function updateMyRowSelect() {
+      // 同時支援新舊 ID，防止 null 報錯中斷月曆
+      const rowSelect = document.getElementById("myCurrentRowSelect") || document.getElementById("myRowSelect");
+      if (!rowSelect) return;
       const maxR = ROSTERS[myStatus.group].totalRows;
       rowSelect.innerHTML = "";
       for (let r = 1; r <= maxR; r++) {
@@ -1144,14 +1146,26 @@
       updateMyRowSelect();
       window.calculateAll();
     };
+    window.onGroupChange = window.updateMyGroup;
 
-        window.updateMyRow = (r) => {
+    window.updateMyRow = (r) => {
       myStatus.currentRow = parseInt(r);
       window.calculateAll();
     };
 
+    // 支援「跳至個人月曆」平滑捲動
+    window.scrollToCalendar = () => {
+      const elem = document.getElementById("unifiedCalAnchor");
+      if (elem) elem.scrollIntoView({ behavior: 'smooth' });
+    };
+
     // 按鈕 1：將目前組別及行數直接導入個人月曆
     window.applyMyStatusToCalendar = async () => {
+      const curRowSel = document.getElementById("myCurrentRowSelect");
+      if (curRowSel) {
+        myStatus.currentRow = parseInt(curRowSel.value);
+      }
+
       timelineAnchors = timelineAnchors.filter(a => a.absWeek !== todayAbsWeek);
       timelineAnchors.push({
         absWeek: todayAbsWeek,
@@ -1171,6 +1185,7 @@
       if (calElem) calElem.scrollIntoView({ behavior: 'smooth' });
       alert(`✅ 已成功導入月曆！\n由本週起設定為：${ROSTERS[myStatus.group].name} 第 ${myStatus.currentRow} 行。`);
     };
+    window.applySetupToCalendar = window.applyMyStatusToCalendar;
 
     // 按鈕 2：一鍵把選中之大假週自動轉為月曆大假週
     window.applyMyLeaveWeekToVacation = async () => {
