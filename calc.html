@@ -824,38 +824,6 @@
       }
     };
 
-            // 3組專用 Duty 與是否有*標記 [duty, hasStar] (MON=0 至 SUN=6)
-    const GROUP3_DUTIES = [
-      // 第 1 行: N, R, W, 9-5*, 9-5, 1-11*, 2-10
-      [["", false], ["", false], ["", false], ["OPD", true], ["e", false], ["f", true], ["OPD/MP", false]],
-      // 第 2 行: W, 9-6, 8-5, 9-5, 1-10*, 1-10, W
-      [["", false], ["c", false], ["e", false], ["e", false], ["OPD%/MP", true], ["OPD/MP", false], ["", false]],
-      // 第 3 行: 9-6, 2-10*, 1-11*, N, R, W, 9-4*
-      [["a", false], ["MP", true], ["f", true], ["", false], ["", false], ["", false], ["a", true]],
-      // 第 4 行: 9-4*, 9-5, 8-4*, 9-1, 8-5*, 9-5, W
-      [["b (#1)", true], ["e (#1)", false], ["d(#1)", true], ["MP (#1)", false], ["OPD(#1)", true], ["e (#1)", false], ["", false]],
-      // 第 5 行: 1-10*, N, R, W, 8-4*, 8-5*, 9-5*
-      [["f", true], ["", false], ["", false], ["", false], ["b", true], ["d", true], ["c (#1)", true]],
-      // 第 6 行: 9-5, 3-11*, 3-11*, W, 8-4, 9-5, 9-1
-      [["e", false], ["OPD%/MP", true], ["OPD/MP", true], ["", false], ["c", false], ["c", false], ["MP", false]],
-      // 第 7 行: 4-11*, 1-11*, N, R, W, 9-6, 9-5*  (已修正 TUE 為食 1 輪)
-      [["OPD/MP", true], ["f", true], ["", false], ["", false], ["", false], ["a", false], ["b (#2)", true]],
-      // 第 8 行: 9-6, 8-1, 9-4*, 3-11, 1-11*, W, 8-1
-      [["c", false], ["OPD", false], ["MP(FS)", true], ["OPD%/MP", false], ["MP", true], ["", false], ["OPD", false]],
-      // 第 9 行: 8-4*, 9-6*, 10-5, 1-11*, N, R, W
-      [["d", true], ["a", true], ["c", false], ["f", true], ["", false], ["", false], ["", false]],
-      // 第 10 行: 2-11*, 3-10, 9-1, 9-6, 8-4*, 9-4*, W
-      [["MP", true], ["OPD/MP", false], ["OPD", false], ["a", false], ["d", true], ["b", true], ["", false]],
-      // 第 11 行: 9-5*, 9-4, 9-6*, W, 1-11*, N, R
-      [["OPD (#2)", true], ["b", false], ["a", true], ["", false], ["f", true], ["", false], ["", false]],
-      // 第 12 行: W, 8-4*, 9-4*, 9-5, 9-4, 8-4*, 4-10
-      [["", false], ["d (#2)", true], ["b (#2)", true], ["d (#2)", false], ["MP/R (#2)", false], ["OPD (#2)", true], ["OPD", false]],
-      // 第 13 行: 1-10*, W, 9-4*, 9-4, 10-5, 9-1, N
-      [["%/MP", true], ["", false], ["NW", true], ["c", false], ["g/%", false], ["MP", false], ["", false]],
-      // 第 14 行: R, W, 8-4*, 8-4*, 9-6, 1-10*, 1-11  (已修正 SAT 為食 1 輪)
-      [["", false], ["", false], ["OPD", true], ["b", true], ["a", false], ["%/MP", true], ["f", false]]
-    ];
-
     // 依特定次序排列：AL(單日) ➔ 半日(1點收) ➔ 早更 ➔ P更(1點起) ➔ N更 ➔ R ➔ W
     const ALL_SHIFT_OPTIONS = [
       "AL",
@@ -1867,12 +1835,10 @@
             let isCustomBadge = customShift ? `<span style="font-size:0.6rem; color:#2980b9; display:block;">(調)</span>` : '';
             let noteBadge = noteText ? `<span class="note-badge" title="${noteText}">📝 ${noteText}</span>` : '';
             let isTodayBorder = (cur.toDateString() === todayObj.toDateString()) ? 'border: 2px solid #e67e22 !important;' : '';
-                        let noteClass = noteText ? 'has-note-cell' : '';
-            const passGrp = typeof currentGroup !== 'undefined' ? currentGroup : (myStatus ? myStatus.group : 'group3');
-            const passRow = typeof currentRow !== 'undefined' ? currentRow : (myStatus ? myStatus.currentRow : 1);
+                                    let noteClass = noteText ? 'has-note-cell' : '';
 
             html += `
-              <td class="${noteClass}" style="${isTodayBorder} cursor:pointer;" onclick="openCombinedModal('${dateKey}', '${defaultShift}', '${passGrp}', ${passRow})">
+              <td class="${noteClass}" style="${isTodayBorder} cursor:pointer;" onclick="openCombinedModal('${dateKey}', '${defaultShift}')">
                 <div class="cal-date-num">${cur.getDate()}</div>
                 ${holidayTag}
                 <div class="cal-shift-text ${shiftClass} ${customShift ? 'cal-shift-custom' : ''}">${finalShift}</div>
@@ -1939,21 +1905,11 @@
     }
 
         // ----------------- PH 及手動調更 Modal -----------------
-    window.openCombinedModal = (dateKey, defaultShift, groupKey, rowNum) => {
+        window.openCombinedModal = (dateKey, defaultShift) => {
       activeModalDateKey = dateKey;
       activeModalDefaultShift = defaultShift;
 
-      // 1. 自動從 dateKey 精準推算星期幾 (0=MON ... 6=SUN)
-      const parts = dateKey.split('-');
-      const dt = new Date(parts[0], parts[1] - 1, parts[2]);
-      const getD = dt.getDay();
-      const dIdx = (getD === 0) ? 6 : getD - 1;
-
-      // 2. 確定當前傳入的組別與推算行數
-      const curGroup = groupKey || (typeof myStatus !== 'undefined' && myStatus.group ? myStatus.group : "group3");
-      const curRow = parseInt(rowNum) || (typeof myStatus !== 'undefined' && myStatus.currentRow ? myStatus.currentRow : 1);
-
-      // 3. 公眾假期 Banner 提示
+      // 公眾假期 Banner 提示
       if (typeof HK_PUBLIC_HOLIDAYS !== 'undefined') {
         const phHolidayName = HK_PUBLIC_HOLIDAYS[dateKey];
         const banner = document.getElementById("modalHolidayBanner");
@@ -1970,37 +1926,9 @@
       const titleElem = document.getElementById("modalDateTitle");
       if (titleElem) titleElem.innerText = `📅 設定 ${dateKey} 之紀錄：`;
 
-      // 4. Duty 與食飯輪次判定：僅 3 組才載入
-      let dutyText = "";
-      let mealText = "";
-      const isSunday = (dIdx === 6);
-      const isPShift = ['1-9','1-10','1-11','2-10','2-11','3-10','3-11','4-10','4-11','5-10','5-11'].includes(defaultShift);
-
-      if (curGroup === "group3" && curRow >= 1 && curRow <= 14 && typeof GROUP3_DUTIES !== 'undefined') {
-        const dutyInfo = GROUP3_DUTIES[curRow - 1][dIdx];
-        if (dutyInfo) {
-          const dutyCode = dutyInfo[0];
-          const hasStar = dutyInfo[1];
-
-          if (dutyCode) {
-            dutyText = `【Duty: ${dutyCode}】`;
-          }
-
-          // 食飯規則：星期日返 P 更 ➔ 直接沒有食飯輪次
-          if (isSunday && isPShift) {
-            mealText = "";
-          } else if (defaultShift !== "W" && defaultShift !== "R" && !defaultShift.startsWith("N")) {
-            mealText = hasStar ? "食「1輪」" : "食「2輪」";
-          }
-        }
-      }
-
       const dutyDisplayElem = document.getElementById("modalDutyInfo");
       if (dutyDisplayElem) {
-        let fullInfo = `今日：<b>${defaultShift}</b>`;
-        if (dutyText) fullInfo += ` ${dutyText}`;
-        if (mealText) fullInfo += ` <b>${mealText}</b>`;
-        dutyDisplayElem.innerHTML = fullInfo;
+        dutyDisplayElem.innerHTML = `今日預設更期：<b>${defaultShift}</b>`;
       }
       
       const curPh = (typeof userPhUsage !== 'undefined' && userPhUsage[dateKey]) ? userPhUsage[dateKey] : 0;
