@@ -1867,10 +1867,12 @@
             let isCustomBadge = customShift ? `<span style="font-size:0.6rem; color:#2980b9; display:block;">(調)</span>` : '';
             let noteBadge = noteText ? `<span class="note-badge" title="${noteText}">📝 ${noteText}</span>` : '';
             let isTodayBorder = (cur.toDateString() === todayObj.toDateString()) ? 'border: 2px solid #e67e22 !important;' : '';
-            let noteClass = noteText ? 'has-note-cell' : '';
+                        let noteClass = noteText ? 'has-note-cell' : '';
+            const passGrp = typeof currentGroup !== 'undefined' ? currentGroup : (myStatus ? myStatus.group : 'group3');
+            const passRow = typeof currentRow !== 'undefined' ? currentRow : (myStatus ? myStatus.currentRow : 1);
 
-html += `
-  <td class="${noteClass}" style="${isTodayBorder} cursor:pointer;" onclick="openCombinedModal('${dateKey}', '${defaultShift}', typeof currentGroup !== 'undefined' ? currentGroup : (myStatus ? myStatus.group : 'group3'), typeof currentRow !== 'undefined' ? currentRow : (myStatus ? myStatus.currentRow : 1))">
+            html += `
+              <td class="${noteClass}" style="${isTodayBorder} cursor:pointer;" onclick="openCombinedModal('${dateKey}', '${defaultShift}', '${passGrp}', ${passRow})">
                 <div class="cal-date-num">${cur.getDate()}</div>
                 ${holidayTag}
                 <div class="cal-shift-text ${shiftClass} ${customShift ? 'cal-shift-custom' : ''}">${finalShift}</div>
@@ -2503,7 +2505,7 @@ html += `
   </div>
 
   <!-- PH 時數及手動調更 Modal 視窗 -->
-  <div class="modal-overlay" id="combinedModal">
+  <div id="combinedModal" class="modal-overlay" style="display:none;">
         <div class="modal-card">
       <div id="modalHolidayBanner" class="modal-holiday-banner" style="display:none; background:#fed7d7; color:#c53030; padding:6px 10px; border-radius:6px; font-weight:bold; font-size:0.85rem; margin-bottom:8px;"></div>
       <div class="modal-section-title" id="modalDateTitle" style="font-size:0.95rem;"></div>
