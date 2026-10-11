@@ -1870,7 +1870,7 @@
             let noteClass = noteText ? 'has-note-cell' : '';
 
 html += `
-  <td class="${noteClass}" style="${isTodayBorder} cursor:pointer;" onclick="openCombinedModal('${dateKey}', '${defaultShift}', '${effectiveGroup}', ${calcRow}, ${d})">
+  <td class="${noteClass}" style="${isTodayBorder} cursor:pointer;" onclick="openCombinedModal('${dateKey}', '${defaultShift}', '${currentGroup}', ${currentRow})">
                 <div class="cal-date-num">${cur.getDate()}</div>
                 ${holidayTag}
                 <div class="cal-shift-text ${shiftClass} ${customShift ? 'cal-shift-custom' : ''}">${finalShift}</div>
