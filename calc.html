@@ -2211,40 +2211,30 @@
 
     <!-- 🌟 目前帳號下方的一鍵直達個人月曆長按鈕 -->
     <div style="margin-bottom:12px;">
-      <button type="button" onclick="document.getElementById('unifiedCalAnchor').scrollIntoView({ behavior: 'smooth' })" style="width:100%; background:linear-gradient(135deg, #8e44ad, #6c3483); color:white; border:none; padding:10px 14px; border-radius:8px; font-size:0.88rem; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 3px 10px rgba(142,68,173,0.25);">
-        <span>📅 一鍵跳至「個人一體化更期月曆」</span>
-        <span style="font-size:0.75rem; opacity:0.85;">(班次推算・手動調更・PH記錄) ▼</span>
+            <button onclick="scrollToCalendar()" style="background:#8e44ad; color:white; border:none; padding:10px 14px; border-radius:8px; font-weight:bold; font-size:0.95rem; cursor:pointer; width:100%; box-shadow:0 3px 6px rgba(142,68,173,0.3); display:flex; justify-content:center; align-items:center; gap:6px;">
+        📅 跳至個人月曆 ▼
       </button>
-    </div>
 
-    <!-- 我的現時更期定位 -->
-    <div class="my-status-card">
-      <div style="font-weight:bold; color:#2980b9; font-size:0.95rem; margin-bottom:6px;">
-        📍 步驟推算：設定你自己何時放大假
-      </div>
-      
-      <!-- ① 與 ② 縮成同一排 -->
-      <div style="display:flex; gap:8px; margin-bottom:8px;">
-        <div class="step-box" style="flex:1; min-width:0;">
-          <span class="step-title">① 我的組別</span>
-          <select id="myGroupSelect" onchange="updateMyGroup(this.value)" style="width:100%; max-width:100%; box-sizing:border-box;">
-            <option value="group2">2組 (12行)</option>
-            <option value="group3" selected>3組 (14行)</option>
-            <option value="group4">4組 (5行)</option>
-            <option value="groupCell">Cell組 (6行)</option>
-          </select>
+      <!-- 步驟推算設定區塊 -->
+      <div style="background:#ffffff; border:1.5px solid #3182ce; border-radius:10px; padding:12px; margin-top:10px;">
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+          <div>
+            <label style="font-size:0.82rem; font-weight:bold; color:#2c3e50;">① 我的組別</label>
+            <select id="myGroupSelect" onchange="onGroupChange(this.value)" style="width:100%; padding:6px; font-weight:bold; border:1px solid #cbd5e1; border-radius:6px; margin-top:4px;">
+              <option value="group2">2組 (12行)</option>
+              <option value="group3" selected>3組 (14行)</option>
+              <option value="group4">4組 (5行)</option>
+              <option value="groupCell">Cell組 (6行)</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:0.82rem; font-weight:bold; color:#2c3e50;">② 今日我正處於</label>
+            <select id="myCurrentRowSelect" style="width:100%; padding:6px; font-weight:bold; border:1px solid #cbd5e1; border-radius:6px; margin-top:4px;"></select>
+          </div>
         </div>
 
-        <div class="step-box" style="flex:1; min-width:0;">
-          <span class="step-title">② 今日我正處於</span>
-          <select id="myRowSelect" onchange="updateMyRow(this.value)" style="width:100%; max-width:100%; box-sizing:border-box;"></select>
-        </div>
-      </div>
-
-      <!-- 入完以上兩樣嘢直接導入月曆按鈕 -->
-      <div style="margin-bottom:10px;">
-        <button type="button" onclick="applyMyStatusToCalendar()" style="width:100%; background:#2980b9; color:white; border:none; padding:8px; border-radius:6px; font-size:0.85rem; font-weight:bold; cursor:pointer;">
-          📥 將目前組別及行數直接導入下面月曆
+        <button class="btn btn-primary" onclick="applySetupToCalendar()" style="width:100%; margin-top:8px; padding:8px; font-size:0.85rem; font-weight:bold; background:#2980b9; color:white; border:none; border-radius:6px;">
+          🗳️ 導入組別和行數至個人月曆
         </button>
       </div>
 
