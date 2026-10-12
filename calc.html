@@ -1339,30 +1339,30 @@
     window.applySetupToCalendar = window.applyMyStatusToCalendar;
 
     // 按鈕 2：一鍵把選中之大假週自動轉為月曆大假週
+        // 按鈕 2：一鍵把選中之大假週自動轉為月曆大假週 (徹底解綁，絕不導入或覆寫組別及行數)
     window.applyMyLeaveWeekToVacation = async () => {
       const ySel = document.getElementById("myLeaveYearSelect");
       const wSel = document.getElementById("myLeaveWeekSelect");
-      if (ySel) myStatus.leaveYear = parseInt(ySel.value);
-      if (wSel) myStatus.leaveWeek = parseInt(wSel.value);
+      const lYear = ySel ? parseInt(ySel.value) : myStatus.leaveYear;
+      const lWeek = wSel ? parseInt(wSel.value) : myStatus.leaveWeek;
 
-      const targetAbs = getAbsIndexFromYearWeek(myStatus.leaveYear, myStatus.leaveWeek);
+      myStatus.leaveYear = lYear;
+      myStatus.leaveWeek = lWeek;
+
+      const targetAbs = getAbsIndexFromYearWeek(lYear, lWeek);
       vacationWeeks.add(targetAbs);
 
-      // 解除該年清空鎖定，確保大假能即時在月曆顯示
-      if (typeof clearedYears !== 'undefined') {
-        clearedYears.delete(myStatus.leaveYear);
-      }
-
-      viewCalYear = myStatus.leaveYear;
+      viewCalYear = lYear;
       const targetInfo = getWeekInfoFromAbsIndex(targetAbs);
       viewCalMonth = targetInfo.monday.getMonth() + 1;
 
+      // 純粹保存大假週，不解除清空標記，亦不修改任何組別錨點
       await saveUserTimeline();
       renderUnifiedCalendar();
 
       const calElem = document.getElementById("unifiedCalAnchor");
       if (calElem) calElem.scrollIntoView({ behavior: 'smooth' });
-      alert(`🏖️ 已將 ${myStatus.leaveYear} 年 Week ${myStatus.leaveWeek} 成功標記為整週大假！\n後續更期已自動截停。`);
+      alert(`🏖️ 已將 ${lYear} 年 Week ${lWeek} 標記為整週大假！\n（此操作只獨立記錄大假，不會更動或導入任何組別及行數）`);
     };
 
     // 檢查並顯示最新公告 (兼判定管理員發布權限)
@@ -1828,22 +1828,30 @@
     }
 
     // ----------------- 一體化個人月曆推算引擎 (換組插旗 + 大假截停) -----------------
-                function getWeekShiftState(absWeek) {
+                    function getWeekShiftState(absWeek) {
       const wInfo = getWeekInfoFromAbsIndex(absWeek);
 
-      // 1. 若此週為大假週，必定優先顯示大假
+      // 1. 若此週為大假週，必定優先獨立顯示大假 (不受是否導入組別影響)
       if (vacationWeeks.has(absWeek)) {
         return { isVacation: true, group: null, rowNum: null, shifts: ["大假","大假","大假","大假","大假","大假","大假"] };
       }
 
-      // 2. 若該年已被重置清空且非大假，顯示未導入
+      // 2. 若該年已被重置清空，其餘日子維持未導入空白
       if (typeof clearedYears !== 'undefined' && clearedYears.has(wInfo.year)) {
         return { isCleared: true, isVacation: false, group: null, rowNum: null, shifts: ["", "", "", "", "", "", ""] };
       }
 
-      const baseAnchor = timelineAnchors[0] || { absWeek: todayAbsWeek, group: 'group3', startRow: 14 };
+      // 3. 若用戶未曾手動導入過組別及行數，其餘日子保持未導入，絕不擅自倒灌預設更期
+      if (!timelineAnchors || timelineAnchors.length === 0 || !timelineAnchors.some(a => a.manual)) {
+        return { isCleared: true, isVacation: false, group: null, rowNum: null, shifts: ["", "", "", "", "", "", ""] };
+      }
 
-      // 檢查此週之前是否有任何大假週截停
+      const baseAnchor = timelineAnchors.find(a => a.manual) || timelineAnchors[0];
+      if (!baseAnchor || !ROSTERS[baseAnchor.group]) {
+        return { isCleared: true, isVacation: false, group: null, rowNum: null, shifts: ["", "", "", "", "", "", ""] };
+      }
+
+      // 4. 檢查此週之前是否有大假週截停
       const pastVacations = Array.from(vacationWeeks).filter(v => v < absWeek).sort((a,b) => b - a);
       if (pastVacations.length > 0) {
         const latestVacation = pastVacations[0];
@@ -1853,7 +1861,7 @@
         }
       }
 
-      // 2. 正常順推計算
+      // 5. 正常順推計算
       const activeAnchor = timelineAnchors.filter(a => a.absWeek <= absWeek).sort((a,b) => b.absWeek - a.absWeek)[0] || baseAnchor;
       const curRoster = ROSTERS[activeAnchor.group];
       const diff = absWeek - activeAnchor.absWeek;
