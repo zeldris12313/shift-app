@@ -717,11 +717,12 @@
       onAuthStateChanged, 
       signOut 
     } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
-    import { 
+        import { 
       getFirestore, 
       doc, 
       setDoc, 
-      getDoc 
+      getDoc,
+      deleteDoc 
     } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -970,21 +971,26 @@
       document.getElementById("authMsg").innerText = "";
     };
 
-    window.toggleForgotMode = () => {
+        window.toggleForgotMode = () => {
       authMode = (authMode === "forgot") ? "login" : "forgot";
       const staffDiv = document.getElementById("staffIdField");
       const passInput = document.getElementById("authPassword");
+      const userInput = document.getElementById("authUsername");
 
       if (authMode === "forgot") {
         staffDiv.style.display = "block";
-        passInput.style.display = "none";
-        document.getElementById("authTitle").innerText = "🔑 忘記密碼 / 重設";
-        document.getElementById("submitAuthBtn").innerText = "驗證員工編號並重設";
+        passInput.style.display = "block";
+        userInput.placeholder = "設定【新帳戶名稱】(例如: peter888)";
+        passInput.placeholder = "設定【新密碼】(最少6位)";
+        document.getElementById("authTitle").innerText = "🔑 忘記帳號/密碼重設";
+        document.getElementById("submitAuthBtn").innerText = "重設帳戶名及密碼並登入";
         document.getElementById("forgotBtn").innerText = "返回登入";
         document.getElementById("toggleBtn").style.display = "none";
       } else {
         staffDiv.style.display = "none";
         passInput.style.display = "block";
+        userInput.placeholder = "帳戶名稱 (例如: peter888)";
+        passInput.placeholder = "密碼 (最少6位)";
         document.getElementById("authTitle").innerText = "🔒 登入推算系統";
         document.getElementById("submitAuthBtn").innerText = "登入";
         document.getElementById("forgotBtn").innerText = "忘記密碼？";
@@ -1002,7 +1008,7 @@
       msgBox.innerText = "";
 
       if (!username) {
-        msgBox.innerText = "請輸入帳戶名稱！";
+        msgBox.innerText = authMode === "forgot" ? "請輸入你想設定的【新帳戶名稱】！" : "請輸入帳戶名稱！";
         return;
       }
 
@@ -1022,7 +1028,7 @@
           const staffCheckRef = doc(db, "registered_staff_ids", staffId);
           const staffCheckSnap = await getDoc(staffCheckRef);
           if (staffCheckSnap.exists()) {
-            msgBox.innerText = `❌ 員工編號【${staffId}】已被其他帳戶註冊，無法重複使用！`;
+            msgBox.innerText = `❌ 員工編號【${staffId}】已被其他帳戶註冊！若忘記帳密請點左下方「忘記密碼？」`;
             return;
           }
 
@@ -1038,15 +1044,77 @@
             msgBox.innerText = "請輸入登記時綁定的員工編號！"; 
             return; 
           }
-
-          const mapSnap = await getDoc(doc(db, "public_user_map", username.toLowerCase()));
-          if (!mapSnap.exists() || mapSnap.data().staffId !== staffId) {
-            msgBox.innerText = "❌ 驗證失敗：帳戶名稱不存在或員工編號不匹配！";
+          if (!pass || pass.length < 6) {
+            msgBox.innerText = "請輸入最少 6 位新密碼！";
             return;
           }
 
-          msgBox.style.color = "#27ae60";
-          msgBox.innerHTML = `✅ 員工編號驗證成功！<br>請切換回「登入」，使用預設密碼 <b>${DEFAULT_RESET_PASS}</b> 登入，登入後請立即點擊右上角「修改密碼」。`;
+          // 1. 驗證員工編號是否存在
+          const staffRef = doc(db, "registered_staff_ids", staffId);
+          const staffSnap = await getDoc(staffRef);
+
+          if (!staffSnap.exists()) {
+            msgBox.innerText = `❌ 查無員工編號【${staffId}】之登記紀錄，請點右下方「註冊」！`;
+            return;
+          }
+
+          const oldData = staffSnap.data();
+          const oldUid = oldData.uid;
+          const oldUsername = oldData.username;
+
+          // 2. 建立新帳號並取得新 UID
+          let newCred;
+          try {
+            newCred = await createUserWithEmailAndPassword(auth, vEmail, pass);
+          } catch (createErr) {
+            if (createErr.code === 'auth/email-already-in-use') {
+              msgBox.innerText = "❌ 此帳戶名稱已被其他同事使用，請換另一個名稱！";
+              return;
+            }
+            throw createErr;
+          }
+
+          const newUid = newCred.user.uid;
+
+          // 3. 自動遷移舊 UID 底下的所有更期、PH 及備忘資料至新帳號
+          if (oldUid && oldUid !== newUid) {
+            const collectionsToMigrate = ["user_ph_usage", "user_shift_overrides", "user_day_notes", "user_timeline", "user_records"];
+            for (const col of collectionsToMigrate) {
+              try {
+                const oldDoc = await getDoc(doc(db, col, oldUid));
+                if (oldDoc.exists()) {
+                  await setDoc(doc(db, col, newUid), oldDoc.data());
+                }
+              } catch (migrateErr) {
+                console.error(`遷移 ${col} 失敗:`, migrateErr);
+              }
+            }
+          }
+
+          // 4. 更新 staff 登記表與帳號映射表
+          await setDoc(staffRef, {
+            username: username,
+            uid: newUid,
+            updatedAt: new Date().toISOString()
+          });
+
+          if (oldUsername && oldUsername.toLowerCase() !== username.toLowerCase()) {
+            try {
+              await deleteDoc(doc(db, "public_user_map", oldUsername.toLowerCase()));
+            } catch (delErr) {}
+          }
+
+          await setDoc(doc(db, "public_user_map", username.toLowerCase()), {
+            uid: newUid,
+            staffId: staffId
+          });
+
+          await setDoc(doc(db, "user_security", newUid), {
+            username: username,
+            staffId: staffId
+          });
+
+          alert(`🎉 帳號名稱及密碼重設成功！\n新帳戶名稱: ${username}\n員工編號: ${staffId}\n舊有更期及 PH 資料已全數轉移，系統已自動為你登入。`);
 
         } else {
           if (!pass) { msgBox.innerText = "請輸入密碼！"; return; }
@@ -1056,7 +1124,7 @@
         if (e.code === 'auth/email-already-in-use') {
           msgBox.innerText = "❌ 此帳戶名稱已被使用，請換另一個名稱！";
         } else if (e.code === 'auth/invalid-credential' || e.code === 'auth/wrong-password') {
-          msgBox.innerText = "❌ 帳戶名稱或密碼錯誤！";
+          msgBox.innerText = "❌ 帳戶名稱或密碼錯誤！若忘記請點下方「忘記密碼？」";
         } else {
           msgBox.innerText = "操作失敗: " + e.message;
         }
@@ -1871,8 +1939,73 @@
       html += `</tbody></table></div>`;
       container.innerHTML = html;
 
-      updatePhStatistics();
+            updatePhStatistics();
     }
+
+    // 重置今年所有已導入更期 (彈窗詢問是否連同 PH 一併重置)
+    window.resetYearShiftsAndPh = async () => {
+      if (!currentUser) return;
+      const targetYear = viewCalYear;
+
+      const confirmShifts = confirm(`⚠️ 確定要重置 ${targetYear} 年所有已導入的更期、換組插旗及自訂班次嗎？\n\n重置後，該年將還原為預設輪更順推。`);
+      if (!confirmShifts) return;
+
+      const resetPhAlso = confirm(`❓ 是否連同 ${targetYear} 年的 PH (公眾假期) 扣減紀錄一併清除？\n\n【按「確定」】= 連同 PH 一併重置 (清空該年 PH 時數)\n【按「取消」】= 保留 PH 紀錄 (只重置更期班次)`);
+
+      // 1. 清除該年份的手動調更紀錄
+      for (const dateKey of Object.keys(userShiftOverrides)) {
+        if (dateKey.startsWith(`${targetYear}-`)) {
+          delete userShiftOverrides[dateKey];
+        }
+      }
+
+      // 2. 清除該年份的整週大假標記
+      for (const absW of Array.from(vacationWeeks)) {
+        const info = getWeekInfoFromAbsIndex(absW);
+        if (info.year === targetYear) {
+          vacationWeeks.delete(absW);
+        }
+      }
+
+      // 3. 清除該年份的插旗起點 (保留今天基礎起點防呆)
+      timelineAnchors = timelineAnchors.filter(a => {
+        const info = getWeekInfoFromAbsIndex(a.absWeek);
+        return info.year !== targetYear;
+      });
+      if (timelineAnchors.length === 0) {
+        timelineAnchors = [{
+          absWeek: todayAbsWeek,
+          group: myStatus.group,
+          startRow: myStatus.currentRow,
+          manual: true
+        }];
+      }
+
+      // 4. 若選擇一併重置 PH，清除該年份的 PH 時數
+      if (resetPhAlso) {
+        for (const dateKey of Object.keys(userPhUsage)) {
+          if (dateKey.startsWith(`${targetYear}-`)) {
+            delete userPhUsage[dateKey];
+          }
+        }
+      }
+
+      try {
+        await saveUserTimeline();
+        await setDoc(doc(db, "user_shift_overrides", currentUser.uid), { overrides: userShiftOverrides });
+        if (resetPhAlso) {
+          await setDoc(doc(db, "user_ph_usage", currentUser.uid), { usage: userPhUsage });
+        }
+
+        renderPhYearChips();
+        renderUnifiedCalendar();
+        updatePhStatistics();
+
+        alert(`🎉 已成功重置 ${targetYear} 年更期設定！\n${resetPhAlso ? '🔴 PH 扣減紀錄已一併清空。' : '🟢 PH 扣減紀錄已完整保留。'}`);
+      } catch (e) {
+        alert("重置失敗: " + e.message);
+      }
+    };
 
     // ----------------- PH 統計 (Chips 年份按鈕版) -----------------
     function renderPhYearChips() {
@@ -2082,9 +2215,9 @@
     
     <div id="staffIdField" style="display:none; width:100%; margin:4px 0;">
       <input type="text" id="authStaffId" placeholder="員工編號 (例如: E12345)" style="border: 2px solid #e67e22;">
-      <div style="font-size:0.75rem; color:#7f8c8d; text-align:left; padding-left:5px; line-height:1.4;">
-        * 每個員工編號只能綁定一個帳號<br>
-        * <b>帳號名稱無法重置</b>，請務必緊記你的帳號名稱！
+            <div style="font-size:0.75rem; color:#7f8c8d; text-align:left; padding-left:5px; line-height:1.4;">
+        * 每個員工編號綁定一個帳號。<br>
+        * 若忘記帳號或密碼，可憑此員工編號隨時重設帳戶名稱及新密碼（原有更期資料會自動保留遷移）。
       </div>
     </div>
 
@@ -2314,8 +2447,15 @@
         <button class="cal-nav-btn" onclick="navUnifiedMonth(1)">下月 ▶</button>
       </div>
 
-      <!-- 單月實體月曆格仔 -->
+            <!-- 單月實體月曆格仔 -->
       <div class="single-month-container" id="unifiedCalendarGrid"></div>
+
+      <!-- 右下角：重置今年所有已導入更期按鈕 -->
+      <div style="display:flex; justify-content:flex-end; margin-top:8px; padding-right:2px;">
+        <button type="button" onclick="resetYearShiftsAndPh()" style="background:#e74c3c; color:white; border:none; padding:6px 12px; border-radius:6px; font-size:0.78rem; font-weight:bold; cursor:pointer; box-shadow:0 2px 5px rgba(231,76,60,0.25); display:flex; align-items:center; gap:4px;">
+          <span>🔄 重置今年所有已導入更期</span>
+        </button>
+      </div>
 
       <!-- PH 統計部分 -->
       <div style="margin-top:15px; border-top:2px dashed #d7bde2; padding-top:12px;">
