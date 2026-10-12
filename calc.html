@@ -707,24 +707,24 @@
   <!-- Firebase SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-    import { 
+        import { 
       getAuth, 
       signInWithEmailAndPassword, 
       createUserWithEmailAndPassword, 
       updatePassword,
+      updateEmail,
       signInWithPopup, 
       GoogleAuthProvider, 
       onAuthStateChanged, 
       signOut 
     } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
-        import { 
+    import { 
       getFirestore, 
       doc, 
       setDoc, 
       getDoc,
       deleteDoc 
     } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
-
     const firebaseConfig = {
       apiKey: "AIzaSyBR6sSm99LLA7k7x6bzqMRsKHP7lBLNnnM",
       authDomain: "three-mum.firebaseapp.com",
@@ -746,7 +746,8 @@
     let savedRecords = [];
         let userPhUsage = {};
     let userShiftOverrides = {};
-    let userDayNotes = {}; // 儲存備註: { "2026-10-15": "覆診" }
+        let userDayNotes = {}; // 儲存備註: { "2026-10-15": "覆診" }
+    let clearedYears = new Set(); // 記錄已被重置清空更期的年份
 
     // ----------------- 香港官方公眾假期清單 (PH) -----------------
     const HK_PUBLIC_HOLIDAYS = {
@@ -1141,18 +1142,96 @@
 
     window.userLogout = () => signOut(auth);
 
-    window.openChangePasswordModal = async () => {
-      const newPass = prompt("請輸入你的新密碼（最少 6 位）：");
-      if (!newPass) return;
-      if (newPass.length < 6) {
-        alert("新密碼最少需 6 位！");
+        // 打開修改帳號名及密碼彈窗
+    window.openChangeAccountModal = () => {
+      const curUname = document.getElementById("userLabel").innerText || "";
+      document.getElementById("editUsernameInput").value = curUname;
+      document.getElementById("editPasswordInput").value = "";
+      document.getElementById("editAccountMsg").innerText = "";
+      document.getElementById("accountModal").style.display = "flex";
+    };
+    window.openChangePasswordModal = window.openChangeAccountModal;
+
+    window.closeAccountModal = () => {
+      document.getElementById("accountModal").style.display = "none";
+    };
+
+    // 提交修改帳號名與密碼
+    window.submitAccountUpdate = async () => {
+      if (!currentUser) return;
+      const newUsername = document.getElementById("editUsernameInput").value.trim();
+      const newPass = document.getElementById("editPasswordInput").value;
+      const msgBox = document.getElementById("editAccountMsg");
+      msgBox.style.color = "#e74c3c";
+      msgBox.innerText = "";
+
+      if (!newUsername) {
+        msgBox.innerText = "請輸入帳戶名稱！";
         return;
       }
+
+      if (newPass && newPass.length < 6) {
+        msgBox.innerText = "新密碼最少需 6 位！";
+        return;
+      }
+
+      const currentUname = currentUser.email ? currentUser.email.replace("@shift.local", "") : "";
+      const isNameChanged = (newUsername.toLowerCase() !== currentUname.toLowerCase());
+      const isPassChanged = !!newPass;
+
+      if (!isNameChanged && !isPassChanged) {
+        closeAccountModal();
+        return;
+      }
+
       try {
-        await updatePassword(auth.currentUser, newPass);
-        alert("✅ 密碼修改成功！下次登入請使用新密碼。");
+        let staffId = "";
+        const secSnap = await getDoc(doc(db, "user_security", currentUser.uid));
+        if (secSnap.exists()) {
+          staffId = secSnap.data().staffId || "";
+        }
+
+        // 1. 若更改了帳號名
+        if (isNameChanged) {
+          const checkSnap = await getDoc(doc(db, "public_user_map", newUsername.toLowerCase()));
+          if (checkSnap.exists() && checkSnap.data().uid !== currentUser.uid) {
+            msgBox.innerText = "❌ 此帳戶名稱已被其他同事使用，請換另一個名稱！";
+            return;
+          }
+
+          // 同步 Firebase Auth 虛擬郵箱
+          const newEmail = toVirtualEmail(newUsername);
+          await updateEmail(currentUser, newEmail);
+
+          // 更新映射表及員工登記表
+          if (currentUname) {
+            try { await deleteDoc(doc(db, "public_user_map", currentUname.toLowerCase())); } catch (e) {}
+          }
+          await setDoc(doc(db, "public_user_map", newUsername.toLowerCase()), { uid: currentUser.uid, staffId });
+          if (staffId) {
+            await setDoc(doc(db, "registered_staff_ids", staffId), { username: newUsername, uid: currentUser.uid, updatedAt: new Date().toISOString() }, { merge: true });
+          }
+          await setDoc(doc(db, "user_security", currentUser.uid), { username: newUsername, staffId }, { merge: true });
+
+          document.getElementById("userLabel").innerText = newUsername;
+        }
+
+        // 2. 若更改了密碼
+        if (isPassChanged) {
+          await updatePassword(currentUser, newPass);
+        }
+
+        alert(`🎉 帳戶資料修改成功！\n${isNameChanged ? `新帳戶名稱: ${newUsername}\n` : ''}${isPassChanged ? '密碼已更新\n' : ''}下次登入請使用最新帳號及密碼。`);
+        closeAccountModal();
+
       } catch (e) {
-        alert("修改密碼失敗 (若太久沒登入需重新登入後再試): " + e.message);
+        if (e.code === 'auth/requires-recent-login') {
+          msgBox.innerText = "⚠️ 安全驗證超時，請先登出再重新登入後方可修改！";
+        } else if (e.code === 'auth/email-already-in-use') {
+          msgBox.innerText = "❌ 此帳戶名稱已被使用，請換另一個名稱！";
+        } else {
+          msgBox.innerText = "修改失敗: " + e.message;
+        }
       }
     };
 
@@ -1228,13 +1307,16 @@
     };
 
     // 按鈕 1：將目前組別及行數直接導入個人月曆
-        window.applyMyStatusToCalendar = async () => {
-      const curRowSel = document.getElementById("myCurrentRowSelect");
+            window.applyMyStatusToCalendar = async () => {
+      const curRowSel = document.getElementById("myCurrentRowSelect") || document.getElementById("myRowSelect");
       if (curRowSel) {
         myStatus.currentRow = parseInt(curRowSel.value);
       }
 
-      // 核心修復：徹底清空之前所有測試留下的混亂插旗，以今日為唯一基準純順推
+      // 解除該年的清空標記，讓新導入更期重現
+      clearedYears.delete(viewCalYear);
+      clearedYears.delete(todayObj.getFullYear());
+
       timelineAnchors = [{
         absWeek: todayAbsWeek,
         group: myStatus.group,
@@ -1250,9 +1332,8 @@
 
       const calElem = document.getElementById("unifiedCalAnchor");
       if (calElem) calElem.scrollIntoView({ behavior: 'smooth' });
-      alert(`✅ 已重新重設月曆！\n所有舊插旗已清除，由本週起回歸規律純順推：${ROSTERS[myStatus.group].name} 第 ${myStatus.currentRow} 行。`);
+      alert(`✅ 已成功導入月曆！\n由本週起設定為：${ROSTERS[myStatus.group].name} 第 ${myStatus.currentRow} 行。`);
     };
-    window.applySetupToCalendar = window.applyMyStatusToCalendar;
 
     // 按鈕 2：一鍵把選中之大假週自動轉為月曆大假週
     window.applyMyLeaveWeekToVacation = async () => {
@@ -1734,30 +1815,32 @@
     }
 
     // ----------------- 一體化個人月曆推算引擎 (換組插旗 + 大假截停) -----------------
-        function getWeekShiftState(absWeek) {
+            function getWeekShiftState(absWeek) {
+      const wInfo = getWeekInfoFromAbsIndex(absWeek);
+
+      // 若該年已被重置清空，月曆不再顯示更期
+      if (clearedYears.has(wInfo.year)) {
+        return { isCleared: true, isVacation: false, group: null, rowNum: null, shifts: ["", "", "", "", "", "", ""] };
+      }
+
       // 1. 如果此週本身被標記為整週大假
       if (vacationWeeks.has(absWeek)) {
         return { isVacation: true, group: null, rowNum: null, shifts: ["大假","大假","大假","大假","大假","大假","大假"] };
       }
 
-      // 取得基準起始錨點 (以最早建立或目前生效之錨點為基準)
       const baseAnchor = timelineAnchors[0] || { absWeek: todayAbsWeek, group: 'group3', startRow: 14 };
-      const roster = ROSTERS[baseAnchor.group];
 
-      // 檢查此週之前是否有任何大假週 (且在大假後未有更晚的全新手動插旗)
-      // 找出小於 absWeek 的所有大假週，取最近期的一個
+      // 檢查此週之前是否有任何大假週截停
       const pastVacations = Array.from(vacationWeeks).filter(v => v < absWeek).sort((a,b) => b - a);
       if (pastVacations.length > 0) {
         const latestVacation = pastVacations[0];
-        // 檢查在大假之後，用戶是否有手動插旗指定新行數
         const manualAfterVacation = timelineAnchors.find(a => a.absWeek > latestVacation && a.absWeek <= absWeek && a.manual);
         if (!manualAfterVacation) {
-          // 大假之後尚未重新入位，全線截停
           return { isPending: true, group: null, rowNum: null, shifts: ["待入位","待入位","待入位","待入位","待入位","待入位","待入位"] };
         }
       }
 
-      // 2. 正常順推計算 (取消大假後會自動依距離自然連續累加，例如第3行取消後自動變第4行)
+      // 2. 正常順推計算
       const activeAnchor = timelineAnchors.filter(a => a.absWeek <= absWeek).sort((a,b) => b.absWeek - a.absWeek)[0] || baseAnchor;
       const curRoster = ROSTERS[activeAnchor.group];
       const diff = absWeek - activeAnchor.absWeek;
@@ -1767,7 +1850,7 @@
       return { isVacation: false, group: activeAnchor.group, rowNum: r, shifts: curRoster.data[r - 1] };
     }
 
-       window.setManualAnchorAtDate = async () => {
+    window.setManualAnchorAtDate = async () => {
       const dateStr = document.getElementById("anchorDateInput").value;
       if (!dateStr) { alert("請先選擇要插旗換組的日期！"); return; }
 
@@ -1776,6 +1859,8 @@
       const absWeek = getAbsoluteWeekIndex(d);
       const group = document.getElementById("anchorGroupSelect").value;
       const row = parseInt(document.getElementById("anchorRowSelect").value);
+
+      clearedYears.delete(d.getFullYear());
 
       timelineAnchors = timelineAnchors.filter(a => a.absWeek !== absWeek);
       timelineAnchors.push({ absWeek, group, startRow: row, manual: true });
@@ -1787,11 +1872,13 @@
     };
 
     window.applyAnchorToUnified = async (group, row, absWeek) => {
+      const info = getWeekInfoFromAbsIndex(absWeek);
+      clearedYears.delete(info.year);
+
       timelineAnchors = timelineAnchors.filter(a => a.absWeek !== absWeek);
       timelineAnchors.push({ absWeek, group, startRow: row, manual: true });
       timelineAnchors.sort((a,b) => a.absWeek - b.absWeek);
 
-      const info = getWeekInfoFromAbsIndex(absWeek);
       viewCalYear = info.year;
       viewCalMonth = info.monday.getMonth() + 1;
 
@@ -1874,7 +1961,10 @@
         let leaveBtnText = "🏖️大假";
         let leaveBtnClass = "btn-set-leave-week";
 
-        if (state.isVacation) {
+                if (state.isCleared) {
+          rowTag = `<span style="color:#94a3b8; font-size:0.65rem;">未導入</span>`;
+          leaveBtnText = "🏖️大假";
+        } else if (state.isVacation) {
           rowTag = `<b style="color:#c0392b;">大假</b>`;
           leaveBtnText = "↺取消";
         } else if (state.isPending) {
@@ -1902,8 +1992,8 @@
           if (cur.getMonth() + 1 === viewCalMonth) {
             const phHours = userPhUsage[dateKey] || 0;
             const phHolidayName = HK_PUBLIC_HOLIDAYS[dateKey];
-            const defaultShift = state.shifts[d];
-            const customShift = userShiftOverrides[dateKey];
+            const defaultShift = state.shifts ? state.shifts[d] : "";
+            const customShift = userShiftOverrides[dateKey] || "";
             const finalShift = customShift || defaultShift;
 
             let shiftClass = "";
@@ -1911,19 +2001,22 @@
             else if (finalShift && finalShift.startsWith('N')) shiftClass = 'shift-night';
             else if (finalShift === '大假' || finalShift === 'AL') shiftClass = 'shift-leave';
 
-                        const noteText = userDayNotes[dateKey] || "";
+            const noteText = userDayNotes[dateKey] || "";
             let holidayTag = phHolidayName ? `<span class="ph-tag-holiday" title="${phHolidayName}">🔴 ${phHolidayName}</span>` : '';
             let phBadge = phHours > 0 ? `<div class="ph-hour-badge">PH:${phHours}h</div>` : '';
             let isCustomBadge = customShift ? `<span style="font-size:0.6rem; color:#2980b9; display:block;">(調)</span>` : '';
             let noteBadge = noteText ? `<span class="note-badge" title="${noteText}">📝 ${noteText}</span>` : '';
             let isTodayBorder = (cur.toDateString() === todayObj.toDateString()) ? 'border: 2px solid #e67e22 !important;' : '';
-                                    let noteClass = noteText ? 'has-note-cell' : '';
+            let noteClass = noteText ? 'has-note-cell' : '';
+
+            // 核心：若無更期(清空狀態)，格子只留空白號數，不再硬塞舊更期
+            let shiftHtml = finalShift ? `<div class="cal-shift-text ${shiftClass} ${customShift ? 'cal-shift-custom' : ''}">${finalShift}</div>` : '';
 
             html += `
               <td class="${noteClass}" style="${isTodayBorder} cursor:pointer;" onclick="openCombinedModal('${dateKey}', '${defaultShift}')">
                 <div class="cal-date-num">${cur.getDate()}</div>
                 ${holidayTag}
-                <div class="cal-shift-text ${shiftClass} ${customShift ? 'cal-shift-custom' : ''}">${finalShift}</div>
+                ${shiftHtml}
                 ${isCustomBadge}
                 ${phBadge}
                 ${noteBadge}
@@ -1939,27 +2032,30 @@
       html += `</tbody></table></div>`;
       container.innerHTML = html;
 
-            updatePhStatistics();
+      updatePhStatistics();
     }
 
-    // 重置今年所有已導入更期 (彈窗詢問是否連同 PH 一併重置)
+    // 重置今年所有已導入更期 (真正清空更期，並可選是否連同 PH 一併重置)
     window.resetYearShiftsAndPh = async () => {
       if (!currentUser) return;
       const targetYear = viewCalYear;
 
-      const confirmShifts = confirm(`⚠️ 確定要重置 ${targetYear} 年所有已導入的更期、換組插旗及自訂班次嗎？\n\n重置後，該年將還原為預設輪更順推。`);
+      const confirmShifts = confirm(`⚠️ 確定要重置並清空 ${targetYear} 年所有已導入的更期嗎？\n\n重置後，${targetYear} 年月曆將清空所有更期班次，重設為未導入狀態。`);
       if (!confirmShifts) return;
 
       const resetPhAlso = confirm(`❓ 是否連同 ${targetYear} 年的 PH (公眾假期) 扣減紀錄一併清除？\n\n【按「確定」】= 連同 PH 一併重置 (清空該年 PH 時數)\n【按「取消」】= 保留 PH 紀錄 (只重置更期班次)`);
 
-      // 1. 清除該年份的手動調更紀錄
+      // 1. 標記該年為已清空
+      clearedYears.add(targetYear);
+
+      // 2. 清除該年份的手動調更紀錄
       for (const dateKey of Object.keys(userShiftOverrides)) {
         if (dateKey.startsWith(`${targetYear}-`)) {
           delete userShiftOverrides[dateKey];
         }
       }
 
-      // 2. 清除該年份的整週大假標記
+      // 3. 清除該年份的整週大假標記
       for (const absW of Array.from(vacationWeeks)) {
         const info = getWeekInfoFromAbsIndex(absW);
         if (info.year === targetYear) {
@@ -1967,21 +2063,13 @@
         }
       }
 
-      // 3. 清除該年份的插旗起點 (保留今天基礎起點防呆)
+      // 4. 清除該年份的換組插旗
       timelineAnchors = timelineAnchors.filter(a => {
         const info = getWeekInfoFromAbsIndex(a.absWeek);
         return info.year !== targetYear;
       });
-      if (timelineAnchors.length === 0) {
-        timelineAnchors = [{
-          absWeek: todayAbsWeek,
-          group: myStatus.group,
-          startRow: myStatus.currentRow,
-          manual: true
-        }];
-      }
 
-      // 4. 若選擇一併重置 PH，清除該年份的 PH 時數
+      // 5. 若選擇一併重置 PH，清除該年份的 PH 時數
       if (resetPhAlso) {
         for (const dateKey of Object.keys(userPhUsage)) {
           if (dateKey.startsWith(`${targetYear}-`)) {
@@ -2001,7 +2089,7 @@
         renderUnifiedCalendar();
         updatePhStatistics();
 
-        alert(`🎉 已成功重置 ${targetYear} 年更期設定！\n${resetPhAlso ? '🔴 PH 扣減紀錄已一併清空。' : '🟢 PH 扣減紀錄已完整保留。'}`);
+        alert(`🎉 已成功重置 ${targetYear} 年更期！\n月曆更期已徹底清空。\n${resetPhAlso ? '🔴 PH 扣減紀錄已一併清空。' : '🟢 PH 扣減紀錄已完整保留。'}\n\n如需重新排更，請在上方點擊「導入組別和行數至個人月曆」。`);
       } catch (e) {
         alert("重置失敗: " + e.message);
       }
@@ -2155,12 +2243,13 @@
     };
 
     // ----------------- 雲端歷史紀錄與載入 -----------------
-    async function saveUserTimeline() {
+        async function saveUserTimeline() {
       if (!currentUser) return;
       try {
         await setDoc(doc(db, "user_timeline", currentUser.uid), {
           anchors: timelineAnchors,
-          vacations: Array.from(vacationWeeks)
+          vacations: Array.from(vacationWeeks),
+          clearedYears: Array.from(clearedYears)
         });
       } catch (e) { console.error(e); }
     }
@@ -2188,10 +2277,11 @@
           userDayNotes = {};
         }
 
-        const tlSnap = await getDoc(doc(db, "user_timeline", currentUser.uid));
-        if (tlSnap.exists() && tlSnap.data().anchors) {
-          timelineAnchors = tlSnap.data().anchors;
+                const tlSnap = await getDoc(doc(db, "user_timeline", currentUser.uid));
+        if (tlSnap.exists()) {
+          timelineAnchors = tlSnap.data().anchors || [];
           vacationWeeks = new Set(tlSnap.data().vacations || []);
+          clearedYears = new Set(tlSnap.data().clearedYears || []);
         }
       } catch (e) { console.error(e); }
     }
@@ -2284,7 +2374,7 @@
         <div style="color:#e74c3c; font-size:0.75rem; font-weight:bold; margin-top:2px;">⚠️ 測試版本 (Beta)</div>
       </div>
       <div style="display:flex; gap:6px;">
-        <button class="btn-logout" style="background:#3498db;" onclick="openChangePasswordModal()">🔑 修改密碼</button>
+        <button class="btn-logout" style="background:#3498db;" onclick="openChangeAccountModal()">🔑 修改帳號名／密碼</button>
         <button class="btn-logout" onclick="userLogout()">登出帳號</button>
       </div>
     </div>
@@ -2551,6 +2641,28 @@
       </div>
     </div>
   </div>
+  <!-- 帳號名及密碼修改專屬 Modal -->
+  <div id="accountModal" class="modal-overlay" style="display:none;">
+    <div class="modal-card">
+      <h3 style="margin-top:0; color:#2c3e50; font-size:1rem;">🔑 修改帳號名稱與密碼</h3>
+      
+      <div style="text-align:left; margin-bottom:10px;">
+        <label style="font-size:0.8rem; font-weight:bold; color:#555;">帳戶名稱：</label>
+        <input type="text" id="editUsernameInput" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:0.9rem; margin-top:4px;" placeholder="輸入帳戶名稱">
+      </div>
 
+      <div style="text-align:left; margin-bottom:12px;">
+        <label style="font-size:0.8rem; font-weight:bold; color:#555;">新密碼（若不改密碼請留空）：</label>
+        <input type="password" id="editPasswordInput" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:0.9rem; margin-top:4px;" placeholder="最少 6 位新密碼">
+      </div>
+
+      <div id="editAccountMsg" style="font-size:0.8rem; margin-bottom:10px; font-weight:bold; color:#e74c3c;"></div>
+
+      <div class="modal-btns">
+        <button class="btn-save-modal" style="background:#3498db;" onclick="submitAccountUpdate()">確認修改</button>
+        <button class="btn-cancel-modal" onclick="closeAccountModal()">取消</button>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
