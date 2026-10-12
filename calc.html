@@ -1276,8 +1276,7 @@
       syncMyLeaveWeekFromDate(myStatus.leaveDate);
     }
 
-        function updateMyRowSelect() {
-      // 同時支援新舊 ID，防止 null 報錯中斷月曆
+            function updateMyRowSelect() {
       const rowSelect = document.getElementById("myCurrentRowSelect") || document.getElementById("myRowSelect");
       if (!rowSelect) return;
       const maxR = ROSTERS[myStatus.group].totalRows;
@@ -1306,16 +1305,19 @@
       if (elem) elem.scrollIntoView({ behavior: 'smooth' });
     };
 
-    // 按鈕 1：將目前組別及行數直接導入個人月曆
-            window.applyMyStatusToCalendar = async () => {
-      const curRowSel = document.getElementById("myCurrentRowSelect") || document.getElementById("myRowSelect");
-      if (curRowSel) {
-        myStatus.currentRow = parseInt(curRowSel.value);
-      }
+    // 按鈕 1：導入組別和行數至個人月曆 (同時支援 applySetupToCalendar 與 applyMyStatusToCalendar)
+    window.applyMyStatusToCalendar = async () => {
+      const groupSel = document.getElementById("myGroupSelect");
+      if (groupSel) myStatus.group = groupSel.value;
 
-      // 解除該年的清空標記，讓新導入更期重現
-      clearedYears.delete(viewCalYear);
-      clearedYears.delete(todayObj.getFullYear());
+      const curRowSel = document.getElementById("myCurrentRowSelect") || document.getElementById("myRowSelect");
+      if (curRowSel) myStatus.currentRow = parseInt(curRowSel.value) || 1;
+
+      // 核心：解除該年份的清空重置鎖定，讓更期正常重現
+      if (typeof clearedYears !== 'undefined') {
+        clearedYears.delete(todayObj.getFullYear());
+        clearedYears.delete(viewCalYear);
+      }
 
       timelineAnchors = [{
         absWeek: todayAbsWeek,
@@ -1334,11 +1336,22 @@
       if (calElem) calElem.scrollIntoView({ behavior: 'smooth' });
       alert(`✅ 已成功導入月曆！\n由本週起設定為：${ROSTERS[myStatus.group].name} 第 ${myStatus.currentRow} 行。`);
     };
+    window.applySetupToCalendar = window.applyMyStatusToCalendar;
 
     // 按鈕 2：一鍵把選中之大假週自動轉為月曆大假週
     window.applyMyLeaveWeekToVacation = async () => {
+      const ySel = document.getElementById("myLeaveYearSelect");
+      const wSel = document.getElementById("myLeaveWeekSelect");
+      if (ySel) myStatus.leaveYear = parseInt(ySel.value);
+      if (wSel) myStatus.leaveWeek = parseInt(wSel.value);
+
       const targetAbs = getAbsIndexFromYearWeek(myStatus.leaveYear, myStatus.leaveWeek);
       vacationWeeks.add(targetAbs);
+
+      // 解除該年清空鎖定，確保大假能即時在月曆顯示
+      if (typeof clearedYears !== 'undefined') {
+        clearedYears.delete(myStatus.leaveYear);
+      }
 
       viewCalYear = myStatus.leaveYear;
       const targetInfo = getWeekInfoFromAbsIndex(targetAbs);
@@ -1347,7 +1360,7 @@
       await saveUserTimeline();
       renderUnifiedCalendar();
 
-            const calElem = document.getElementById("unifiedCalAnchor");
+      const calElem = document.getElementById("unifiedCalAnchor");
       if (calElem) calElem.scrollIntoView({ behavior: 'smooth' });
       alert(`🏖️ 已將 ${myStatus.leaveYear} 年 Week ${myStatus.leaveWeek} 成功標記為整週大假！\n後續更期已自動截停。`);
     };
@@ -1815,17 +1828,17 @@
     }
 
     // ----------------- 一體化個人月曆推算引擎 (換組插旗 + 大假截停) -----------------
-            function getWeekShiftState(absWeek) {
+                function getWeekShiftState(absWeek) {
       const wInfo = getWeekInfoFromAbsIndex(absWeek);
 
-      // 若該年已被重置清空，月曆不再顯示更期
-      if (clearedYears.has(wInfo.year)) {
-        return { isCleared: true, isVacation: false, group: null, rowNum: null, shifts: ["", "", "", "", "", "", ""] };
-      }
-
-      // 1. 如果此週本身被標記為整週大假
+      // 1. 若此週為大假週，必定優先顯示大假
       if (vacationWeeks.has(absWeek)) {
         return { isVacation: true, group: null, rowNum: null, shifts: ["大假","大假","大假","大假","大假","大假","大假"] };
+      }
+
+      // 2. 若該年已被重置清空且非大假，顯示未導入
+      if (typeof clearedYears !== 'undefined' && clearedYears.has(wInfo.year)) {
+        return { isCleared: true, isVacation: false, group: null, rowNum: null, shifts: ["", "", "", "", "", "", ""] };
       }
 
       const baseAnchor = timelineAnchors[0] || { absWeek: todayAbsWeek, group: 'group3', startRow: 14 };
