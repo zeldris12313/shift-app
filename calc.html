@@ -1160,20 +1160,19 @@
     };
 
     // 按鈕 1：將目前組別及行數直接導入個人月曆
-    window.applyMyStatusToCalendar = async () => {
+        window.applyMyStatusToCalendar = async () => {
       const curRowSel = document.getElementById("myCurrentRowSelect");
       if (curRowSel) {
         myStatus.currentRow = parseInt(curRowSel.value);
       }
 
-      timelineAnchors = timelineAnchors.filter(a => a.absWeek !== todayAbsWeek);
-      timelineAnchors.push({
+      // 核心修復：徹底清空之前所有測試留下的混亂插旗，以今日為唯一基準純順推
+      timelineAnchors = [{
         absWeek: todayAbsWeek,
         group: myStatus.group,
         startRow: myStatus.currentRow,
         manual: true
-      });
-      timelineAnchors.sort((a,b) => a.absWeek - b.absWeek);
+      }];
 
       viewCalYear = todayObj.getFullYear();
       viewCalMonth = todayObj.getMonth() + 1;
@@ -1183,7 +1182,7 @@
 
       const calElem = document.getElementById("unifiedCalAnchor");
       if (calElem) calElem.scrollIntoView({ behavior: 'smooth' });
-      alert(`✅ 已成功導入月曆！\n由本週起設定為：${ROSTERS[myStatus.group].name} 第 ${myStatus.currentRow} 行。`);
+      alert(`✅ 已重新重設月曆！\n所有舊插旗已清除，由本週起回歸規律純順推：${ROSTERS[myStatus.group].name} 第 ${myStatus.currentRow} 行。`);
     };
     window.applySetupToCalendar = window.applyMyStatusToCalendar;
 
