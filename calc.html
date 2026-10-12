@@ -1871,7 +1871,7 @@
       return { isVacation: false, group: activeAnchor.group, rowNum: r, shifts: curRoster.data[r - 1] };
     }
 
-    window.setManualAnchorAtDate = async () => {
+        window.setManualAnchorAtDate = async () => {
       const dateStr = document.getElementById("anchorDateInput").value;
       if (!dateStr) { alert("請先選擇要插旗換組的日期！"); return; }
 
@@ -1881,15 +1881,38 @@
       const group = document.getElementById("anchorGroupSelect").value;
       const row = parseInt(document.getElementById("anchorRowSelect").value);
 
-      clearedYears.delete(d.getFullYear());
+      if (typeof clearedYears !== 'undefined') {
+        clearedYears.delete(d.getFullYear());
+      }
 
-      timelineAnchors = timelineAnchors.filter(a => a.absWeek !== absWeek);
+      // 核心修復：插新旗時，清除該週及「未來所有舊插旗」，確保完全順著這支新旗一路向後順推
+      timelineAnchors = timelineAnchors.filter(a => a.absWeek < absWeek);
       timelineAnchors.push({ absWeek, group, startRow: row, manual: true });
       timelineAnchors.sort((a,b) => a.absWeek - b.absWeek);
 
       await saveUserTimeline();
       renderUnifiedCalendar();
-      alert(`✅ 成功設定更期起點！\n由 ${dateStr} 起採用 ${ROSTERS[group].name} 第 ${row} 行，後續自動順推。`);
+      alert(`✅ 成功設定更期起點！\n由 ${dateStr} 起採用 ${ROSTERS[group].name} 第 ${row} 行，後續所有更期已自動沿此起點向後順推。`);
+    };
+
+    window.applyAnchorToUnified = async (group, row, absWeek) => {
+      const info = getWeekInfoFromAbsIndex(absWeek);
+      if (typeof clearedYears !== 'undefined') {
+        clearedYears.delete(info.year);
+      }
+
+      // 從候選人接替入位時，同樣清除未來殘留舊插旗，向後順推
+      timelineAnchors = timelineAnchors.filter(a => a.absWeek < absWeek);
+      timelineAnchors.push({ absWeek, group, startRow: row, manual: true });
+      timelineAnchors.sort((a,b) => a.absWeek - b.absWeek);
+
+      viewCalYear = info.year;
+      viewCalMonth = info.monday.getMonth() + 1;
+
+      await saveUserTimeline();
+      renderUnifiedCalendar();
+      const anchor = document.getElementById("unifiedCalAnchor");
+      if (anchor) anchor.scrollIntoView({ behavior: 'smooth' });
     };
 
     window.applyAnchorToUnified = async (group, row, absWeek) => {
