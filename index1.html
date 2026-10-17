@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="mobile-web-app-capable" content="yes">
-  
+
   <title>主頁大月曆 - 個人一體化更期系統</title>
   <style>
     :root {
@@ -54,7 +54,7 @@
     .btn-today:hover { background: var(--gc-hover); }
     .profile-icon { width: 32px; height: 32px; border-radius: 50%; background: var(--gc-blue); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.9rem; border: 2px solid white; outline: 1px solid var(--gc-border); cursor: pointer; }
 
-    /* 水平導航按鈕 (不換行，可滑動) */
+    /* 水平導航按鈕 (可滑動) */
     .nav-links { display: flex; gap: 8px; overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; padding-bottom: 2px; width: 100%; align-items: center; }
     .nav-links::-webkit-scrollbar { display: none; }
     .nav-links a { padding: 6px 14px; border-radius: 16px; font-size: 0.85rem; font-weight: bold; text-decoration: none; border: 1px solid var(--gc-border); background: white; color: #5f6368; white-space: nowrap; flex-shrink: 0; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
@@ -69,10 +69,7 @@
 
     /* Google Calendar 網格 */
     .calendar-wrapper { padding: 0 16px 40px 16px; max-width: 1600px; margin: 0 auto; overflow: hidden; touch-action: pan-y; }
-    
-    /* 滑動層 */
     #unifiedCalendarGrid { width: 100%; will-change: transform; }
-    
     .cal-table { width: 100%; border-collapse: collapse; table-layout: fixed; margin-top: 10px; }
     .cal-table th { font-size: 0.75rem; color: var(--gc-light-text); font-weight: 500; padding-bottom: 8px; border-bottom: 1px solid var(--gc-border); }
     .cal-table td { border: 1px solid var(--gc-border); vertical-align: top; height: 110px; padding: 4px; position: relative; cursor: pointer; transition: background 0.1s; }
@@ -83,7 +80,6 @@
     /* 強烈標記今日日期 */
     .cal-table td.cell-today { border: 3px solid var(--gc-blue) !important; background-color: #f8fbff !important; box-shadow: inset 0 0 0 2px rgba(26,115,232,0.05); }
     
-    /* 日期數字 */
     .date-header { display: flex; justify-content: center; margin-bottom: 4px; margin-top: 2px; }
     .date-num { font-size: 0.8rem; color: var(--gc-light-text); width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
     .date-num.today { background: var(--gc-blue); color: white; font-weight: bold; }
@@ -135,11 +131,13 @@
     .btn-cancel { background: transparent; color: var(--gc-light-text); }
     .btn-danger { background: white; color: #d32f2f; border: 1px solid #d32f2f; width:100%; margin-top:10px; }
 
-    /* 登入面板專用 */
-    .auth-container { max-width: 380px; margin: 40px auto; background: white; border-radius: 8px; padding: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border: 1px solid var(--gc-border); text-align: center; }
-    .auth-container input { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid var(--gc-border); border-radius: 4px; font-size: 0.95rem; }
-    .btn-auth { background: var(--gc-blue); color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.95rem; width: 100%; margin-top: 8px; }
-    .auth-toggle { font-size: 0.85rem; color: var(--gc-blue); cursor: pointer; margin-top: 15px; display:inline-block; }
+    /* 登入面板專用 (還原圖2橙藍經典樣式) */
+    .auth-container { max-width: 380px; margin: 40px auto; background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border-top: 5px solid #e67e22; text-align: center; }
+    .auth-container input { width: 100%; padding: 10px; margin: 6px 0; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; outline: none; }
+    .auth-container input:focus { border-color: #e67e22; }
+    .btn-auth { background: #e67e22; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.95rem; width: 100%; margin-top: 8px; }
+    .btn-google { background: #4285f4; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.95rem; width: 100%; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .auth-toggle { font-size: 0.85rem; color: #7f8c8d; margin-top: 15px; cursor: pointer; text-decoration: underline; font-weight: bold; }
   </style>
 
   <!-- Firebase SDK -->
@@ -161,6 +159,7 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
+    const googleProvider = new GoogleAuthProvider();
 
     let currentUser = null;
     let userPhUsage = {};
@@ -169,12 +168,16 @@
     let clearedYears = new Set();
     let timelineAnchors = [];
     let vacationWeeks = new Set();
+    
+    // 滑動手勢記錄變數
+    let touchstartX = 0;
+    let touchendX = 0;
 
     const HK_PUBLIC_HOLIDAYS = {
       "2026-01-01": "元旦", "2026-02-17": "農曆年初一", "2026-02-18": "農曆年初二", "2026-02-19": "農曆年初三",
       "2026-04-03": "耶穌受難節", "2026-04-04": "清明節", "2026-04-06": "復活節星期一", "2026-05-01": "勞動節",
       "2026-05-25": "佛誕翌日", "2026-06-19": "端午節", "2026-07-01": "特區成立日", "2026-09-26": "中秋節翌日",
-      "2026-10-01": "國慶日", "2026-10-19": "重陽節", "2026-12-25": "聖誕節", "2026-12-26": "聖誕翌日",
+      "2026-10-01": "National Day", "2026-10-19": "Chung Yeung", "2026-12-25": "聖誕節", "2026-12-26": "聖誕翌日",
       "2027-01-01": "元旦", "2027-02-06": "農曆年初一", "2027-02-08": "農曆年初二", "2027-02-09": "農曆年初三",
       "2027-03-26": "耶穌受難節", "2027-03-27": "受難節翌日", "2027-03-29": "復活節星期一", "2027-04-05": "清明節",
       "2027-05-01": "勞動節", "2027-05-13": "佛誕", "2027-06-09": "端午節", "2027-07-01": "特區成立日",
@@ -234,24 +237,60 @@
       }
     });
 
-    // ------------- 登入邏輯 -------------
+    // ------------- 登入邏輯 (完全還原舊版) -------------
     let authMode = "login";
     const toVirtualEmail = (uname) => `${uname.toLowerCase().replace(/[^a-z0-9_]/g, '')}@shift.local`;
 
     window.toggleAuthMode = () => {
       authMode = (authMode === "register") ? "login" : "register";
-      document.getElementById("staffIdField").style.display = (authMode === "register") ? "block" : "none";
-      document.getElementById("authTitle").innerText = (authMode === "register") ? "📝 註冊帳戶" : "登入";
-      document.getElementById("submitAuthBtn").innerText = (authMode === "register") ? "立即註冊" : "繼續";
-      document.getElementById("toggleBtn").innerText = (authMode === "register") ? "返回登入" : "建立帳戶";
+      const staffDiv = document.getElementById("staffIdField");
+      const passInput = document.getElementById("authPassword");
+      const userInput = document.getElementById("authUsername");
+
+      if (authMode === "register") {
+        staffDiv.style.display = "block";
+        passInput.style.display = "block";
+        userInput.placeholder = "帳戶名稱 (例如: peter888)";
+        passInput.placeholder = "密碼 (最少6位)";
+        document.getElementById("submitAuthBtn").innerText = "立即註冊";
+        document.getElementById("toggleBtn").innerText = "已有帳號？點此登入";
+        document.getElementById("forgotBtn").style.display = "none";
+      } else {
+        staffDiv.style.display = "none";
+        passInput.style.display = "block";
+        userInput.placeholder = "帳戶名稱 (例如: peter888)";
+        passInput.placeholder = "密碼 (最少6位)";
+        document.getElementById("submitAuthBtn").innerText = "登入";
+        document.getElementById("toggleBtn").innerText = "未有帳號？點此註冊";
+        document.getElementById("forgotBtn").style.display = "inline";
+      }
+      document.getElementById("authMsg").innerText = "";
     };
 
     window.toggleForgotMode = () => {
       authMode = (authMode === "forgot") ? "login" : "forgot";
-      document.getElementById("staffIdField").style.display = (authMode === "forgot") ? "block" : "none";
-      document.getElementById("authTitle").innerText = (authMode === "forgot") ? "🔑 密碼重設" : "登入";
-      document.getElementById("submitAuthBtn").innerText = (authMode === "forgot") ? "重設並登入" : "繼續";
-      document.getElementById("toggleBtn").style.display = (authMode === "forgot") ? "none" : "inline-block";
+      const staffDiv = document.getElementById("staffIdField");
+      const passInput = document.getElementById("authPassword");
+      const userInput = document.getElementById("authUsername");
+
+      if (authMode === "forgot") {
+        staffDiv.style.display = "block";
+        passInput.style.display = "block";
+        userInput.placeholder = "設定【新帳戶名稱】(例如: peter888)";
+        passInput.placeholder = "設定【新密碼】(最少6位)";
+        document.getElementById("submitAuthBtn").innerText = "重設帳戶名及密碼並登入";
+        document.getElementById("forgotBtn").innerText = "返回登入";
+        document.getElementById("toggleBtn").style.display = "none";
+      } else {
+        staffDiv.style.display = "none";
+        passInput.style.display = "block";
+        userInput.placeholder = "帳戶名稱 (例如: peter888)";
+        passInput.placeholder = "密碼 (最少6位)";
+        document.getElementById("submitAuthBtn").innerText = "登入";
+        document.getElementById("forgotBtn").innerText = "忘記密碼？";
+        document.getElementById("toggleBtn").style.display = "inline";
+      }
+      document.getElementById("authMsg").innerText = "";
     };
 
     window.submitUserAuth = async () => {
@@ -261,19 +300,23 @@
       const msgBox = document.getElementById("authMsg");
       msgBox.innerText = "";
 
-      if (!username || !pass) { msgBox.innerText = "請填寫所有欄位！"; return; }
+      if (!username) { msgBox.innerText = authMode === "forgot" ? "請輸入你想設定的【新帳戶名稱】！" : "請輸入帳戶名稱！"; return; }
       const vEmail = toVirtualEmail(username);
 
       try {
         if (authMode === "register") {
-          if (!staffId) { msgBox.innerText = "請輸入員工編號！"; return; }
+          if (!pass || pass.length < 6) { msgBox.innerText = "請設定最少 6 位密碼！"; return; }
+          if (!staffId) { msgBox.innerText = "請填寫員工編號（此編號不能重複且用於驗證）！"; return; }
           const staffRef = doc(db, "registered_staff_ids", staffId);
           if ((await getDoc(staffRef)).exists()) { msgBox.innerText = "❌ 員工編號已被註冊！"; return; }
           const cred = await createUserWithEmailAndPassword(auth, vEmail, pass);
           await setDoc(staffRef, { username, uid: cred.user.uid });
           await setDoc(doc(db, "public_user_map", username.toLowerCase()), { uid: cred.user.uid, staffId });
           await setDoc(doc(db, "user_security", cred.user.uid), { username, staffId });
+          alert("🎉 註冊成功！系統即將為你登入。");
         } else if (authMode === "forgot") {
+          if (!staffId) { msgBox.innerText = "請輸入登記時綁定的員工編號！"; return; }
+          if (!pass || pass.length < 6) { msgBox.innerText = "請輸入最少 6 位新密碼！"; return; }
           const staffRef = doc(db, "registered_staff_ids", staffId);
           const snap = await getDoc(staffRef);
           if (!snap.exists()) { msgBox.innerText = "❌ 查無此員工編號！"; return; }
@@ -287,12 +330,19 @@
           }
           await setDoc(staffRef, { username, uid: newUid });
           await setDoc(doc(db, "public_user_map", username.toLowerCase()), { uid: newUid, staffId });
-          alert("🎉 帳號重設成功！所有更期已轉移。");
+          alert("🎉 帳號名稱及密碼重設成功！所有更期已轉移。");
         } else {
+          if (!pass) { msgBox.innerText = "請輸入密碼！"; return; }
           await signInWithEmailAndPassword(auth, vEmail, pass);
         }
-      } catch (e) { msgBox.innerText = "失敗: " + e.message; }
+      } catch (e) { msgBox.innerText = "登入失敗: " + e.message; }
     };
+    
+    window.loginWithGoogle = async () => {
+      try { await signInWithPopup(auth, googleProvider); } 
+      catch (e) { document.getElementById("authMsg").innerText = "Google登入失敗: " + e.message; }
+    };
+    
     window.userLogout = () => signOut(auth);
 
     // ------------- Firebase 資料讀寫 -------------
@@ -339,7 +389,6 @@
     function buildMonthScroller() {
       const scroller = document.getElementById("monthScroller");
       let html = "";
-      // 動態無限延伸：前後足足 12 個月
       for (let i = -12; i <= 12; i++) {
         const d = new Date(viewCalYear, viewCalMonth - 1 + i, 1);
         const y = d.getFullYear(); const m = d.getMonth() + 1;
@@ -349,7 +398,6 @@
       }
       scroller.innerHTML = html;
       
-      // 自動滑動到選中月份正中間
       setTimeout(() => {
         const activeChip = document.getElementById(`chip-${viewCalYear}-${viewCalMonth}`);
         if(activeChip) activeChip.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
@@ -357,6 +405,13 @@
     }
 
     window.navToMonth = (y, m) => { viewCalYear = y; viewCalMonth = m; buildMonthScroller(); renderUnifiedCalendar(); };
+    window.navUnifiedMonth = (delta) => {
+      viewCalMonth += delta;
+      if (viewCalMonth > 12) { viewCalMonth = 1; viewCalYear++; }
+      if (viewCalMonth < 1) { viewCalMonth = 12; viewCalYear--; }
+      buildMonthScroller();
+      renderUnifiedCalendar();
+    };
     window.jumpToToday = () => { navToMonth(todayObj.getFullYear(), todayObj.getMonth() + 1); };
 
     window.jumpToSpecificDate = (val) => {
@@ -368,7 +423,6 @@
     function setupSwipeGestures() {
       const wrapper = document.querySelector('.calendar-wrapper');
       const grid = document.getElementById('unifiedCalendarGrid');
-      let touchstartX = 0;
       
       wrapper.addEventListener('touchstart', e => {
         touchstartX = e.changedTouches[0].screenX;
@@ -387,7 +441,7 @@
         const touchendX = e.changedTouches[0].screenX;
         const deltaX = touchendX - touchstartX;
         
-        if (deltaX < -60) { // 向左滑 -> 下一月
+        if (deltaX < -60) {
           grid.style.transition = 'transform 0.25s ease-out';
           grid.style.transform = `translateX(-100%)`;
           setTimeout(() => {
@@ -396,7 +450,7 @@
             grid.style.transition = 'none'; grid.style.transform = `translateX(100%)`;
             setTimeout(() => { grid.style.transition = 'transform 0.25s ease-out'; grid.style.transform = `translateX(0)`; }, 20);
           }, 250);
-        } else if (deltaX > 60) { // 向右滑 -> 上一月
+        } else if (deltaX > 60) {
           grid.style.transition = 'transform 0.25s ease-out';
           grid.style.transform = `translateX(100%)`;
           setTimeout(() => {
@@ -405,14 +459,13 @@
             grid.style.transition = 'none'; grid.style.transform = `translateX(-100%)`;
             setTimeout(() => { grid.style.transition = 'transform 0.25s ease-out'; grid.style.transform = `translateX(0)`; }, 20);
           }, 250);
-        } else { // 彈回原位
+        } else {
           grid.style.transition = 'transform 0.25s ease-out'; grid.style.transform = `translateX(0)`;
         }
       }, {passive: true});
     }
 
     function renderUnifiedCalendar() {
-      // 確保頂部日期選擇器預設顯示今日，或跟隨滾動月份
       const datePicker = document.getElementById("headerDatePicker");
       if(datePicker) {
         if(viewCalYear === todayObj.getFullYear() && viewCalMonth === todayObj.getMonth() + 1) {
@@ -599,19 +652,36 @@
 </head>
 <body>
 
-  <!-- 登入面板 -->
+  <!-- 登入面板 (已還原為圖2經典樣式) -->
   <div class="auth-container" id="authPanel" style="display:none;">
-    <h2 style="margin-top:0; color:var(--gc-text); font-size:1.4rem; font-weight:normal;" id="authTitle">登入</h2>
-    <div style="font-size:0.85rem; color:var(--gc-light-text); margin-bottom:16px;">繼續前往 個人更期系統</div>
-    <input type="text" id="authUsername" placeholder="帳戶名稱">
-    <input type="password" id="authPassword" placeholder="密碼">
-    <div id="staffIdField" style="display:none;"><input type="text" id="authStaffId" placeholder="員工編號"></div>
-    <div style="text-align:right;"><span class="auth-toggle" id="forgotBtn" style="margin-top:4px;" onclick="toggleForgotMode()">忘記密碼？</span></div>
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px;">
-      <span class="auth-toggle" id="toggleBtn" style="margin:0; font-weight:bold;" onclick="toggleAuthMode()">建立帳戶</span>
-      <button class="btn-auth" id="submitAuthBtn" style="width:auto; margin:0;" onclick="submitUserAuth()">繼續</button>
+    <input type="text" id="authUsername" placeholder="帳戶名稱 (例如: peter888)">
+    <input type="password" id="authPassword" placeholder="密碼 (最少6位)">
+    
+    <div id="staffIdField" style="display:none; width:100%; margin:4px 0;">
+      <input type="text" id="authStaffId" placeholder="員工編號 (例如: E12345)" style="border: 2px solid #e67e22;">
+      <div style="font-size:0.75rem; color:#7f8c8d; text-align:left; padding-left:5px; line-height:1.4;">
+        * 每個員工編號綁定一個帳號。<br>
+        * 若忘記帳號或密碼，可憑此員工編號隨時重設帳戶名稱及新密碼（原有更期資料會自動保留遷移）。
+      </div>
     </div>
-    <div id="authMsg" style="color:#d32f2f; margin-top:10px; font-size:0.85rem;"></div>
+
+    <button class="btn-auth" id="submitAuthBtn" onclick="submitUserAuth()">登入</button>
+    
+    <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:0.82rem;">
+      <span class="auth-toggle" id="forgotBtn" style="margin:0; color:#e67e22;" onclick="toggleForgotMode()">忘記密碼？</span>
+      <span class="auth-toggle" id="toggleBtn" style="margin:0;" onclick="toggleAuthMode()">未有帳號？點此註冊</span>
+    </div>
+
+    <hr style="border:0; border-top:1px solid #eee; margin:15px 0 10px;">
+
+    <button class="btn-google" onclick="loginWithGoogle()">
+      <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#ffffff" d="M12.24 10.285V13.4h6.887C18.2 16.14 15.645 18 12.24 18c-3.315 0-6-2.685-6-6s2.685-6 6-6c1.47 0 2.805.54 3.84 1.425l2.385-2.385C16.98 3.555 14.73 2.7 12.24 2.7 7.155 2.7 3 6.855 3 11.94s4.155 9.24 9.24 9.24c5.325 0 8.865-3.75 8.865-9.03 0-.615-.06-1.2-.165-1.755H12.24z"/></svg>
+      Google 一鍵登入
+    </button>
+    <div style="font-size:0.75rem; color:#7f8c8d; margin-top:8px; line-height:1.4;">
+      ⚠️ 若首次使用 Google 登入未有反應，請<b>再按一下</b>「Google 一鍵登入」即可。
+    </div>
+    <div id="authMsg" style="color:#e74c3c; font-size:0.85rem; margin-top:10px; font-weight:bold;"></div>
   </div>
 
   <!-- 主介面 -->
