@@ -35,17 +35,8 @@
     
     /* 醒目日期選擇器 */
     .month-title input[type="date"] { 
-      font-size: 1.15rem; 
-      font-weight: bold; 
-      color: var(--gc-text); 
-      background: #f1f3f4; 
-      border: 1px solid var(--gc-border); 
-      border-radius: 8px; 
-      padding: 6px 12px; 
-      cursor: pointer; 
-      outline: none; 
-      font-family: inherit; 
-      transition: background 0.2s;
+      font-size: 1.15rem; font-weight: bold; color: var(--gc-text); background: #f1f3f4; 
+      border: 1px solid var(--gc-border); border-radius: 8px; padding: 6px 12px; cursor: pointer; outline: none; font-family: inherit; transition: background 0.2s;
     }
     .month-title input[type="date"]:hover { background: #e8eaed; }
     
@@ -66,6 +57,13 @@
     .month-chip { padding: 6px 16px; border-radius: 16px; font-size: 0.85rem; color: var(--gc-text); cursor: pointer; white-space: nowrap; border: 1px solid var(--gc-border); background: white; font-weight: 500; }
     .month-chip.active { background: #c2e7ff; color: #001d35; border-color: #c2e7ff; }
     .month-chip.year-label { border: none; font-weight: bold; padding: 6px 4px; pointer-events: none; font-size: 0.9rem; }
+
+    /* 獨立操作橫條 (快速導入 & 換組插旗) */
+    .setup-bars-container { display: flex; flex-direction: column; gap: 8px; margin: 12px 16px; }
+    .quick-setup-bar { background: #e8f0fe; border-radius: 8px; padding: 10px; border: 1px solid #d2e3fc; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 0.85rem; }
+    .anchor-setup-bar { background: #fbf7fd; border-radius: 8px; padding: 10px; border: 1px solid #e8daf0; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 0.85rem; }
+    .setup-select { padding: 4px 6px; border-radius: 4px; border: 1px solid #bdc1c6; font-size: 0.85rem; font-weight: bold; color: var(--gc-text); outline: none; }
+    .btn-quick-nav { border: none; padding: 6px 12px; border-radius: 4px; font-size: 0.85rem; font-weight: bold; color: white; cursor: pointer; white-space: nowrap; }
 
     /* Google Calendar 網格 */
     .calendar-wrapper { padding: 0 16px 40px 16px; max-width: 1600px; margin: 0 auto; overflow: hidden; touch-action: pan-y; }
@@ -97,11 +95,6 @@
 
     .week-tag { text-align: center; font-size: 0.65rem; color: var(--gc-light-text); line-height: 1.3; margin-top: 4px; }
     .week-btn { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; padding: 2px 0; border-radius: 4px; font-size: 0.6rem; cursor: pointer; width: 90%; margin: 6px auto 0 auto; display: block; }
-
-    /* calc.html 風格插旗橫條 */
-    .unified-controls { background: #fbf7fd; border: 1px solid #e8daf0; border-radius: 8px; padding: 8px 10px; margin-bottom: 10px; margin-top: 10px; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: 0.8rem; }
-    .unified-controls input[type="date"], .unified-controls select { padding: 4px 6px; border-radius: 4px; border: 1px solid #ccc; font-size: 0.8rem; }
-    .btn-quick-nav { background: #8e44ad; color: white; border: none; padding: 5px 8px; border-radius: 5px; font-size: 0.75rem; cursor: pointer; font-weight: bold; }
 
     /* PH 統計區 */
     .ph-year-chips-bar { display: flex; gap: 8px; overflow-x: auto; padding: 6px 0; -webkit-overflow-scrolling: touch; }
@@ -170,15 +163,15 @@
     let timelineAnchors = [];
     let vacationWeeks = new Set();
     
-    // 滑動手勢記錄變數
     let touchstartX = 0;
     let touchendX = 0;
 
+    // 全中文公眾假期
     const HK_PUBLIC_HOLIDAYS = {
       "2026-01-01": "元旦", "2026-02-17": "農曆年初一", "2026-02-18": "農曆年初二", "2026-02-19": "農曆年初三",
       "2026-04-03": "耶穌受難節", "2026-04-04": "清明節", "2026-04-06": "復活節星期一", "2026-05-01": "勞動節",
       "2026-05-25": "佛誕翌日", "2026-06-19": "端午節", "2026-07-01": "特區成立日", "2026-09-26": "中秋節翌日",
-      "2026-10-01": "National Day", "2026-10-19": "Chung Yeung", "2026-12-25": "聖誕節", "2026-12-26": "聖誕翌日",
+      "2026-10-01": "國慶日", "2026-10-19": "重陽節", "2026-12-25": "聖誕節", "2026-12-26": "聖誕翌日",
       "2027-01-01": "元旦", "2027-02-06": "農曆年初一", "2027-02-08": "農曆年初二", "2027-02-09": "農曆年初三",
       "2027-03-26": "耶穌受難節", "2027-03-27": "受難節翌日", "2027-03-29": "復活節星期一", "2027-04-05": "清明節",
       "2027-05-01": "勞動節", "2027-05-13": "佛誕", "2027-06-09": "端午節", "2027-07-01": "特區成立日",
@@ -227,6 +220,10 @@
         document.getElementById("appPanel").style.display = "block";
         await loadUserData();
         initOverrideShiftSelect();
+        updateQuickRowSelect("group3");
+        document.getElementById("quickRowSelect").value = "14";
+        onAnchorGroupChange("group3");
+        document.getElementById("anchorRowSelect").value = "14";
         buildMonthScroller();
         renderPhYearChips();
         renderUnifiedCalendar();
@@ -343,7 +340,6 @@
       try { await signInWithPopup(auth, googleProvider); } 
       catch (e) { document.getElementById("authMsg").innerText = "Google登入失敗: " + e.message; }
     };
-    
     window.userLogout = () => signOut(auth);
 
     // ------------- Firebase 資料讀寫 -------------
@@ -386,7 +382,37 @@
       return { isVacation: false, group: active.group, rowNum: r, shifts: rost.data[r - 1] };
     }
 
-    // ------------- 換組插旗邏輯 (完美還原 calc.html) -------------
+    // ------------- 獨立雙插旗功能 (今日 vs 特定日期) -------------
+    window.updateQuickRowSelect = (grp) => {
+      const sel = document.getElementById("quickRowSelect");
+      if(!sel) return;
+      sel.innerHTML = "";
+      for (let r = 1; r <= ROSTERS[grp].totalRows; r++) sel.innerHTML += `<option value="${r}">第 ${r} 行</option>`;
+    };
+
+    window.quickApplyToday = async () => {
+      const group = document.getElementById("quickGroupSelect").value;
+      const row = parseInt(document.getElementById("quickRowSelect").value);
+      
+      if (typeof clearedYears !== 'undefined') {
+        clearedYears.delete(todayObj.getFullYear());
+        clearedYears.delete(viewCalYear);
+      }
+      
+      // 以今日為基準：清除今日及未來所有殘留旗標，保證順利向後推
+      timelineAnchors = timelineAnchors.filter(a => a.absWeek < todayAbsWeek);
+      timelineAnchors.push({ absWeek: todayAbsWeek, group: group, startRow: row, manual: true });
+      timelineAnchors.sort((a,b) => a.absWeek - b.absWeek);
+
+      viewCalYear = todayObj.getFullYear();
+      viewCalMonth = todayObj.getMonth() + 1;
+
+      await saveUserTimeline();
+      buildMonthScroller();
+      renderUnifiedCalendar();
+      alert(`✅ 快速導入成功！\n以今日為基準，已採用 ${ROSTERS[group].name} 第 ${row} 行，並自動向後順推所有更期。`);
+    };
+
     window.onAnchorGroupChange = (grp) => {
       const sel = document.getElementById("anchorRowSelect");
       sel.innerHTML = "";
@@ -396,7 +422,7 @@
     window.setManualAnchorAtDate = async () => {
       const dateStr = document.getElementById("anchorDateInput").value;
       if (!dateStr) { alert("請先選擇要插旗換組的日期！"); return; }
-
+      
       const parts = dateStr.split('-');
       const d = new Date(parts[0], parts[1] - 1, parts[2]);
       const absWeek = getAbsoluteWeekIndex(d);
@@ -405,16 +431,21 @@
 
       if (typeof clearedYears !== 'undefined') {
         clearedYears.delete(d.getFullYear());
+        clearedYears.delete(viewCalYear);
       }
 
-      // 核心防鎖死邏輯：清除該週及未來所有舊插旗
+      // 以指定日為基準：清除該日及未來所有殘留旗標，保證順利向後推
       timelineAnchors = timelineAnchors.filter(a => a.absWeek < absWeek);
       timelineAnchors.push({ absWeek, group, startRow: row, manual: true });
       timelineAnchors.sort((a,b) => a.absWeek - b.absWeek);
 
+      viewCalYear = d.getFullYear();
+      viewCalMonth = d.getMonth() + 1;
+
       await saveUserTimeline();
+      buildMonthScroller();
       renderUnifiedCalendar();
-      alert(`✅ 成功設定更期起點！\n由 ${dateStr} 起採用 ${ROSTERS[group].name} 第 ${row} 行，後續所有更期已自動沿此起點向後順推。`);
+      alert(`✅ 成功設定指定起點！\n由 ${dateStr} 起採用 ${ROSTERS[group].name} 第 ${row} 行，後續所有舊旗已清除並自動順推。`);
     };
 
     // ------------- UI 渲染與手勢滑動 -------------
@@ -519,7 +550,7 @@
         let rowTag = st.isCleared ? "未導入" : st.isVacation ? "大假" : st.isPending ? "待入位" : `第${st.rowNum}行`;
         let btnTxt = st.isVacation ? "取消" : "休";
 
-        // 修復大假按鈕：移除 event，避免 iPhone Safari 報錯
+        // 已修正大假按鈕，無 event 攔截
         html += `<tr><td style="text-align:center;">
           <div class="week-tag">${rowTag}</div>
           <button class="week-btn" onclick="toggleVacationWeek(${w})">${btnTxt}</button>
@@ -565,7 +596,7 @@
       updatePhStatistics();
     }
 
-    // ------------- 操作與 Modal (移除 e.stopPropagation) -------------
+    // ------------- 操作與 Modal -------------
     window.toggleVacationWeek = async (absWeek) => {
       if (vacationWeeks.has(absWeek)) {
         vacationWeeks.delete(absWeek);
@@ -662,7 +693,7 @@
 </head>
 <body>
 
-  <!-- 登入面板 (已還原為圖2經典樣式) -->
+  <!-- 登入面板 -->
   <div class="auth-container" id="authPanel" style="display:none;">
     <input type="text" id="authUsername" placeholder="帳戶名稱 (例如: peter888)">
     <input type="password" id="authPassword" placeholder="密碼 (最少6位)">
@@ -688,9 +719,6 @@
       <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#ffffff" d="M12.24 10.285V13.4h6.887C18.2 16.14 15.645 18 12.24 18c-3.315 0-6-2.685-6-6s2.685-6 6-6c1.47 0 2.805.54 3.84 1.425l2.385-2.385C16.98 3.555 14.73 2.7 12.24 2.7 7.155 2.7 3 6.855 3 11.94s4.155 9.24 9.24 9.24c5.325 0 8.865-3.75 8.865-9.03 0-.615-.06-1.2-.165-1.755H12.24z"/></svg>
       Google 一鍵登入
     </button>
-    <div style="font-size:0.75rem; color:#7f8c8d; margin-top:8px; line-height:1.4;">
-      ⚠️ 若首次使用 Google 登入未有反應，請<b>再按一下</b>「Google 一鍵登入」即可。
-    </div>
     <div id="authMsg" style="color:#e74c3c; font-size:0.85rem; margin-top:10px; font-weight:bold;"></div>
   </div>
 
@@ -699,7 +727,7 @@
     <!-- 頂部欄 -->
     <div class="top-header">
       <div class="top-row">
-        <!-- 醒目日期選擇器 (按鈕式) -->
+        <!-- 醒目日期選擇器 -->
         <div class="month-title">
           <input type="date" id="headerDatePicker" onchange="jumpToSpecificDate(this.value)">
         </div>
@@ -708,7 +736,7 @@
           <div class="profile-icon" id="profileIcon" onclick="openChangeAccountModal()" title="點擊修改帳號/登出">U</div>
         </div>
       </div>
-      <!-- 水平導航列 (可左右滑動) -->
+      <!-- 水平導航列 -->
       <div class="nav-links">
         <a href="calc.html">📅 舊版推算/設定</a>
         <a href="dinner.html">🍽️ 多人約食飯對照</a>
@@ -722,26 +750,41 @@
     <!-- 月曆網格區 -->
     <div class="calendar-wrapper">
       
-      <!-- ★ calc.html 風格插旗橫條 ★ -->
-      <div class="unified-controls">
-        <b style="color: #8e44ad;">🚩 換組插旗設定：</b>
-        <span>由</span>
-        <input type="date" id="anchorDateInput" value="2026-10-05">
-        <span>起轉為：</span>
-        <select id="anchorGroupSelect" onchange="onAnchorGroupChange(this.value)">
-          <option value="group2">2組 (12行)</option>
-          <option value="group3" selected>3組 (14行)</option>
-          <option value="group4">4組 (5行)</option>
-          <option value="groupCell">Cell組 (6行)</option>
-        </select>
-        <select id="anchorRowSelect">
-          <option value="1">第 1 行</option><option value="2">第 2 行</option><option value="3">第 3 行</option>
-          <option value="4">第 4 行</option><option value="5">第 5 行</option><option value="6">第 6 行</option>
-          <option value="7">第 7 行</option><option value="8">第 8 行</option><option value="9">第 9 行</option>
-          <option value="10">第 10 行</option><option value="11">第 11 行</option><option value="12">第 12 行</option>
-          <option value="13">第 13 行</option><option value="14" selected>第 14 行</option>
-        </select>
-        <button class="btn-quick-nav" onclick="setManualAnchorAtDate()">套用並向後推算</button>
+      <!-- ★ 獨立兩組設定橫條 ★ -->
+      <div class="setup-bars-container">
+        <!-- 1. 快速導入：今日 -->
+        <div class="quick-setup-bar">
+          <b style="color: var(--gc-blue);">📍 快速導入 (以今日為起點)：</b>
+          <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+            <span>今日係</span>
+            <select id="quickGroupSelect" class="setup-select" onchange="updateQuickRowSelect(this.value)">
+              <option value="group2">2組 (12行)</option>
+              <option value="group3" selected>3組 (14行)</option>
+              <option value="group4">4組 (5行)</option>
+              <option value="groupCell">Cell組 (6行)</option>
+            </select>
+            <select id="quickRowSelect" class="setup-select"></select>
+            <button onclick="quickApplyToday()" class="btn-quick-nav" style="background:var(--gc-blue);">🚀 一鍵推算所有更期</button>
+          </div>
+        </div>
+
+        <!-- 2. 指定日期換組/插旗 -->
+        <div class="anchor-setup-bar">
+          <b style="color: #8e44ad;">🚩 指定日期換組/插旗：</b>
+          <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+            <span>由</span>
+            <input type="date" id="anchorDateInput" value="2026-10-05" class="setup-select">
+            <span>起轉為</span>
+            <select id="anchorGroupSelect" class="setup-select" onchange="onAnchorGroupChange(this.value)">
+              <option value="group2">2組 (12行)</option>
+              <option value="group3" selected>3組 (14行)</option>
+              <option value="group4">4組 (5行)</option>
+              <option value="groupCell">Cell組 (6行)</option>
+            </select>
+            <select id="anchorRowSelect" class="setup-select"></select>
+            <button onclick="setManualAnchorAtDate()" class="btn-quick-nav" style="background:#8e44ad;">套用並向後推算</button>
+          </div>
+        </div>
       </div>
 
       <div id="unifiedCalendarGrid"></div>
