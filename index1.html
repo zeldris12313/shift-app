@@ -67,6 +67,10 @@
     .month-chip.active { background: #c2e7ff; color: #001d35; border-color: #c2e7ff; }
     .month-chip.year-label { border: none; font-weight: bold; padding: 6px 4px; pointer-events: none; font-size: 0.9rem; }
 
+    /* 快速推算橫幅 */
+    .quick-setup-bar { background: #e8f0fe; border-radius: 8px; padding: 10px; margin-top: 10px; border: 1px solid #d2e3fc; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
+    .quick-setup-select { padding: 6px 8px; border-radius: 4px; border: 1px solid #bdc1c6; font-size: 0.85rem; font-weight: bold; color: var(--gc-text); outline: none; }
+
     /* Google Calendar 網格 */
     .calendar-wrapper { padding: 0 16px 40px 16px; max-width: 1600px; margin: 0 auto; overflow: hidden; touch-action: pan-y; }
     #unifiedCalendarGrid { width: 100%; will-change: transform; }
@@ -131,7 +135,7 @@
     .btn-cancel { background: transparent; color: var(--gc-light-text); }
     .btn-danger { background: white; color: #d32f2f; border: 1px solid #d32f2f; width:100%; margin-top:10px; }
 
-    /* 登入面板專用 (還原圖2橙藍經典樣式) */
+    /* 登入面板專用 */
     .auth-container { max-width: 380px; margin: 40px auto; background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border-top: 5px solid #e67e22; text-align: center; }
     .auth-container input { width: 100%; padding: 10px; margin: 6px 0; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; outline: none; }
     .auth-container input:focus { border-color: #e67e22; }
@@ -226,6 +230,8 @@
         document.getElementById("appPanel").style.display = "block";
         await loadUserData();
         initOverrideShiftSelect();
+        updateQuickRowSelect("group3");
+        document.getElementById("quickRowSelect").value = "14";
         buildMonthScroller();
         renderPhYearChips();
         renderUnifiedCalendar();
@@ -237,7 +243,7 @@
       }
     });
 
-    // ------------- 登入邏輯 (完全還原舊版) -------------
+    // ------------- 登入邏輯 -------------
     let authMode = "login";
     const toVirtualEmail = (uname) => `${uname.toLowerCase().replace(/[^a-z0-9_]/g, '')}@shift.local`;
 
@@ -384,6 +390,35 @@
       if (r <= 0) r += rost.totalRows;
       return { isVacation: false, group: active.group, rowNum: r, shifts: rost.data[r - 1] };
     }
+
+    // ------------- 快速一鍵推算 -------------
+    window.updateQuickRowSelect = (grp) => {
+      const sel = document.getElementById("quickRowSelect");
+      if(!sel) return;
+      sel.innerHTML = "";
+      for (let r = 1; r <= ROSTERS[grp].totalRows; r++) sel.innerHTML += `<option value="${r}">第 ${r} 行</option>`;
+    };
+
+    window.quickApplyToday = async () => {
+      const group = document.getElementById("quickGroupSelect").value;
+      const row = parseInt(document.getElementById("quickRowSelect").value);
+
+      if (typeof clearedYears !== 'undefined') {
+        clearedYears.delete(todayObj.getFullYear());
+        clearedYears.delete(viewCalYear);
+      }
+
+      // 以今日為絕對基準，覆蓋所有舊插旗
+      timelineAnchors = [{ absWeek: todayAbsWeek, group: group, startRow: row, manual: true }];
+
+      viewCalYear = todayObj.getFullYear();
+      viewCalMonth = todayObj.getMonth() + 1;
+
+      await saveUserTimeline();
+      buildMonthScroller();
+      renderUnifiedCalendar();
+      alert(`✅ 已成功導入！\n系統已按 ${ROSTERS[group].name} 第 ${row} 行，為你重新推算前後所有更期。`);
+    };
 
     // ------------- UI 渲染與手勢滑動 -------------
     function buildMonthScroller() {
@@ -533,13 +568,6 @@
     }
 
     // ------------- 操作與 Modal -------------
-    window.toggleVacationWeek = async (absWeek, e) => {
-      e.stopPropagation();
-      if (vacationWeeks.has(absWeek)) vacationWeeks.delete(absWeek);
-      else { vacationWeeks.add(absWeek); timelineAnchors = timelineAnchors.filter(a => a.absWeek < absWeek); }
-      await saveUserTimeline(); renderUnifiedCalendar();
-    };
-
     window.openAnchorModal = () => document.getElementById("anchorModal").style.display = "flex";
     window.closeAnchorModal = () => document.getElementById("anchorModal").style.display = "none";
     
@@ -689,7 +717,6 @@
     <!-- 頂部欄 -->
     <div class="top-header">
       <div class="top-row">
-        <!-- 醒目日期選擇器 (按鈕式) -->
         <div class="month-title">
           <input type="date" id="headerDatePicker" onchange="jumpToSpecificDate(this.value)">
         </div>
@@ -698,7 +725,6 @@
           <div class="profile-icon" id="profileIcon" onclick="openChangeAccountModal()" title="點擊修改帳號/登出">U</div>
         </div>
       </div>
-      <!-- 水平導航列 (可左右滑動) -->
       <div class="nav-links">
         <a href="calc.html">📅 舊版推算/設定</a>
         <a href="dinner.html">🍽️ 多人約食飯對照</a>
@@ -711,23 +737,33 @@
 
     <!-- 月曆網格區 -->
     <div class="calendar-wrapper">
+      
+      <!-- ★ 快速推算橫幅 ★ -->
+      <div class="quick-setup-bar">
+        <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+          <span style="font-weight:bold; color:var(--gc-blue); font-size:0.9rem;">📍 快速導入：今日係</span>
+          <select id="quickGroupSelect" class="quick-setup-select" style="width:auto;" onchange="updateQuickRowSelect(this.value)">
+            <option value="group2">2組 (12行)</option>
+            <option value="group3" selected>3組 (14行)</option>
+            <option value="group4">4組 (5行)</option>
+            <option value="groupCell">Cell組 (6行)</option>
+          </select>
+          <select id="quickRowSelect" class="quick-setup-select" style="width:auto;"></select>
+          <button onclick="quickApplyToday()" style="background:var(--gc-blue); color:white; border:none; padding:6px 12px; border-radius:4px; font-size:0.85rem; font-weight:bold; cursor:pointer;">🚀 一鍵推算所有更期</button>
+        </div>
+      </div>
+
       <div id="unifiedCalendarGrid"></div>
 
       <!-- 重置與 PH 統計區 -->
       <div style="margin-top: 30px; padding-top: 20px; border-top: 2px dashed #d7bde2;">
-        
         <div style="display:flex; justify-content:flex-end; margin-bottom:15px;">
           <button onclick="resetYearShiftsAndPh()" style="background:#e74c3c; color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-weight:bold; box-shadow:0 2px 5px rgba(231,76,60,0.3);">
             🔄 重置今年所有已導入更期
           </button>
         </div>
-
-        <div style="font-weight:bold; color:#6c3483; font-size:0.95rem; margin-bottom: 10px;">
-          📊 歷年 PH 統計（點擊年份切換）：
-        </div>
-        
+        <div style="font-weight:bold; color:#6c3483; font-size:0.95rem; margin-bottom: 10px;">📊 歷年 PH 統計（點擊年份切換）：</div>
         <div class="ph-year-chips-bar" id="phYearChipsContainer" style="justify-content: flex-start; margin-bottom: 10px;"></div>
-        
         <div style="background:#f4ecf7; border: 1.5px solid #d7bde2; border-radius:10px; padding:20px; display:flex; justify-content:space-around; align-items:center; text-align:center;">
           <div>
             <div style="font-size:0.85rem; color:#7d3c98;" id="summaryYearTitle">2026 年</div>
@@ -750,10 +786,7 @@
   <div id="anchorModal" class="modal-overlay">
     <div class="modal-card">
       <h3 class="modal-title">🚩 換組插旗設定</h3>
-      <div class="modal-section">
-        <label>生效日期</label>
-        <input type="date" id="anchorDateInput" class="select-block">
-      </div>
+      <div class="modal-section"><label>生效日期</label><input type="date" id="anchorDateInput" class="select-block"></div>
       <div class="modal-section">
         <label>轉為組別</label>
         <select id="anchorGroupSelect" class="select-block" onchange="onAnchorGroupChange(this.value)">
@@ -782,7 +815,6 @@
   <div id="combinedModal" class="modal-overlay">
     <div class="modal-card">
       <h3 class="modal-title" id="modalDateTitle">📅 日期</h3>
-      
       <div class="modal-section">
         <label>扣減 PH 時數</label>
         <select class="select-block" id="phHourSelect">
@@ -791,18 +823,12 @@
           <option value="6">6 小時</option><option value="7">7 小時</option><option value="8">8 小時</option>
         </select>
       </div>
-
       <div class="modal-section">
         <label>手動調更 / 單日大假</label>
         <select class="select-block" id="modalShiftSelect"></select>
         <button class="btn-modal btn-danger" onclick="document.getElementById('modalShiftSelect').value='AL'">🏖️ 設為單日 AL</button>
       </div>
-
-      <div class="modal-section">
-        <label>個人備註</label>
-        <input type="text" id="modalNoteInput" placeholder="輸入備註..." class="select-block">
-      </div>
-
+      <div class="modal-section"><label>個人備註</label><input type="text" id="modalNoteInput" placeholder="輸入備註..." class="select-block"></div>
       <div class="modal-btns">
         <button class="btn-modal btn-cancel" onclick="closeCombinedModal()">取消</button>
         <button class="btn-modal btn-save" onclick="saveCombinedData()">儲存</button>
@@ -814,14 +840,8 @@
   <div id="accountModal" class="modal-overlay">
     <div class="modal-card">
       <h3 class="modal-title">🔑 修改帳號與密碼</h3>
-      <div class="modal-section">
-        <label>帳戶名稱：</label>
-        <input type="text" id="editUsernameInput" class="select-block">
-      </div>
-      <div class="modal-section">
-        <label>新密碼 (不改請留空)：</label>
-        <input type="password" id="editPasswordInput" class="select-block">
-      </div>
+      <div class="modal-section"><label>帳戶名稱：</label><input type="text" id="editUsernameInput" class="select-block"></div>
+      <div class="modal-section"><label>新密碼 (不改請留空)：</label><input type="password" id="editPasswordInput" class="select-block"></div>
       <div id="editAccountMsg" style="color:#d32f2f; font-size:0.85rem; font-weight:bold; margin-bottom:10px;"></div>
       <div class="modal-btns" style="flex-wrap:wrap;">
         <button class="btn-modal btn-save" style="width:100%;" onclick="submitAccountUpdate()">確認修改</button>
