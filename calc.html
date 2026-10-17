@@ -1039,11 +1039,13 @@
             staffId: staffId
           });
 
-          alert(`🎉 帳號名稱及密碼重設成功！\n新帳戶名稱: ${username}\n員工編號: ${staffId}\n舊有更期及 PH 資料已全數轉移，系統已自動為你登入。`);
+                    alert(`🎉 帳號名稱及密碼重設成功！\n新帳戶名稱: ${username}\n員工編號: ${staffId}\n舊有更期及 PH 資料已全數轉移，系統已自動為你登入。`);
+          window.location.href = "index1.html"; // 重設成功後，強制跳轉去大月曆主頁
 
-        } else {
+                } else {
           if (!pass) { msgBox.innerText = "請輸入密碼！"; return; }
           await signInWithEmailAndPassword(auth, vEmail, pass);
+          window.location.href = "index1.html"; // 登入成功後，強制跳轉去大月曆主頁
         }
       } catch (e) {
         if (e.code === 'auth/email-already-in-use') {
