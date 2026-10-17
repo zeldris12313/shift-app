@@ -29,48 +29,50 @@
     * { box-sizing: border-box; font-family: "Google Sans", Roboto, Arial, sans-serif; }
     body { margin: 0; padding: 0; background-color: var(--gc-bg); color: var(--gc-text); overflow-x: hidden; }
     
-    /* 頂部導航與工具列 */
-    .top-header { display: flex; flex-direction: column; padding: 10px 16px 12px 16px; border-bottom: 1px solid var(--gc-border); background: white; position: sticky; top: 0; z-index: 100; gap: 12px; }
+    /* 頂部導航與工具列 - 極限壓縮版 */
+    .top-header { display: flex; flex-direction: column; padding: 6px 12px 8px 12px; border-bottom: 1px solid var(--gc-border); background: white; position: sticky; top: 0; z-index: 100; gap: 8px; }
     .top-row { display: flex; justify-content: space-between; align-items: center; width: 100%; }
     
     /* 醒目日期選擇器 */
     .month-title input[type="date"] { 
-      font-size: 1.15rem; font-weight: bold; color: var(--gc-text); background: #f1f3f4; 
-      border: 1px solid var(--gc-border); border-radius: 8px; padding: 6px 12px; cursor: pointer; outline: none; font-family: inherit; transition: background 0.2s;
+      font-size: 1.05rem; font-weight: bold; color: var(--gc-text); background: #f1f3f4; 
+      border: 1px solid var(--gc-border); border-radius: 6px; padding: 4px 8px; cursor: pointer; outline: none; font-family: inherit; transition: background 0.2s;
     }
     .month-title input[type="date"]:hover { background: #e8eaed; }
     
-    .top-right { display: flex; align-items: center; gap: 12px; }
-    .btn-today { border: 1px solid var(--gc-border); background: white; padding: 6px 14px; border-radius: 4px; font-size: 0.85rem; font-weight: bold; color: var(--gc-text); cursor: pointer; }
+    .top-right { display: flex; align-items: center; gap: 8px; }
+    .btn-today { border: 1px solid var(--gc-border); background: white; padding: 4px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; color: var(--gc-text); cursor: pointer; }
     .btn-today:hover { background: var(--gc-hover); }
-    .profile-icon { width: 32px; height: 32px; border-radius: 50%; background: var(--gc-blue); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.9rem; border: 2px solid white; outline: 1px solid var(--gc-border); cursor: pointer; }
+    .profile-icon { width: 28px; height: 28px; border-radius: 50%; background: var(--gc-blue); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.8rem; border: 2px solid white; outline: 1px solid var(--gc-border); cursor: pointer; }
 
-    /* 水平導航按鈕 (可滑動) */
-    .nav-links { display: flex; gap: 8px; overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; padding-bottom: 2px; width: 100%; align-items: center; }
+    /* 水平導航按鈕 */
+    .nav-links { display: flex; gap: 6px; overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; width: 100%; align-items: center; }
     .nav-links::-webkit-scrollbar { display: none; }
-    .nav-links a { padding: 6px 14px; border-radius: 16px; font-size: 0.85rem; font-weight: bold; text-decoration: none; border: 1px solid var(--gc-border); background: white; color: #5f6368; white-space: nowrap; flex-shrink: 0; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
+    .nav-links a { padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: bold; text-decoration: none; border: 1px solid var(--gc-border); background: white; color: #5f6368; white-space: nowrap; flex-shrink: 0; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
     .nav-links a:hover { background: var(--gc-hover); }
 
     /* 無限月份快速選擇列 */
-    .month-scroller { display: flex; overflow-x: auto; padding: 10px 16px; gap: 8px; border-bottom: 1px solid var(--gc-border); background: white; -webkit-overflow-scrolling: touch; scroll-behavior: smooth; }
+    .month-scroller { display: flex; overflow-x: auto; padding: 6px 12px; gap: 6px; border-bottom: 1px solid var(--gc-border); background: white; -webkit-overflow-scrolling: touch; scroll-behavior: smooth; }
     .month-scroller::-webkit-scrollbar { display: none; }
-    .month-chip { padding: 6px 16px; border-radius: 16px; font-size: 0.85rem; color: var(--gc-text); cursor: pointer; white-space: nowrap; border: 1px solid var(--gc-border); background: white; font-weight: 500; }
+    .month-chip { padding: 4px 12px; border-radius: 12px; font-size: 0.8rem; color: var(--gc-text); cursor: pointer; white-space: nowrap; border: 1px solid var(--gc-border); background: white; font-weight: 500; }
     .month-chip.active { background: #c2e7ff; color: #001d35; border-color: #c2e7ff; }
-    .month-chip.year-label { border: none; font-weight: bold; padding: 6px 4px; pointer-events: none; font-size: 0.9rem; }
+    .month-chip.year-label { border: none; font-weight: bold; padding: 4px; pointer-events: none; font-size: 0.85rem; }
 
-    /* 獨立操作橫條 (快速導入 & 換組插旗) */
-    .setup-bars-container { display: flex; flex-direction: column; gap: 8px; margin: 12px 16px; }
-    .quick-setup-bar { background: #e8f0fe; border-radius: 8px; padding: 10px; border: 1px solid #d2e3fc; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 0.85rem; }
-    .anchor-setup-bar { background: #fbf7fd; border-radius: 8px; padding: 10px; border: 1px solid #e8daf0; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 0.85rem; }
-    .setup-select { padding: 4px 6px; border-radius: 4px; border: 1px solid #bdc1c6; font-size: 0.85rem; font-weight: bold; color: var(--gc-text); outline: none; }
-    .btn-quick-nav { border: none; padding: 6px 12px; border-radius: 4px; font-size: 0.85rem; font-weight: bold; color: white; cursor: pointer; white-space: nowrap; }
+    /* ★ 極致壓縮版設定橫條 ★ */
+    .setup-bars-container { display: flex; flex-direction: column; gap: 4px; margin: 4px 12px 8px 12px; }
+    .quick-setup-bar { background: #e8f0fe; border-radius: 6px; padding: 4px 8px; border: 1px solid #d2e3fc; display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 6px; align-items: center; font-size: 0.75rem; -webkit-overflow-scrolling: touch; }
+    .quick-setup-bar::-webkit-scrollbar { display: none; }
+    .anchor-setup-bar { background: #fbf7fd; border-radius: 6px; padding: 4px 8px; border: 1px solid #e8daf0; display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 6px; align-items: center; font-size: 0.75rem; -webkit-overflow-scrolling: touch; }
+    .anchor-setup-bar::-webkit-scrollbar { display: none; }
+    .setup-select { padding: 2px 4px; border-radius: 4px; border: 1px solid #bdc1c6; font-size: 0.75rem; font-weight: bold; color: var(--gc-text); outline: none; background: white; white-space: nowrap; flex-shrink: 0; }
+    .btn-quick-nav { border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; color: white; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
 
     /* Google Calendar 網格 */
-    .calendar-wrapper { padding: 0 16px 40px 16px; max-width: 1600px; margin: 0 auto; overflow: hidden; touch-action: pan-y; }
+    .calendar-wrapper { padding: 0 12px 40px 12px; max-width: 1600px; margin: 0 auto; overflow: hidden; touch-action: pan-y; }
     #unifiedCalendarGrid { width: 100%; will-change: transform; }
-    .cal-table { width: 100%; border-collapse: collapse; table-layout: fixed; margin-top: 10px; }
-    .cal-table th { font-size: 0.75rem; color: var(--gc-light-text); font-weight: 500; padding-bottom: 8px; border-bottom: 1px solid var(--gc-border); }
-    .cal-table td { border: 1px solid var(--gc-border); vertical-align: top; height: 110px; padding: 4px; position: relative; cursor: pointer; transition: background 0.1s; }
+    .cal-table { width: 100%; border-collapse: collapse; table-layout: fixed; margin-top: 4px; }
+    .cal-table th { font-size: 0.75rem; color: var(--gc-light-text); font-weight: 500; padding-bottom: 6px; border-bottom: 1px solid var(--gc-border); }
+    .cal-table td { border: 1px solid var(--gc-border); vertical-align: top; height: 95px; padding: 4px; position: relative; cursor: pointer; transition: background 0.1s; }
     .cal-table td:hover { background: #fbfbfb; }
     .cal-table tr td:first-child { border-left: none; width: 45px; background: #fafafa; border-right: 2px solid var(--gc-border); } 
     .cal-table tr td:last-child { border-right: none; }
@@ -79,11 +81,11 @@
     .cal-table td.cell-today { border: 3px solid var(--gc-blue) !important; background-color: #f8fbff !important; box-shadow: inset 0 0 0 2px rgba(26,115,232,0.05); }
     
     .date-header { display: flex; justify-content: center; margin-bottom: 4px; margin-top: 2px; }
-    .date-num { font-size: 0.8rem; color: var(--gc-light-text); width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
+    .date-num { font-size: 0.8rem; color: var(--gc-light-text); width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
     .date-num.today { background: var(--gc-blue); color: white; font-weight: bold; }
 
     /* 膠囊 Event Pills */
-    .event-pill { font-size: 0.72rem; padding: 2px 6px; margin-bottom: 2px; border-radius: 4px; color: white; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; line-height: 1.3; }
+    .event-pill { font-size: 0.7rem; padding: 2px 4px; margin-bottom: 2px; border-radius: 4px; color: white; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; line-height: 1.2; }
     .pill-holiday { background-color: var(--pill-holiday); }
     .pill-note { background-color: var(--pill-note); }
     .pill-shift { background-color: var(--pill-shift); }
@@ -93,8 +95,11 @@
     .pill-ph { background-color: var(--pill-ph); }
     .custom-override { border-left: 3px solid #fbbc04; }
 
-    .week-tag { text-align: center; font-size: 0.65rem; color: var(--gc-light-text); line-height: 1.3; margin-top: 4px; }
+    .week-tag { text-align: center; font-size: 0.65rem; color: var(--gc-light-text); line-height: 1.2; margin-top: 4px; }
     .week-btn { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; padding: 2px 0; border-radius: 4px; font-size: 0.6rem; cursor: pointer; width: 90%; margin: 6px auto 0 auto; display: block; }
+
+    /* 右下角懸浮按鈕 (FAB) - 只保留 + 用作其他未來功能 */
+    .fab { display:none; } /* 隱藏 FAB，因為設定已移至頂部 */
 
     /* PH 統計區 */
     .ph-year-chips-bar { display: flex; gap: 8px; overflow-x: auto; padding: 6px 0; -webkit-overflow-scrolling: touch; }
@@ -103,7 +108,7 @@
 
     /* 電腦版適配 */
     @media (min-width: 768px) {
-      .cal-table td { height: 140px; padding: 6px; }
+      .cal-table td { height: 130px; padding: 6px; }
       .date-num { font-size: 0.9rem; }
       .event-pill { font-size: 0.8rem; padding: 3px 8px; margin-bottom: 3px; }
       .cal-table tr td:first-child { width: 60px; }
@@ -166,7 +171,6 @@
     let touchstartX = 0;
     let touchendX = 0;
 
-    // 全中文公眾假期
     const HK_PUBLIC_HOLIDAYS = {
       "2026-01-01": "元旦", "2026-02-17": "農曆年初一", "2026-02-18": "農曆年初二", "2026-02-19": "農曆年初三",
       "2026-04-03": "耶穌受難節", "2026-04-04": "清明節", "2026-04-06": "復活節星期一", "2026-05-01": "勞動節",
@@ -179,10 +183,10 @@
     };
 
     const ROSTERS = {
-      group2: { name: "2組 (12行)", totalRows: 12, data: [ ["N (10-8)", "R", "W", "1-11", "1-9", "9-6", "9-4"], ["9-5", "N (10-8)", "R", "W", "1-11", "1-9", "9-5"], ["9-5", "9-5", "1-9", "9-5", "9-5", "9-1", "W"], ["8-4", "9-5", "N (10-8)", "R", "W", "1-11", "1-9"], ["9-6", "8-4", "9-4", "N (10-8)", "R", "W", "1-11"], ["1-9", "9-6", "8-4", "9-5", "4-11", "W", "9-1"], ["3-11", "9-5", "9-6", "9-6", "N (10-8)", "R", "W"], ["8-4", "8-4", "8-4", "8-4", "8-4", "9-1", "W"], ["1-11", "1-9", "W", "8-5", "9-4", "N (10-8)", "R"], ["W", "1-11", "5-10", "9-1", "8-4", "9-4", "N (10-8)"], ["R", "W", "1-11", "1-9", "9-6", "8-5", "8-4"], ["W", "1-11", "1-9", "9-4", "9-1", "8-5", "8-4"] ] },
-      group3: { name: "3組 (14行)", totalRows: 14, data: [ ["N (10-8)", "R", "W", "9-5", "9-5", "1-11", "2-10"], ["W", "9-6", "8-5", "9-5", "1-10", "1-10", "W"], ["9-6", "2-10", "1-11", "N (10-8)", "R", "W", "9-4"], ["9-4", "9-5", "8-4", "9-1", "8-5", "9-5", "W"], ["1-10", "N (10-8)", "R", "W", "8-4", "8-5", "9-5"], ["9-5", "3-11", "3-11", "W", "8-4", "9-5", "9-1"], ["4-11", "1-11", "N (10-8)", "R", "W", "9-6", "9-5"], ["9-6", "8-1", "9-4", "3-11", "1-11", "W", "8-1"], ["8-4", "9-6", "10-5", "1-11", "N (10-8)", "R", "W"], ["2-11", "3-10", "9-1", "9-6", "8-4", "9-4", "W"], ["9-5", "9-4", "9-6", "W", "1-11", "N (10-8)", "R"], ["W", "8-4", "9-4", "9-5", "9-4", "8-4", "4-10"], ["1-10", "W", "9-4", "9-4", "10-5", "9-1", "N (10-8)"], ["R", "W", "8-4", "8-4", "9-6", "1-10", "1-11"] ] },
-      group4: { name: "4組 (5行)", totalRows: 5, data: [ ["8-1", "9-4", "9-5", "8-4", "W", "4-11", "1-10"], ["9-5", "9-5", "9-5", "2-10", "9-1", "W", "8-4"], ["9-4", "8-1", "W", "8-4", "9-5", "1-11", "5-11"], ["10-5", "9-1", "1-11", "5-11", "W", "9-6", "9-5"], ["8-4", "10-5", "9-6", "1-11", "4-10", "9-1", "W"] ] },
-      groupCell: { name: "Cell組 (6行)", totalRows: 6, data: [ ["9-5", "9-5", "9-5", "8-5", "9-1", "W", "9-4"], ["9-1", "9-5", "9-5", "9-6", "9-4", "8-4", "W"], ["8-4", "8-4", "8-4", "9-1", "W", "8-4", "9-5"], ["9-6", "W", "9-6", "4-11", "4-11", "9-5", "9-1"], ["9-5", "9-5", "W", "9-5", "9-5", "9-5", "9-1"], ["1-11", "5-11", "5-11", "W", "9-6", "9-6", "9-1"] ] }
+      group2: { name: "2組", totalRows: 12, data: [ ["N (10-8)", "R", "W", "1-11", "1-9", "9-6", "9-4"], ["9-5", "N (10-8)", "R", "W", "1-11", "1-9", "9-5"], ["9-5", "9-5", "1-9", "9-5", "9-5", "9-1", "W"], ["8-4", "9-5", "N (10-8)", "R", "W", "1-11", "1-9"], ["9-6", "8-4", "9-4", "N (10-8)", "R", "W", "1-11"], ["1-9", "9-6", "8-4", "9-5", "4-11", "W", "9-1"], ["3-11", "9-5", "9-6", "9-6", "N (10-8)", "R", "W"], ["8-4", "8-4", "8-4", "8-4", "8-4", "9-1", "W"], ["1-11", "1-9", "W", "8-5", "9-4", "N (10-8)", "R"], ["W", "1-11", "5-10", "9-1", "8-4", "9-4", "N (10-8)"], ["R", "W", "1-11", "1-9", "9-6", "8-5", "8-4"], ["W", "1-11", "1-9", "9-4", "9-1", "8-5", "8-4"] ] },
+      group3: { name: "3組", totalRows: 14, data: [ ["N (10-8)", "R", "W", "9-5", "9-5", "1-11", "2-10"], ["W", "9-6", "8-5", "9-5", "1-10", "1-10", "W"], ["9-6", "2-10", "1-11", "N (10-8)", "R", "W", "9-4"], ["9-4", "9-5", "8-4", "9-1", "8-5", "9-5", "W"], ["1-10", "N (10-8)", "R", "W", "8-4", "8-5", "9-5"], ["9-5", "3-11", "3-11", "W", "8-4", "9-5", "9-1"], ["4-11", "1-11", "N (10-8)", "R", "W", "9-6", "9-5"], ["9-6", "8-1", "9-4", "3-11", "1-11", "W", "8-1"], ["8-4", "9-6", "10-5", "1-11", "N (10-8)", "R", "W"], ["2-11", "3-10", "9-1", "9-6", "8-4", "9-4", "W"], ["9-5", "9-4", "9-6", "W", "1-11", "N (10-8)", "R"], ["W", "8-4", "9-4", "9-5", "9-4", "8-4", "4-10"], ["1-10", "W", "9-4", "9-4", "10-5", "9-1", "N (10-8)"], ["R", "W", "8-4", "8-4", "9-6", "1-10", "1-11"] ] },
+      group4: { name: "4組", totalRows: 5, data: [ ["8-1", "9-4", "9-5", "8-4", "W", "4-11", "1-10"], ["9-5", "9-5", "9-5", "2-10", "9-1", "W", "8-4"], ["9-4", "8-1", "W", "8-4", "9-5", "1-11", "5-11"], ["10-5", "9-1", "1-11", "5-11", "W", "9-6", "9-5"], ["8-4", "10-5", "9-6", "1-11", "4-10", "9-1", "W"] ] },
+      groupCell: { name: "Cell組", totalRows: 6, data: [ ["9-5", "9-5", "9-5", "8-5", "9-1", "W", "9-4"], ["9-1", "9-5", "9-5", "9-6", "9-4", "8-4", "W"], ["8-4", "8-4", "8-4", "9-1", "W", "8-4", "9-5"], ["9-6", "W", "9-6", "4-11", "4-11", "9-5", "9-1"], ["9-5", "9-5", "W", "9-5", "9-5", "9-5", "9-1"], ["1-11", "5-11", "5-11", "W", "9-6", "9-6", "9-1"] ] }
     };
     const ALL_SHIFT_OPTIONS = [ "AL", "9-1", "8-1", "8-4", "8-5", "9-4", "9-5", "9-6", "10-5", "1-9", "1-10", "1-11", "2-10", "2-11", "3-10", "3-11", "4-10", "4-11", "5-10", "5-11", "N (10-8)", "R", "W" ];
     
@@ -387,7 +391,7 @@
       const sel = document.getElementById("quickRowSelect");
       if(!sel) return;
       sel.innerHTML = "";
-      for (let r = 1; r <= ROSTERS[grp].totalRows; r++) sel.innerHTML += `<option value="${r}">第 ${r} 行</option>`;
+      for (let r = 1; r <= ROSTERS[grp].totalRows; r++) sel.innerHTML += `<option value="${r}">${r}行</option>`;
     };
 
     window.quickApplyToday = async () => {
@@ -410,13 +414,13 @@
       await saveUserTimeline();
       buildMonthScroller();
       renderUnifiedCalendar();
-      alert(`✅ 快速導入成功！\n以今日為基準，已採用 ${ROSTERS[group].name} 第 ${row} 行，並自動向後順推所有更期。`);
+      alert(`✅ 快速導入成功！\n已採用 ${ROSTERS[group].name} 第 ${row} 行，並自動向後順推所有更期。`);
     };
 
     window.onAnchorGroupChange = (grp) => {
       const sel = document.getElementById("anchorRowSelect");
       sel.innerHTML = "";
-      for (let r = 1; r <= ROSTERS[grp].totalRows; r++) sel.innerHTML += `<option value="${r}">第 ${r} 行</option>`;
+      for (let r = 1; r <= ROSTERS[grp].totalRows; r++) sel.innerHTML += `<option value="${r}">${r}行</option>`;
     };
 
     window.setManualAnchorAtDate = async () => {
@@ -550,7 +554,6 @@
         let rowTag = st.isCleared ? "未導入" : st.isVacation ? "大假" : st.isPending ? "待入位" : `第${st.rowNum}行`;
         let btnTxt = st.isVacation ? "取消" : "休";
 
-        // 已修正大假按鈕，無 event 攔截
         html += `<tr><td style="text-align:center;">
           <div class="week-tag">${rowTag}</div>
           <button class="week-btn" onclick="toggleVacationWeek(${w})">${btnTxt}</button>
@@ -693,7 +696,7 @@
 </head>
 <body>
 
-  <!-- 登入面板 -->
+  <!-- 登入面板 (還原為圖2經典樣式) -->
   <div class="auth-container" id="authPanel" style="display:none;">
     <input type="text" id="authUsername" placeholder="帳戶名稱 (例如: peter888)">
     <input type="password" id="authPassword" placeholder="密碼 (最少6位)">
@@ -750,40 +753,33 @@
     <!-- 月曆網格區 -->
     <div class="calendar-wrapper">
       
-      <!-- ★ 獨立兩組設定橫條 ★ -->
+      <!-- ★ 極致壓縮版設定橫條 ★ -->
       <div class="setup-bars-container">
         <!-- 1. 快速導入：今日 -->
         <div class="quick-setup-bar">
-          <b style="color: var(--gc-blue);">📍 快速導入 (以今日為起點)：</b>
-          <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
-            <span>今日係</span>
-            <select id="quickGroupSelect" class="setup-select" onchange="updateQuickRowSelect(this.value)">
-              <option value="group2">2組 (12行)</option>
-              <option value="group3" selected>3組 (14行)</option>
-              <option value="group4">4組 (5行)</option>
-              <option value="groupCell">Cell組 (6行)</option>
-            </select>
-            <select id="quickRowSelect" class="setup-select"></select>
-            <button onclick="quickApplyToday()" class="btn-quick-nav" style="background:var(--gc-blue);">🚀 一鍵推算所有更期</button>
-          </div>
+          <b style="color: var(--gc-blue); white-space: nowrap;">📍今日:</b>
+          <select id="quickGroupSelect" class="setup-select" onchange="updateQuickRowSelect(this.value)">
+            <option value="group2">2組</option>
+            <option value="group3" selected>3組</option>
+            <option value="group4">4組</option>
+            <option value="groupCell">Cell組</option>
+          </select>
+          <select id="quickRowSelect" class="setup-select"></select>
+          <button onclick="quickApplyToday()" class="btn-quick-nav" style="background:var(--gc-blue);">🚀 推算</button>
         </div>
 
         <!-- 2. 指定日期換組/插旗 -->
         <div class="anchor-setup-bar">
-          <b style="color: #8e44ad;">🚩 指定日期換組/插旗：</b>
-          <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
-            <span>由</span>
-            <input type="date" id="anchorDateInput" value="2026-10-05" class="setup-select">
-            <span>起轉為</span>
-            <select id="anchorGroupSelect" class="setup-select" onchange="onAnchorGroupChange(this.value)">
-              <option value="group2">2組 (12行)</option>
-              <option value="group3" selected>3組 (14行)</option>
-              <option value="group4">4組 (5行)</option>
-              <option value="groupCell">Cell組 (6行)</option>
-            </select>
-            <select id="anchorRowSelect" class="setup-select"></select>
-            <button onclick="setManualAnchorAtDate()" class="btn-quick-nav" style="background:#8e44ad;">套用並向後推算</button>
-          </div>
+          <b style="color: #8e44ad; white-space: nowrap;">🚩插旗:</b>
+          <input type="date" id="anchorDateInput" value="2026-10-05" class="setup-select">
+          <select id="anchorGroupSelect" class="setup-select" onchange="onAnchorGroupChange(this.value)">
+            <option value="group2">2組</option>
+            <option value="group3" selected>3組</option>
+            <option value="group4">4組</option>
+            <option value="groupCell">Cell組</option>
+          </select>
+          <select id="anchorRowSelect" class="setup-select"></select>
+          <button onclick="setManualAnchorAtDate()" class="btn-quick-nav" style="background:#8e44ad;">套用</button>
         </div>
       </div>
 
