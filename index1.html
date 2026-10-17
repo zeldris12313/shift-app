@@ -552,7 +552,7 @@
         const st = getWeekShiftState(w);
         
         let rowTag = st.isCleared ? "未導入" : st.isVacation ? "大假" : st.isPending ? "待入位" : `第${st.rowNum}行`;
-        let btnTxt = st.isVacation ? "取消" : "休";
+        let btnTxt = st.isVacation ? "取消" : "大假";
 
         html += `<tr><td style="text-align:center;">
           <div class="week-tag">${rowTag}</div>
