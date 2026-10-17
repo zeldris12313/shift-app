@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>主頁大月曆 - 一體化個人更期系統</title>
+  <style>
+    :root {
+      --primary-color: #2c3e50;
+      --accent-color: #e67e22;
+      --highlight: #27ae60;
+      --off-bg: #ffeaa7;
+      --night-bg: #dfe6e9;
+      --today-highlight: #fdcb6e;
+      --leave-bg: #fadbd8;
+      --leave-text: #c0392b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 0;
+      padding: 10px;
+      background-color: #f0f4f8; /* 更柔和的主頁底色 */
+      color: #333;
+      overflow-x: hidden;
+    }
+    /* 主頁容器加寬，模仿 Google Calendar */
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+      border-top: 6px solid #8e44ad;
+    }
+    
+    /* 登入面板保持置中 */
+    .auth-container {
+      max-width: 380px;
+      margin: 50px auto;
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+      border-top: 5px solid #8e44ad;
+      text-align: center;
+    }
+    .auth-container input { width: 100%; padding: 10px; margin: 6px 0; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; }
+    .btn-auth { background: #8e44ad; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.95rem; width: 100%; margin-top: 8px; }
+    .btn-google { background: #4285f4; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.95rem; width: 100%; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    
+    .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #eee; flex-wrap: wrap; gap: 8px; }
+    .btn-logout { background: #95a5a6; color: white; border: none; font-size: 0.85rem; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight:bold; }
+
+    /* 頂部導航按鈕 */
+    .nav-links { display:flex; justify-content:center; gap:8px; margin-bottom:15px; flex-wrap:wrap; }
+    .nav-links a { padding:8px 14px; border-radius:8px; font-size:0.9rem; font-weight:bold; text-decoration:none; box-shadow:0 2px 4px rgba(0,0,0,0.05); }
+    .nav-active { background:#8e44ad; color:white; border:2px solid #8e44ad; }
+    .nav-inactive { background:#f8f9fa; color:#555; border:2px solid #ddd; }
+
+    /* 放大版月曆專用樣式 (核心升級) */
+    .unified-calendar-box { border: none; padding: 0; margin-top: 5px; }
+    .month-card { border: 2px solid #8e44ad; border-radius: 12px; overflow: hidden; background: white; box-shadow: 0 4px 10px rgba(142,68,173,0.1); }
+    .month-header { background: #8e44ad; color: white; text-align: center; padding: 10px; font-weight: bold; font-size: 1.2rem; letter-spacing: 1px; }
+    .month-cal-table { width: 100%; table-layout: fixed; border-collapse: collapse; }
+    .month-cal-table th { background: #f8f9fa; padding: 8px 2px; font-size: 0.85rem; color: #555; border-bottom: 2px solid #8e44ad; }
+    
+    /* 格仔高度放大 */
+    .month-cal-table td {
+      padding: 4px;
+      height: 90px; /* 手機版基本高度 */
+      vertical-align: top;
+      border: 1px solid #e2e8f0;
+      word-break: break-all;
+      transition: background 0.2s;
+    }
+    .month-cal-table td:hover { background: #fbf7fd; }
+    
+    .cal-date-num { font-size: 0.85rem; font-weight: bold; color: #64748b; margin-bottom: 4px; }
+    .cal-shift-text {
+      font-size: 0.9rem;
+      font-weight: bold;
+      border-radius: 4px;
+      padding: 3px 2px;
+      line-height: 1.2;
+      display: inline-block;
+      width: 100%;
+      text-align: center;
+    }
+    .cal-shift-custom { border: 2px solid #2980b9 !important; }
+    .has-note-cell { border: 2.5px solid #3498db !important; background-color: #f0f8ff !important; }
+    
+    .note-badge { display: block; background: #2980b9; color: white; font-size: 0.65rem; padding: 2px 4px; border-radius: 3px; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: bold; }
+    .ph-hour-badge { display: inline-block; background: #8e44ad; color: white; font-size: 0.7rem; font-weight: bold; padding: 2px 4px; border-radius: 4px; margin-top: 3px; }
+    .ph-tag-holiday { display: block; background-color: #ff7675; color: white; font-size: 0.65rem; padding: 2px 4px; border-radius: 3px; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: bold; }
+
+    /* 電腦/平板特大畫面響應式 */
+    @media (min-width: 768px) {
+      .month-cal-table td { height: 130px; padding: 8px; }
+      .cal-date-num { font-size: 1.05rem; }
+      .cal-shift-text { font-size: 1.15rem; padding: 6px 2px; margin-bottom: 4px; }
+      .note-badge, .ph-hour-badge, .ph-tag-holiday { font-size: 0.8rem; padding: 3px 6px; }
+      .cal-week-tag-col { width: 60px !important; font-size: 0.8rem !important; }
+      .btn-set-leave-week { font-size: 0.75rem !important; padding: 4px !important; }
+    }
+
+    .cal-week-tag-col { background: #fbf7fd; font-size: 0.7rem; color: #8e44ad; padding: 2px; border-right: 2px solid #d7bde2; width: 48px; vertical-align: middle; text-align: center; }
+    .btn-set-leave-week { background: #e74c3c; color: white; border: none; padding: 3px; border-radius: 4px; font-size: 0.65rem; cursor: pointer; margin-top: 4px; display: block; width: 95%; margin-left: auto; margin-right: auto; line-height: 1.2; font-weight:bold; }
+    
+    .cell-today { background-color: var(--today-highlight) !important; border: 3px solid #e1701a !important; }
+    .shift-off { background-color: var(--off-bg); color: #d63031; }
+    .shift-night { background-color: var(--night-bg); }
+    .shift-leave { background-color: var(--leave-bg) !important; color: var(--leave-text) !important; font-weight: bold; }
+
+    .unified-controls { background: #fbf7fd; border: 1px solid #e8daf0; border-radius: 10px; padding: 12px; margin-bottom: 15px; display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 0.9rem; }
+    .unified-controls select, .unified-controls input { padding: 6px 8px; border-radius: 6px; border: 1px solid #ccc; font-size: 0.9rem; }
+    .btn-quick-nav { background: #6c3483; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; cursor: pointer; font-weight: bold; }
+
+    .cal-nav-bar { display: flex; align-items: center; justify-content: space-between; background: #f4ecf7; padding: 10px; border-radius: 10px; margin: 15px 0; flex-wrap: wrap; gap: 10px; }
+    .cal-nav-btn { background: #8e44ad; color: white; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.9rem; }
+    
+    .ph-summary-dashboard { background: #ebdef0; border-radius: 10px; padding: 15px; margin-top: 15px; display: flex; justify-content: space-around; align-items: center; gap: 15px; text-align: center; }
+    .ph-stat-val { font-size: 1.5rem; font-weight: bold; color: #6c3483; margin-top: 4px; }
+
+    /* Modal 樣式 (沿用) */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 9999; }
+    .modal-card { background: white; border-radius: 12px; width: 90%; max-width: 360px; padding: 20px; box-shadow: 0 5px 25px rgba(0,0,0,0.3); text-align: center; max-height: 90vh; overflow-y: auto; }
+    .modal-section { background: #fcf9fe; border: 1px solid #e8daf0; border-radius: 8px; padding: 12px; margin-bottom: 12px; text-align: left; }
+    .modal-section-title { font-size: 0.9rem; font-weight: bold; color: #8e44ad; margin-bottom: 8px; display: block; }
+    .select-block { width: 100%; padding: 8px; font-size: 0.95rem; font-weight: bold; border: 1.5px solid #8e44ad; border-radius: 6px; }
+    .modal-btns { display: flex; gap: 8px; justify-content: center; margin-top: 15px; }
+    .btn-save-modal { background: #8e44ad; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.9rem; flex: 1; }
+    .btn-reset-modal, .btn-cancel-modal { padding: 10px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight:bold; border:none; color:white; }
+    .btn-reset-modal { background: #e67e22; }
+    .btn-cancel-modal { background: #95a5a6; }
+  </style>
+
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, updatePassword, updateEmail, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBR6sSm99LLA7k7x6bzqMRsKHP7lBLNnnM",
+      authDomain: "three-mum.firebaseapp.com",
+      projectId: "three-mum",
+      storageBucket: "three-mum.firebasestorage.app",
+      messagingSenderId: "759414785710",
+      appId: "1:759414785710:web:6ae6f93040be6325898f3f",
+      measurementId: "G-QFKQMNB71B"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const googleProvider = new GoogleAuthProvider();
+
+    let currentUser = null;
+    let userPhUsage = {};
+    let userShiftOverrides = {};
+    let userDayNotes = {};
+    let clearedYears = new Set();
+    let timelineAnchors = [];
+    let vacationWeeks = new Set();
+
+    // ----------------- 香港官方公眾假期清單 (PH) -----------------
+    const HK_PUBLIC_HOLIDAYS = {
+      "2026-01-01": "元旦", "2026-02-17": "農曆年初一", "2026-02-18": "農曆年初二", "2026-02-19": "農曆年初三",
+      "2026-04-03": "耶穌受難節", "2026-04-04": "清明節", "2026-04-06": "復活節星期一", "2026-05-01": "勞動節",
+      "2026-05-25": "佛誕翌日", "2026-06-19": "端午節", "2026-07-01": "特區成立日", "2026-09-26": "中秋節翌日",
+      "2026-10-01": "國慶日", "2026-10-19": "重陽節", "2026-12-25": "聖誕節", "2026-12-26": "聖誕翌日",
+      "2027-01-01": "元旦", "2027-02-06": "農曆年初一", "2027-02-08": "農曆年初二", "2027-02-09": "農曆年初三",
+      "2027-03-26": "耶穌受難節", "2027-03-27": "受難節翌日", "2027-03-29": "復活節星期一", "2027-04-05": "清明節",
+      "2027-05-01": "勞動節", "2027-05-13": "佛誕", "2027-06-09": "端午節", "2027-07-01": "特區成立日",
+      "2027-09-16": "中秋節翌日", "2027-10-01": "國慶日", "2027-10-08": "重陽節", "2027-12-25": "聖誕節", "2027-12-27": "聖誕翌日"
+    };
+
+    const ROSTERS = {
+      group2: {
+        name: "2組 (12行)", totalRows: 12,
+        data: [
+          ["N (10-8)", "R", "W", "1-11", "1-9", "9-6", "9-4"], ["9-5", "N (10-8)", "R", "W", "1-11", "1-9", "9-5"],
+          ["9-5", "9-5", "1-9", "9-5", "9-5", "9-1", "W"], ["8-4", "9-5", "N (10-8)", "R", "W", "1-11", "1-9"],
+          ["9-6", "8-4", "9-4", "N (10-8)", "R", "W", "1-11"], ["1-9", "9-6", "8-4", "9-5", "4-11", "W", "9-1"],
+          ["3-11", "9-5", "9-6", "9-6", "N (10-8)", "R", "W"], ["8-4", "8-4", "8-4", "8-4", "8-4", "9-1", "W"],
+          ["1-11", "1-9", "W", "8-5", "9-4", "N (10-8)", "R"], ["W", "1-11", "5-10", "9-1", "8-4", "9-4", "N (10-8)"],
+          ["R", "W", "1-11", "1-9", "9-6", "8-5", "8-4"], ["W", "1-11", "1-9", "9-4", "9-1", "8-5", "8-4"]
+        ]
+      },
+      group3: {
+        name: "3組 (14行)", totalRows: 14,
+        data: [
+          ["N (10-8)", "R", "W", "9-5", "9-5", "1-11", "2-10"], ["W", "9-6", "8-5", "9-5", "1-10", "1-10", "W"],
+          ["9-6", "2-10", "1-11", "N (10-8)", "R", "W", "9-4"], ["9-4", "9-5", "8-4", "9-1", "8-5", "9-5", "W"],
+          ["1-10", "N (10-8)", "R", "W", "8-4", "8-5", "9-5"], ["9-5", "3-11", "3-11", "W", "8-4", "9-5", "9-1"],
+          ["4-11", "1-11", "N (10-8)", "R", "W", "9-6", "9-5"], ["9-6", "8-1", "9-4", "3-11", "1-11", "W", "8-1"],
+          ["8-4", "9-6", "10-5", "1-11", "N (10-8)", "R", "W"], ["2-11", "3-10", "9-1", "9-6", "8-4", "9-4", "W"],
+          ["9-5", "9-4", "9-6", "W", "1-11", "N (10-8)", "R"], ["W", "8-4", "9-4", "9-5", "9-4", "8-4", "4-10"],
+          ["1-10", "W", "9-4", "9-4", "10-5", "9-1", "N (10-8)"], ["R", "W", "8-4", "8-4", "9-6", "1-10", "1-11"]
+        ]
+      },
+      group4: {
+        name: "4組 (5行)", totalRows: 5,
+        data: [
+          ["8-1", "9-4", "9-5", "8-4", "W", "4-11", "1-10"], ["9-5", "9-5", "9-5", "2-10", "9-1", "W", "8-4"],
+          ["9-4", "8-1", "W", "8-4", "9-5", "1-11", "5-11"], ["10-5", "9-1", "1-11", "5-11", "W", "9-6", "9-5"],
+          ["8-4", "10-5", "9-6", "1-11", "4-10", "9-1", "W"]
+        ]
+      },
+      groupCell: {
+        name: "Cell組 (6行)", totalRows: 6,
+        data: [
+          ["9-5", "9-5", "9-5", "8-5", "9-1", "W", "9-4"], ["9-1", "9-5", "9-5", "9-6", "9-4", "8-4", "W"],
+          ["8-4", "8-4", "8-4", "9-1", "W", "8-4", "9-5"], ["9-6", "W", "9-6", "4-11", "4-11", "9-5", "9-1"],
+          ["9-5", "9-5", "W", "9-5", "9-5", "9-5", "9-1"], ["1-11", "5-11", "5-11", "W", "9-6", "9-6", "9-1"]
+        ]
+      }
+    };
+
+    const ALL_SHIFT_OPTIONS = [ "AL", "9-1", "8-1", "8-4", "8-5", "9-4", "9-5", "9-6", "10-5", "1-9", "1-10", "1-11", "2-10", "2-11", "3-10", "3-11", "4-10", "4-11", "5-10", "5-11", "N (10-8)", "R", "W" ];
+    const ANCHOR_DATE = new Date(2026, 0, 5);
+
+    function getAbsoluteWeekIndex(dateObj) {
+      const d = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
+      const day = d.getDay();
+      const diffToMon = day === 0 ? -6 : 1 - day;
+      const monday = new Date(d);
+      monday.setDate(d.getDate() + diffToMon);
+      return Math.round((monday.getTime() - ANCHOR_DATE.getTime()) / (7 * 24 * 60 * 60 * 1000));
+    }
+
+    function getWeekInfoFromAbsIndex(absIndex) {
+      const monday = new Date(ANCHOR_DATE);
+      monday.setDate(ANCHOR_DATE.getDate() + absIndex * 7);
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+      const thurs = new Date(monday);
+      thurs.setDate(monday.getDate() + 3);
+      const year = thurs.getFullYear();
+      const jan4 = new Date(year, 0, 4);
+      const jan4Abs = getAbsoluteWeekIndex(jan4);
+      const weekNum = absIndex - jan4Abs + 1;
+      return { year, weekNum, absIndex, monday, sunday, monStr: `${monday.getFullYear()}-${String(monday.getMonth()+1).padStart(2,'0')}-${String(monday.getDate()).padStart(2,'0')}` };
+    }
+
+    const todayObj = new Date();
+    const todayAbsWeek = getAbsoluteWeekIndex(todayObj);
+
+    let viewCalYear = todayObj.getFullYear();
+    let viewCalMonth = todayObj.getMonth() + 1;
+    let selectedSummaryYear = todayObj.getFullYear();
+    let activeModalDateKey = null;
+    let activeModalDefaultShift = "";
+
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        currentUser = user;
+        document.getElementById("userLabel").innerText = user.email ? user.email.replace("@shift.local", "") : "使用者";
+        document.getElementById("authPanel").style.display = "none";
+        document.getElementById("appPanel").style.display = "block";
+        await loadUserData();
+        initDynamicYears();
+        initOverrideShiftSelect();
+        renderUnifiedCalendar();
+      } else {
+        currentUser = null;
+        document.getElementById("authPanel").style.display = "block";
+        document.getElementById("appPanel").style.display = "none";
+      }
+    });
+
+    // ------------- 登入邏輯 -------------
+    let authMode = "login";
+    const toVirtualEmail = (uname) => `${uname.toLowerCase().replace(/[^a-z0-9_]/g, '')}@shift.local`;
+
+    window.toggleAuthMode = () => {
+      authMode = (authMode === "register") ? "login" : "register";
+      document.getElementById("staffIdField").style.display = (authMode === "register") ? "block" : "none";
+      document.getElementById("authTitle").innerText = (authMode === "register") ? "📝 註冊帳戶名" : "🔒 登入系統";
+      document.getElementById("submitAuthBtn").innerText = (authMode === "register") ? "立即註冊" : "登入";
+      document.getElementById("toggleBtn").innerText = (authMode === "register") ? "已有帳號？登入" : "未有帳號？註冊";
+      document.getElementById("forgotBtn").style.display = (authMode === "register") ? "none" : "inline";
+    };
+
+    window.toggleForgotMode = () => {
+      authMode = (authMode === "forgot") ? "login" : "forgot";
+      document.getElementById("staffIdField").style.display = (authMode === "forgot") ? "block" : "none";
+      document.getElementById("authTitle").innerText = (authMode === "forgot") ? "🔑 密碼重設" : "🔒 登入系統";
+      document.getElementById("submitAuthBtn").innerText = (authMode === "forgot") ? "重設密碼並登入" : "登入";
+      document.getElementById("toggleBtn").style.display = (authMode === "forgot") ? "none" : "inline";
+    };
+
+    window.submitUserAuth = async () => {
+      const username = document.getElementById("authUsername").value.trim();
+      const pass = document.getElementById("authPassword").value;
+      const staffId = document.getElementById("authStaffId").value.trim().toUpperCase();
+      const msgBox = document.getElementById("authMsg");
+      msgBox.innerText = "";
+
+      if (!username || !pass) { msgBox.innerText = "請填寫所有欄位！"; return; }
+      const vEmail = toVirtualEmail(username);
+
+      try {
+        if (authMode === "register") {
+          if (!staffId) { msgBox.innerText = "請輸入員工編號！"; return; }
+          const staffRef = doc(db, "registered_staff_ids", staffId);
+          if ((await getDoc(staffRef)).exists()) { msgBox.innerText = "❌ 員工編號已被註冊！"; return; }
+          const cred = await createUserWithEmailAndPassword(auth, vEmail, pass);
+          await setDoc(staffRef, { username, uid: cred.user.uid });
+          await setDoc(doc(db, "public_user_map", username.toLowerCase()), { uid: cred.user.uid, staffId });
+          await setDoc(doc(db, "user_security", cred.user.uid), { username, staffId });
+          alert("🎉 註冊成功！");
+        } else if (authMode === "forgot") {
+          const staffRef = doc(db, "registered_staff_ids", staffId);
+          const snap = await getDoc(staffRef);
+          if (!snap.exists()) { msgBox.innerText = "❌ 查無此員工編號！"; return; }
+          const oldUid = snap.data().uid;
+          const cred = await createUserWithEmailAndPassword(auth, vEmail, pass);
+          const newUid = cred.user.uid;
+          const cols = ["user_ph_usage", "user_shift_overrides", "user_day_notes", "user_timeline"];
+          for (const c of cols) {
+            const d = await getDoc(doc(db, c, oldUid));
+            if (d.exists()) await setDoc(doc(db, c, newUid), d.data());
+          }
+          await setDoc(staffRef, { username, uid: newUid });
+          await setDoc(doc(db, "public_user_map", username.toLowerCase()), { uid: newUid, staffId });
+          alert("🎉 帳號重設成功！所有更期已轉移。");
+        } else {
+          await signInWithEmailAndPassword(auth, vEmail, pass);
+        }
+      } catch (e) { msgBox.innerText = "失敗: " + e.message; }
+    };
+    
+    window.loginWithGoogle = async () => signInWithPopup(auth, googleProvider).catch(e => alert(e.message));
+    window.userLogout = () => signOut(auth);
+
+    // ------------- Firebase 資料讀寫 -------------
+    async function loadUserData() {
+      if (!currentUser) return;
+      const uid = currentUser.uid;
+      const getD = async (col) => (await getDoc(doc(db, col, uid))).data() || {};
+      userPhUsage = (await getD("user_ph_usage")).usage || {};
+      userShiftOverrides = (await getD("user_shift_overrides")).overrides || {};
+      userDayNotes = (await getD("user_day_notes")).notes || {};
+      
+      const tl = await getD("user_timeline");
+      timelineAnchors = tl.anchors || [{ absWeek: todayAbsWeek, group: 'group3', startRow: 14 }];
+      vacationWeeks = new Set(tl.vacations || []);
+      clearedYears = new Set(tl.clearedYears || []);
+    }
+
+    async function saveUserTimeline() {
+      if (!currentUser) return;
+      await setDoc(doc(db, "user_timeline", currentUser.uid), {
+        anchors: timelineAnchors,
+        vacations: Array.from(vacationWeeks),
+        clearedYears: Array.from(clearedYears)
+      });
+    }
+
+    // ------------- 月曆推算核心 -------------
+    function getWeekShiftState(absWeek) {
+      const wInfo = getWeekInfoFromAbsIndex(absWeek);
+
+      if (vacationWeeks.has(absWeek)) return { isVacation: true, shifts: ["大假","大假","大假","大假","大假","大假","大假"] };
+      if (clearedYears.has(wInfo.year)) return { isCleared: true, shifts: ["","","","","","",""] };
+      
+      if (!timelineAnchors.some(a => a.manual)) return { isCleared: true, shifts: ["","","","","","",""] };
+      const baseAnchor = timelineAnchors.find(a => a.manual) || timelineAnchors[0];
+
+      const pastVacs = Array.from(vacationWeeks).filter(v => v < absWeek).sort((a,b)=>b-a);
+      if (pastVacs.length > 0) {
+        if (!timelineAnchors.find(a => a.absWeek > pastVacs[0] && a.absWeek <= absWeek && a.manual)) {
+          return { isPending: true, shifts: ["待入位","待入位","待入位","待入位","待入位","待入位","待入位"] };
+        }
+      }
+
+      const active = timelineAnchors.filter(a => a.absWeek <= absWeek).sort((a,b)=>b.absWeek-a.absWeek)[0] || baseAnchor;
+      const rost = ROSTERS[active.group];
+      let r = ((active.startRow - 1 + (absWeek - active.absWeek)) % rost.totalRows) + 1;
+      if (r <= 0) r += rost.totalRows;
+      return { isVacation: false, group: active.group, rowNum: r, shifts: rost.data[r - 1] };
+    }
+
+    // ------------- 手動插旗 & 大假操作 -------------
+    window.setManualAnchorAtDate = async () => {
+      const dStr = document.getElementById("anchorDateInput").value;
+      if (!dStr) return;
+      const d = new Date(dStr);
+      const absWeek = getAbsoluteWeekIndex(d);
+      const group = document.getElementById("anchorGroupSelect").value;
+      const row = parseInt(document.getElementById("anchorRowSelect").value);
+
+      clearedYears.delete(d.getFullYear());
+      timelineAnchors = timelineAnchors.filter(a => a.absWeek < absWeek);
+      timelineAnchors.push({ absWeek, group, startRow: row, manual: true });
+      timelineAnchors.sort((a,b) => a.absWeek - b.absWeek);
+
+      await saveUserTimeline();
+      renderUnifiedCalendar();
+      alert(`✅ 由 ${dStr} 起採用 ${ROSTERS[group].name} 第 ${row} 行，後續舊旗已清除！`);
+    };
+
+    window.toggleVacationWeek = async (absWeek) => {
+      if (vacationWeeks.has(absWeek)) {
+        vacationWeeks.delete(absWeek);
+      } else {
+        vacationWeeks.add(absWeek);
+        timelineAnchors = timelineAnchors.filter(a => a.absWeek < absWeek);
+      }
+      await saveUserTimeline();
+      renderUnifiedCalendar();
+    };
+
+    window.onAnchorGroupChange = (grp) => {
+      const sel = document.getElementById("anchorRowSelect");
+      sel.innerHTML = "";
+      for (let r = 1; r <= ROSTERS[grp].totalRows; r++) sel.innerHTML += `<option value="${r}">第 ${r} 行</option>`;
+    };
+
+    // ------------- 月曆渲染與導航 -------------
+    window.navUnifiedMonth = (d) => { viewCalMonth += d; if(viewCalMonth>12){viewCalMonth=1;viewCalYear++;} if(viewCalMonth<1){viewCalMonth=12;viewCalYear--;} renderUnifiedCalendar(); };
+    window.jumpUnifiedToToday = () => { viewCalYear=todayObj.getFullYear(); viewCalMonth=todayObj.getMonth()+1; renderUnifiedCalendar(); };
+    
+    function initDynamicYears() {
+      const sel = document.getElementById("viewCalYearSelect");
+      if(!sel) return;
+      sel.innerHTML = "";
+      for (let y = todayObj.getFullYear()-2; y <= todayObj.getFullYear()+6; y++) {
+        sel.innerHTML += `<option value="${y}" ${y === viewCalYear ? 'selected':''}>${y}年</option>`;
+      }
+      renderPhYearChips();
+    }
+    window.onViewCalYearChange = (v) => { viewCalYear = parseInt(v); renderUnifiedCalendar(); };
+    window.onViewCalMonthChange = (v) => { viewCalMonth = parseInt(v); renderUnifiedCalendar(); };
+
+    function renderUnifiedCalendar() {
+      document.getElementById("viewCalYearSelect").value = viewCalYear;
+      document.getElementById("viewCalMonthSelect").value = viewCalMonth;
+      document.getElementById("unifiedNavTitle").innerText = `${viewCalYear} 年 ${viewCalMonth} 月`;
+
+      const firstAbs = getAbsoluteWeekIndex(new Date(viewCalYear, viewCalMonth - 1, 1));
+      const lastAbs = getAbsoluteWeekIndex(new Date(viewCalYear, viewCalMonth, 0));
+
+      let html = `<div class="month-card"><div class="month-header">📅 ${viewCalYear} 年 ${viewCalMonth} 月大月曆</div><table class="month-cal-table"><thead><tr><th style="width:55px;">週/操作</th><th>MON</th><th>TUE</th><th>WED</th><th>THU</th><th>FRI</th><th>SAT</th><th>SUN</th></tr></thead><tbody>`;
+
+      for (let w = firstAbs; w <= lastAbs; w++) {
+        const wInfo = getWeekInfoFromAbsIndex(w);
+        const st = getWeekShiftState(w);
+        
+        let rowTag = st.isCleared ? `<span style="color:#94a3b8;">未導入</span>` : st.isVacation ? `<b style="color:#c0392b;">大假</b>` : st.isPending ? `<span style="color:#7f8c8d;">待入位</span>` : `<b style="color:#8e44ad;">第${st.rowNum}行</b>`;
+        let btnTxt = (st.isVacation || st.isCleared) ? "大假" : "大假";
+        if(st.isVacation) btnTxt = "↺取消";
+
+        html += `<tr><td class="cal-week-tag-col">W${wInfo.weekNum}<br>${rowTag}<button class="btn-set-leave-week" onclick="toggleVacationWeek(${w})">${btnTxt}</button></td>`;
+
+        for (let d = 0; d < 7; d++) {
+          const cur = new Date(wInfo.monday); cur.setDate(cur.getDate() + d);
+          if (cur.getMonth() + 1 === viewCalMonth) {
+            const dk = `${cur.getFullYear()}-${String(cur.getMonth()+1).padStart(2,'0')}-${String(cur.getDate()).padStart(2,'0')}`;
+            const fShift = userShiftOverrides[dk] || (st.shifts ? st.shifts[d] : "");
+            
+            let cls = "";
+            if (fShift === 'W' || fShift === 'R') cls = 'shift-off';
+            else if (fShift.startsWith('N')) cls = 'shift-night';
+            else if (fShift === '大假' || fShift === 'AL') cls = 'shift-leave';
+
+            const nText = userDayNotes[dk] || "";
+            const hDay = HK_PUBLIC_HOLIDAYS[dk];
+            const phH = userPhUsage[dk] || 0;
+            
+            let sHtml = fShift ? `<div class="cal-shift-text ${cls} ${userShiftOverrides[dk]?'cal-shift-custom':''}">${fShift}</div>` : '';
+            html += `
+              <td class="${nText?'has-note-cell':''}" style="${cur.toDateString()===todayObj.toDateString()?'border:3px solid #e67e22 !important;':''} cursor:pointer;" onclick="openCombinedModal('${dk}', '${st.shifts?st.shifts[d]:''}')">
+                <div class="cal-date-num">${cur.getDate()}</div>
+                ${hDay ? `<span class="ph-tag-holiday">${hDay}</span>`:''}
+                ${sHtml}
+                ${userShiftOverrides[dk] ? `<span style="font-size:0.7rem;color:#2980b9;display:block;text-align:center;">(手動調)</span>`:''}
+                ${phH > 0 ? `<div class="ph-hour-badge">PH:${phH}h</div>`:''}
+                ${nText ? `<span class="note-badge">${nText}</span>`:''}
+              </td>`;
+          } else {
+            html += `<td style="background:#fafafa;"><div class="cal-date-num" style="color:#ddd;">${cur.getDate()}</div></td>`;
+          }
+        }
+        html += `</tr>`;
+      }
+      html += `</tbody></table></div>`;
+      document.getElementById("unifiedCalendarGrid").innerHTML = html;
+      updatePhStatistics();
+    }
+
+    // ------------- PH 統計與 Modal -------------
+    window.resetYearShiftsAndPh = async () => {
+      if (!confirm(`⚠️ 確定重置清空 ${viewCalYear} 年所有更期？`)) return;
+      const clrPh = confirm(`❓ 是否連同 ${viewCalYear} 年 PH 扣減紀錄一併清空？`);
+      clearedYears.add(viewCalYear);
+      for (const k of Object.keys(userShiftOverrides)) if(k.startsWith(`${viewCalYear}-`)) delete userShiftOverrides[k];
+      for (const w of Array.from(vacationWeeks)) if(getWeekInfoFromAbsIndex(w).year === viewCalYear) vacationWeeks.delete(w);
+      timelineAnchors = timelineAnchors.filter(a => getWeekInfoFromAbsIndex(a.absWeek).year !== viewCalYear);
+      if (clrPh) for (const k of Object.keys(userPhUsage)) if(k.startsWith(`${viewCalYear}-`)) delete userPhUsage[k];
+      
+      await saveUserTimeline();
+      await setDoc(doc(db,"user_shift_overrides",currentUser.uid),{overrides:userShiftOverrides});
+      if(clrPh) await setDoc(doc(db,"user_ph_usage",currentUser.uid),{usage:userPhUsage});
+      renderUnifiedCalendar();
+      alert("🎉 重置成功！");
+    };
+
+    function renderPhYearChips() {
+      const setY = new Set([todayObj.getFullYear()]);
+      for (const k of Object.keys(userPhUsage)) setY.add(parseInt(k.split('-')[0]));
+      let html = "";
+      Array.from(setY).sort((a,b)=>b-a).forEach(y => {
+        html += `<button class="btn-year-chip ${y===selectedSummaryYear?'active':''}" onclick="selectSummaryYear(${y})">${y} 年</button>`;
+      });
+      document.getElementById("phYearChipsContainer").innerHTML = html;
+    }
+    window.selectSummaryYear = (y) => { selectedSummaryYear = y; renderPhYearChips(); updatePhStatistics(); };
+
+    function updatePhStatistics() {
+      let tH = 0;
+      for (const [k, v] of Object.entries(userPhUsage)) if(k.startsWith(`${selectedSummaryYear}-`)) tH += v;
+      document.getElementById("summaryYearTitle").innerText = `${selectedSummaryYear} 年`;
+      document.getElementById("phStatTotalHours").innerText = `${tH} 小時`;
+      document.getElementById("phStatTotalDays").innerText = `${(tH/8).toFixed(2)} 日`;
+    }
+
+    function initOverrideShiftSelect() {
+      const s = document.getElementById("modalShiftSelect");
+      s.innerHTML = `<option value="">-- 維持預設 --</option>`;
+      ALL_SHIFT_OPTIONS.forEach(opt => s.innerHTML += `<option value="${opt}">${opt}</option>`);
+    }
+
+    window.openCombinedModal = (dk, def) => {
+      activeModalDateKey = dk;
+      document.getElementById("modalDateTitle").innerText = `📅 ${dk}`;
+      document.getElementById("modalDutyInfo").innerText = `預設：${def||'無'}`;
+      document.getElementById("phHourSelect").value = userPhUsage[dk] || 0;
+      document.getElementById("modalShiftSelect").value = userShiftOverrides[dk] || "";
+      document.getElementById("modalNoteInput").value = userDayNotes[dk] || "";
+      document.getElementById("combinedModal").style.display = "flex";
+    };
+    window.closeCombinedModal = () => document.getElementById("combinedModal").style.display="none";
+
+    window.saveCombinedData = async () => {
+      const dk = activeModalDateKey;
+      const p = parseInt(document.getElementById("phHourSelect").value);
+      const s = document.getElementById("modalShiftSelect").value;
+      const n = document.getElementById("modalNoteInput").value.trim();
+      
+      if(p>0) userPhUsage[dk]=p; else delete userPhUsage[dk];
+      if(s) userShiftOverrides[dk]=s; else delete userShiftOverrides[dk];
+      if(n) userDayNotes[dk]=n; else delete userDayNotes[dk];
+      
+      await setDoc(doc(db,"user_ph_usage",currentUser.uid),{usage:userPhUsage});
+      await setDoc(doc(db,"user_shift_overrides",currentUser.uid),{overrides:userShiftOverrides});
+      await setDoc(doc(db,"user_day_notes",currentUser.uid),{notes:userDayNotes});
+      closeCombinedModal();
+      renderPhYearChips();
+      renderUnifiedCalendar();
+    };
+
+    window.resetCombinedDate = async () => {
+      const dk = activeModalDateKey;
+      delete userPhUsage[dk]; delete userShiftOverrides[dk]; delete userDayNotes[dk];
+      await setDoc(doc(db,"user_ph_usage",currentUser.uid),{usage:userPhUsage});
+      await setDoc(doc(db,"user_shift_overrides",currentUser.uid),{overrides:userShiftOverrides});
+      await setDoc(doc(db,"user_day_notes",currentUser.uid),{notes:userDayNotes});
+      closeCombinedModal();
+      renderPhYearChips();
+      renderUnifiedCalendar();
+    };
+    
+    // 帳戶修改
+    window.openChangeAccountModal = () => { document.getElementById("accountModal").style.display="flex"; };
+    window.closeAccountModal = () => document.getElementById("accountModal").style.display="none";
+  </script>
+</head>
+<body>
+
+  <!-- 登入面板 -->
+  <div class="auth-container" id="authPanel" style="display:none;">
+    <input type="text" id="authUsername" placeholder="帳戶名稱">
+    <input type="password" id="authPassword" placeholder="密碼">
+    <div id="staffIdField" style="display:none;"><input type="text" id="authStaffId" placeholder="員工編號"></div>
+    <button class="btn-auth" id="submitAuthBtn" onclick="submitUserAuth()">登入</button>
+    <div style="display:flex; justify-content:space-between; margin-top:10px;">
+      <span class="auth-toggle" id="forgotBtn" onclick="toggleForgotMode()">忘記密碼？</span>
+      <span class="auth-toggle" id="toggleBtn" onclick="toggleAuthMode()">註冊</span>
+    </div>
+    <div id="authMsg" style="color:red; margin-top:10px;"></div>
+  </div>
+
+  <!-- 主介面 -->
+  <div class="container" id="appPanel" style="display:none;">
+    <div class="top-bar">
+      <div>👤 用戶：<b id="userLabel" style="color:var(--highlight);"></b></div>
+      <div style="display:flex; gap:6px;">
+        <button class="btn-logout" style="background:#3498db;" onclick="openChangeAccountModal()">🔑 修改帳號/密碼</button>
+        <button class="btn-logout" onclick="userLogout()">登出</button>
+      </div>
+    </div>
+
+    <!-- 頂部頁面導航 -->
+    <div class="nav-links">
+      <a href="index.html" class="nav-active">🏠 主頁大月曆</a>
+      <a href="calc.html" class="nav-inactive">👥 多人推算與設定</a>
+      <a href="dinner.html" class="nav-inactive">🍽️ 撞假/約食飯</a>
+      <a href="swap.html" class="nav-inactive">🔄 模擬調更表</a>
+    </div>
+
+    <!-- 月曆區塊 -->
+    <div class="unified-calendar-box" id="unifiedCalAnchor">
+      
+      <!-- 插旗設定列 -->
+      <div class="unified-controls">
+        <b>🚩 換組插旗：</b>由 <input type="date" id="anchorDateInput" value="2026-10-05"> 起轉為：
+        <select id="anchorGroupSelect" onchange="onAnchorGroupChange(this.value)">
+          <option value="group2">2組(12行)</option><option value="group3" selected>3組(14行)</option>
+          <option value="group4">4組(5行)</option><option value="groupCell">Cell組(6行)</option>
+        </select>
+        <select id="anchorRowSelect">
+          <option value="1">第 1 行</option><option value="2">第 2 行</option><option value="3">第 3 行</option>
+          <option value="4">第 4 行</option><option value="5">第 5 行</option><option value="6">第 6 行</option>
+          <option value="7">第 7 行</option><option value="8">第 8 行</option><option value="9">第 9 行</option>
+          <option value="10">第 10 行</option><option value="11">第 11 行</option><option value="12">第 12 行</option>
+          <option value="13">第 13 行</option><option value="14" selected>第 14 行</option>
+        </select>
+        <button class="btn-quick-nav" onclick="setManualAnchorAtDate()">套用並順推</button>
+      </div>
+
+      <!-- 月曆導航 -->
+      <div class="cal-nav-bar">
+        <div><button class="cal-nav-btn" onclick="navUnifiedMonth(-1)">◀ 上月</button></div>
+        <div style="font-weight:bold; color:#8e44ad; font-size:1.1rem;">
+          <span id="unifiedNavTitle">2026 年 10 月</span>
+          <select id="viewCalYearSelect" onchange="onViewCalYearChange(this.value)" style="padding:4px;"></select>
+          <select id="viewCalMonthSelect" onchange="onViewCalMonthChange(this.value)" style="padding:4px;">
+            <option value="1">1月</option><option value="2">2月</option><option value="3">3月</option><option value="4">4月</option>
+            <option value="5">5月</option><option value="6">6月</option><option value="7">7月</option><option value="8">8月</option>
+            <option value="9">9月</option><option value="10" selected>10月</option><option value="11">11月</option><option value="12">12月</option>
+          </select>
+          <button class="btn-quick-nav" style="background:#e67e22; margin-left:10px;" onclick="jumpUnifiedToToday()">🎯 返回今日</button>
+        </div>
+        <div><button class="cal-nav-btn" onclick="navUnifiedMonth(1)">下月 ▶</button></div>
+      </div>
+
+      <!-- 月曆本體 -->
+      <div class="single-month-container" id="unifiedCalendarGrid"></div>
+
+      <!-- 右下角重置按鈕 -->
+      <div style="display:flex; justify-content:flex-end; margin-top:10px;">
+        <button onclick="resetYearShiftsAndPh()" style="background:#e74c3c; color:white; border:none; padding:8px 14px; border-radius:6px; cursor:pointer; font-weight:bold;">🔄 重置今年所有更期</button>
+      </div>
+
+      <!-- PH 統計區 -->
+      <div class="ph-summary-dashboard">
+        <div style="flex:1;">
+          <div style="font-weight:bold; color:#6c3483; margin-bottom:8px;">📊 PH 統計年份：</div>
+          <div class="ph-year-chips-bar" id="phYearChipsContainer" style="justify-content:center;"></div>
+        </div>
+        <div style="flex:1;">
+          <div style="font-size:0.85rem; color:#555;">已用總時數</div>
+          <div class="ph-stat-val" id="phStatTotalHours">0 小時</div>
+        </div>
+        <div style="flex:1;">
+          <div style="font-size:0.85rem; color:#555;">折合日數 (8h=1日)</div>
+          <div class="ph-stat-val" style="color:#c0392b;" id="phStatTotalDays">0.00 日</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 調更與 PH Modal -->
+  <div id="combinedModal" class="modal-overlay">
+    <div class="modal-card">
+      <div id="modalHolidayBanner" style="display:none; background:#fed7d7; color:#c53030; padding:8px; border-radius:6px; font-weight:bold; margin-bottom:10px;"></div>
+      <h3 style="margin-top:0; color:#8e44ad;" id="modalDateTitle">設定該日紀錄</h3>
+      <div id="modalDutyInfo" style="background:#edf2f7; padding:8px; margin-bottom:12px; border-radius:6px; font-weight:bold; color:#2d3748;"></div>
+
+      <div class="modal-section">
+        <span class="modal-section-title">🏖️ 扣減 PH 時數：</span>
+        <select class="select-block" id="phHourSelect">
+          <option value="0">0 小時</option><option value="1">1 小時</option><option value="2">2 小時</option>
+          <option value="3">3 小時</option><option value="4">4 小時</option><option value="5">5 小時</option>
+          <option value="6">6 小時</option><option value="7">7 小時</option><option value="8">8 小時</option>
+        </select>
+      </div>
+
+      <div class="modal-section">
+        <span class="modal-section-title">🔄 手動調更 / 單日大假：</span>
+        <select class="select-block" id="modalShiftSelect"></select>
+        <button style="background:#e74c3c; color:white; border:none; padding:6px 12px; border-radius:4px; font-weight:bold; cursor:pointer; margin-top:8px; width:100%;" onclick="document.getElementById('modalShiftSelect').value='AL'">🏖️ 設為單日 AL</button>
+      </div>
+
+      <div class="modal-section">
+        <span class="modal-section-title">📝 備註：</span>
+        <input type="text" id="modalNoteInput" placeholder="輸入個人備註..." style="width:100%; padding:8px; border-radius:6px; border:1px solid #3498db;">
+      </div>
+
+      <div class="modal-btns">
+        <button class="btn-save-modal" onclick="saveCombinedData()">儲存設定</button>
+        <button class="btn-reset-modal" onclick="resetCombinedDate()">清除還原</button>
+        <button class="btn-cancel-modal" onclick="closeCombinedModal()">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 修改帳號 Modal -->
+  <div id="accountModal" class="modal-overlay">
+    <div class="modal-card">
+      <h3 style="margin-top:0; color:#2c3e50;">🔑 修改帳號與密碼</h3>
+      <div style="text-align:left; margin-bottom:10px;">
+        <label style="font-size:0.85rem; font-weight:bold;">帳戶名稱：</label>
+        <input type="text" id="editUsernameInput" style="width:100%; padding:8px; border-radius:6px; border:1px solid #ccc; margin-top:4px;">
+      </div>
+      <div style="text-align:left; margin-bottom:12px;">
+        <label style="font-size:0.85rem; font-weight:bold;">新密碼 (不改請留空)：</label>
+        <input type="password" id="editPasswordInput" style="width:100%; padding:8px; border-radius:6px; border:1px solid #ccc; margin-top:4px;">
+      </div>
+      <div id="editAccountMsg" style="color:#e74c3c; font-size:0.85rem; font-weight:bold; margin-bottom:10px;"></div>
+      <div class="modal-btns">
+        <button class="btn-save-modal" style="background:#3498db;" onclick="submitAccountUpdate()">確認修改</button>
+        <button class="btn-cancel-modal" onclick="closeAccountModal()">取消</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
