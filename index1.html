@@ -23,34 +23,35 @@
     * { box-sizing: border-box; font-family: "Google Sans", Roboto, Arial, sans-serif; }
     body { margin: 0; padding: 0; background-color: var(--gc-bg); color: var(--gc-text); overflow-x: hidden; }
     
-    /* 頂部導航與工具列 */
-    .top-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 16px; border-bottom: 1px solid var(--gc-border); background: white; position: sticky; top: 0; z-index: 100; flex-wrap: wrap; gap: 10px; }
-    .top-left { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
-    .menu-icon { font-size: 1.5rem; cursor: pointer; color: #5f6368; }
-    .month-title { font-size: 1.35rem; color: var(--gc-text); margin: 0; display:flex; align-items:center; gap:8px; }
-    .month-title select { font-size: 1.2rem; border: none; background: transparent; color: var(--gc-text); font-family: inherit; font-weight: normal; cursor:pointer; outline:none; }
+    /* 頂部導航與工具列 - 垂直排版 */
+    .top-header { display: flex; flex-direction: column; padding: 10px 16px 12px 16px; border-bottom: 1px solid var(--gc-border); background: white; position: sticky; top: 0; z-index: 100; gap: 12px; }
+    .top-row { display: flex; justify-content: space-between; align-items: center; width: 100%; }
     
-    /* 10月旁邊的 3 個導航按鈕 */
-    .nav-links { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
-    .nav-links a { padding:6px 12px; border-radius:6px; font-size:0.85rem; font-weight:bold; text-decoration:none; border: 1px solid #ccc; background: #f8f9fa; color: #555; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: background 0.2s;}
-    .nav-links a:hover { background: #e2e6ea; }
-
+    /* 頂部日期選擇器 */
+    .month-title input[type="date"] { font-size: 1.35rem; font-weight: bold; color: var(--gc-text); border: none; outline: none; background: transparent; cursor: pointer; padding: 0; font-family: inherit; }
+    
     .top-right { display: flex; align-items: center; gap: 12px; }
-    .btn-today { border: 1px solid var(--gc-border); background: white; padding: 6px 16px; border-radius: 4px; font-size: 0.85rem; font-weight: bold; color: var(--gc-text); cursor: pointer; }
+    .btn-today { border: 1px solid var(--gc-border); background: white; padding: 6px 14px; border-radius: 4px; font-size: 0.85rem; font-weight: bold; color: var(--gc-text); cursor: pointer; }
     .btn-today:hover { background: var(--gc-hover); }
-    .profile-icon { width: 32px; height: 32px; border-radius: 50%; background: var(--gc-blue); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.9rem; border: 2px solid white; outline: 1px solid var(--gc-border); cursor:pointer; }
+    .profile-icon { width: 32px; height: 32px; border-radius: 50%; background: var(--gc-blue); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.9rem; border: 2px solid white; outline: 1px solid var(--gc-border); cursor: pointer; }
 
-    /* 月份快速選擇列 (水平捲動) */
-    .month-scroller { display: flex; overflow-x: auto; padding: 10px 16px; gap: 8px; border-bottom: 1px solid var(--gc-border); background: white; -webkit-overflow-scrolling: touch; }
+    /* 水平導航按鈕 (不換行，可滑動) */
+    .nav-links { display: flex; gap: 8px; overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; padding-bottom: 2px; width: 100%; align-items: center; }
+    .nav-links::-webkit-scrollbar { display: none; }
+    .nav-links a { padding: 6px 14px; border-radius: 16px; font-size: 0.85rem; font-weight: bold; text-decoration: none; border: 1px solid var(--gc-border); background: white; color: #5f6368; white-space: nowrap; flex-shrink: 0; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
+    .nav-links a:hover { background: var(--gc-hover); }
+
+    /* 月份快速選擇列 (動態無限) */
+    .month-scroller { display: flex; overflow-x: auto; padding: 10px 16px; gap: 8px; border-bottom: 1px solid var(--gc-border); background: white; -webkit-overflow-scrolling: touch; scroll-behavior: smooth; }
     .month-scroller::-webkit-scrollbar { display: none; }
     .month-chip { padding: 6px 16px; border-radius: 16px; font-size: 0.85rem; color: var(--gc-text); cursor: pointer; white-space: nowrap; border: 1px solid var(--gc-border); background: white; font-weight: 500; }
     .month-chip.active { background: #c2e7ff; color: #001d35; border-color: #c2e7ff; }
-    .month-chip.year-label { border: none; font-weight: bold; padding: 6px 4px; pointer-events: none; }
+    .month-chip.year-label { border: none; font-weight: bold; padding: 6px 4px; pointer-events: none; font-size: 0.9rem; }
 
     /* Google Calendar 網格 */
-    .calendar-wrapper { padding: 0 16px 40px 16px; max-width: 1600px; margin: 0 auto; }
+    .calendar-wrapper { padding: 0 16px 40px 16px; max-width: 1600px; margin: 0 auto; touch-action: pan-y; /* 確保垂直滑動正常，水平留給 JS */ }
     .cal-table { width: 100%; border-collapse: collapse; table-layout: fixed; margin-top: 10px; }
-    .cal-table th { font-size: 0.75rem; color: var(--gc-light-text); font-weight: 500; text-transform: uppercase; padding-bottom: 8px; border-bottom: 1px solid var(--gc-border); }
+    .cal-table th { font-size: 0.75rem; color: var(--gc-light-text); font-weight: 500; padding-bottom: 8px; border-bottom: 1px solid var(--gc-border); }
     .cal-table td { border: 1px solid var(--gc-border); vertical-align: top; height: 110px; padding: 4px; position: relative; cursor: pointer; transition: background 0.1s; }
     .cal-table td:hover { background: #fbfbfb; }
     .cal-table tr td:first-child { border-left: none; width: 45px; background: #fafafa; border-right: 2px solid var(--gc-border); } 
@@ -79,7 +80,7 @@
     .fab { position: fixed; bottom: 24px; right: 24px; width: 56px; height: 56px; border-radius: 50%; background: var(--gc-bg); border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24); display: flex; align-items: center; justify-content: center; font-size: 2rem; color: var(--gc-text); cursor: pointer; z-index: 1000; transition: box-shadow 0.2s; }
     .fab:hover { box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23); }
 
-    /* 紫色 PH 統計區專用樣式 */
+    /* PH 統計區 */
     .ph-year-chips-bar { display: flex; gap: 8px; overflow-x: auto; padding: 6px 0; -webkit-overflow-scrolling: touch; }
     .btn-year-chip { background: #ebdef0; color: #4a235a; border: 1px solid #d2b4de; padding: 6px 14px; border-radius: 16px; cursor: pointer; font-size: 0.85rem; font-weight: bold; white-space: nowrap; flex-shrink: 0; }
     .btn-year-chip.active { background: #8e44ad; color: white; border-color: #8e44ad; }
@@ -90,6 +91,8 @@
       .date-num { font-size: 0.9rem; }
       .event-pill { font-size: 0.8rem; padding: 3px 8px; margin-bottom: 3px; }
       .cal-table tr td:first-child { width: 60px; }
+      .top-header { flex-direction: row; align-items: center; }
+      .nav-links { width: auto; margin-left: 20px; padding-bottom: 0; }
     }
 
     /* Modal 通用 */
@@ -140,12 +143,16 @@
     let clearedYears = new Set();
     let timelineAnchors = [];
     let vacationWeeks = new Set();
+    
+    // 滑動手勢記錄變數
+    let touchstartX = 0;
+    let touchendX = 0;
 
     const HK_PUBLIC_HOLIDAYS = {
       "2026-01-01": "元旦", "2026-02-17": "農曆年初一", "2026-02-18": "農曆年初二", "2026-02-19": "農曆年初三",
       "2026-04-03": "耶穌受難節", "2026-04-04": "清明節", "2026-04-06": "復活節星期一", "2026-05-01": "勞動節",
       "2026-05-25": "佛誕翌日", "2026-06-19": "端午節", "2026-07-01": "特區成立日", "2026-09-26": "中秋節翌日",
-      "2026-10-01": "國慶日", "2026-10-19": "重陽節", "2026-12-25": "聖誕節", "2026-12-26": "聖誕翌日",
+      "2026-10-01": "National Day", "2026-10-19": "Chung Yeung", "2026-12-25": "聖誕節", "2026-12-26": "聖誕翌日",
       "2027-01-01": "元旦", "2027-02-06": "農曆年初一", "2027-02-08": "農曆年初二", "2027-02-09": "農曆年初三",
       "2027-03-26": "耶穌受難節", "2027-03-27": "受難節翌日", "2027-03-29": "復活節星期一", "2027-04-05": "清明節",
       "2027-05-01": "勞動節", "2027-05-13": "佛誕", "2027-06-09": "端午節", "2027-07-01": "特區成立日",
@@ -197,6 +204,7 @@
         buildMonthScroller();
         renderPhYearChips();
         renderUnifiedCalendar();
+        setupSwipeGestures();
       } else {
         currentUser = null;
         document.getElementById("authPanel").style.display = "block";
@@ -211,7 +219,7 @@
     window.toggleAuthMode = () => {
       authMode = (authMode === "register") ? "login" : "register";
       document.getElementById("staffIdField").style.display = (authMode === "register") ? "block" : "none";
-      document.getElementById("authTitle").innerText = (authMode === "register") ? "📝 註冊帳戶名" : "登入";
+      document.getElementById("authTitle").innerText = (authMode === "register") ? "📝 註冊帳戶" : "登入";
       document.getElementById("submitAuthBtn").innerText = (authMode === "register") ? "立即註冊" : "繼續";
       document.getElementById("toggleBtn").innerText = (authMode === "register") ? "返回登入" : "建立帳戶";
     };
@@ -220,7 +228,7 @@
       authMode = (authMode === "forgot") ? "login" : "forgot";
       document.getElementById("staffIdField").style.display = (authMode === "forgot") ? "block" : "none";
       document.getElementById("authTitle").innerText = (authMode === "forgot") ? "🔑 密碼重設" : "登入";
-      document.getElementById("submitAuthBtn").innerText = (authMode === "forgot") ? "重設密碼並登入" : "繼續";
+      document.getElementById("submitAuthBtn").innerText = (authMode === "forgot") ? "重設並登入" : "繼續";
       document.getElementById("toggleBtn").style.display = (authMode === "forgot") ? "none" : "inline-block";
     };
 
@@ -309,21 +317,44 @@
     function buildMonthScroller() {
       const scroller = document.getElementById("monthScroller");
       let html = "";
-      for (let i = -2; i <= 6; i++) {
-        const d = new Date(todayObj.getFullYear(), todayObj.getMonth() + i, 1);
+      // 動態無限延伸：顯示當前月份的前 6 個月到後 12 個月
+      for (let i = -6; i <= 12; i++) {
+        const d = new Date(viewCalYear, viewCalMonth - 1 + i, 1);
         const y = d.getFullYear(); const m = d.getMonth() + 1;
-        if (m === 1 || i === -2) html += `<div class="month-chip year-label">${y}</div>`;
+        if (m === 1 || i === -6) html += `<div class="month-chip year-label">${y}</div>`;
         const active = (y === viewCalYear && m === viewCalMonth) ? 'active' : '';
-        html += `<div class="month-chip ${active}" onclick="navToMonth(${y}, ${m})">${m}月</div>`;
+        html += `<div class="month-chip ${active}" id="chip-${y}-${m}" onclick="navToMonth(${y}, ${m})">${m}月</div>`;
       }
       scroller.innerHTML = html;
+      
+      // 自動滑動到選中月份正中間
+      setTimeout(() => {
+        const activeChip = document.getElementById(`chip-${viewCalYear}-${viewCalMonth}`);
+        if(activeChip) activeChip.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+      }, 50);
     }
 
     window.navToMonth = (y, m) => { viewCalYear = y; viewCalMonth = m; buildMonthScroller(); renderUnifiedCalendar(); };
+    window.navUnifiedMonth = (delta) => {
+      viewCalMonth += delta;
+      if (viewCalMonth > 12) { viewCalMonth = 1; viewCalYear++; }
+      if (viewCalMonth < 1) { viewCalMonth = 12; viewCalYear--; }
+      buildMonthScroller();
+      renderUnifiedCalendar();
+    };
     window.jumpToToday = () => { navToMonth(todayObj.getFullYear(), todayObj.getMonth() + 1); };
 
+    window.jumpToSpecificDate = (val) => {
+      if (!val) return;
+      const [y, m, d] = val.split('-');
+      navToMonth(parseInt(y), parseInt(m));
+    };
+
     function renderUnifiedCalendar() {
-      document.getElementById("headerMonthSelect").value = viewCalMonth;
+      // 確保頂部日期選擇器顯示該月份 (設為 1 號)
+      const datePicker = document.getElementById("headerDatePicker");
+      if(datePicker) datePicker.value = `${viewCalYear}-${String(viewCalMonth).padStart(2,'0')}-01`;
+
       const firstAbs = getAbsoluteWeekIndex(new Date(viewCalYear, viewCalMonth - 1, 1));
       const lastAbs = getAbsoluteWeekIndex(new Date(viewCalYear, viewCalMonth, 0));
 
@@ -380,41 +411,17 @@
       updatePhStatistics();
     }
 
-    // ------------- PH 統計與重置 -------------
-    window.resetYearShiftsAndPh = async () => {
-      if (!confirm(`⚠️ 確定重置清空 ${viewCalYear} 年所有更期？\n重置後，月曆將變回未導入的空白狀態。`)) return;
-      const clrPh = confirm(`❓ 是否連同 ${viewCalYear} 年 PH 扣減紀錄一併清空？`);
-      clearedYears.add(viewCalYear);
-      for (const k of Object.keys(userShiftOverrides)) if(k.startsWith(`${viewCalYear}-`)) delete userShiftOverrides[k];
-      for (const w of Array.from(vacationWeeks)) if(getWeekInfoFromAbsIndex(w).year === viewCalYear) vacationWeeks.delete(w);
-      timelineAnchors = timelineAnchors.filter(a => getWeekInfoFromAbsIndex(a.absWeek).year !== viewCalYear);
-      if (clrPh) for (const k of Object.keys(userPhUsage)) if(k.startsWith(`${viewCalYear}-`)) delete userPhUsage[k];
-      
-      await saveUserTimeline();
-      await setDoc(doc(db,"user_shift_overrides",currentUser.uid),{overrides:userShiftOverrides});
-      if(clrPh) await setDoc(doc(db,"user_ph_usage",currentUser.uid),{usage:userPhUsage});
-      renderPhYearChips();
-      renderUnifiedCalendar();
-      alert("🎉 該年更期已徹底重置清空！");
-    };
-
-    function renderPhYearChips() {
-      const setY = new Set([todayObj.getFullYear()]);
-      for (const k of Object.keys(userPhUsage)) setY.add(parseInt(k.split('-')[0]));
-      let html = "";
-      Array.from(setY).sort((a,b)=>b-a).forEach(y => {
-        html += `<button class="btn-year-chip ${y===selectedSummaryYear?'active':''}" onclick="selectSummaryYear(${y})">${y} 年</button>`;
-      });
-      document.getElementById("phYearChipsContainer").innerHTML = html;
-    }
-    window.selectSummaryYear = (y) => { selectedSummaryYear = y; renderPhYearChips(); updatePhStatistics(); };
-
-    function updatePhStatistics() {
-      let tH = 0;
-      for (const [k, v] of Object.entries(userPhUsage)) if(k.startsWith(`${selectedSummaryYear}-`)) tH += v;
-      document.getElementById("summaryYearTitle").innerText = `${selectedSummaryYear} 年`;
-      document.getElementById("phStatTotalHours").innerText = `${tH} 小時`;
-      document.getElementById("phStatTotalDays").innerText = `${(tH/8).toFixed(2)} 日`;
+    // ------------- 左右滑動手勢 -------------
+    function setupSwipeGestures() {
+      const wrapper = document.querySelector('.calendar-wrapper');
+      wrapper.addEventListener('touchstart', e => {
+        touchstartX = e.changedTouches[0].screenX;
+      }, {passive: true});
+      wrapper.addEventListener('touchend', e => {
+        touchendX = e.changedTouches[0].screenX;
+        if (touchstartX - touchendX > 60) navUnifiedMonth(1); // 向左滑 -> 下一月
+        if (touchendX - touchstartX > 60) navUnifiedMonth(-1); // 向右滑 -> 上一月
+      }, {passive: true});
     }
 
     // ------------- 操作與 Modal -------------
@@ -484,6 +491,52 @@
       closeCombinedModal(); renderPhYearChips(); renderUnifiedCalendar();
     };
 
+    window.resetCombinedDate = async () => {
+      const dk = activeModalDateKey;
+      delete userPhUsage[dk]; delete userShiftOverrides[dk]; delete userDayNotes[dk];
+      await setDoc(doc(db,"user_ph_usage",currentUser.uid),{usage:userPhUsage});
+      await setDoc(doc(db,"user_shift_overrides",currentUser.uid),{overrides:userShiftOverrides});
+      await setDoc(doc(db,"user_day_notes",currentUser.uid),{notes:userDayNotes});
+      closeCombinedModal(); renderPhYearChips(); renderUnifiedCalendar();
+    };
+
+    // ------------- PH 統計與重置 -------------
+    window.resetYearShiftsAndPh = async () => {
+      if (!confirm(`⚠️ 確定重置清空 ${viewCalYear} 年所有更期？\n重置後，月曆將變回未導入的空白狀態。`)) return;
+      const clrPh = confirm(`❓ 是否連同 ${viewCalYear} 年 PH 扣減紀錄一併清空？`);
+      clearedYears.add(viewCalYear);
+      for (const k of Object.keys(userShiftOverrides)) if(k.startsWith(`${viewCalYear}-`)) delete userShiftOverrides[k];
+      for (const w of Array.from(vacationWeeks)) if(getWeekInfoFromAbsIndex(w).year === viewCalYear) vacationWeeks.delete(w);
+      timelineAnchors = timelineAnchors.filter(a => getWeekInfoFromAbsIndex(a.absWeek).year !== viewCalYear);
+      if (clrPh) for (const k of Object.keys(userPhUsage)) if(k.startsWith(`${viewCalYear}-`)) delete userPhUsage[k];
+      
+      await saveUserTimeline();
+      await setDoc(doc(db,"user_shift_overrides",currentUser.uid),{overrides:userShiftOverrides});
+      if(clrPh) await setDoc(doc(db,"user_ph_usage",currentUser.uid),{usage:userPhUsage});
+      renderPhYearChips();
+      renderUnifiedCalendar();
+      alert("🎉 該年更期已徹底重置清空！");
+    };
+
+    function renderPhYearChips() {
+      const setY = new Set([todayObj.getFullYear()]);
+      for (const k of Object.keys(userPhUsage)) setY.add(parseInt(k.split('-')[0]));
+      let html = "";
+      Array.from(setY).sort((a,b)=>b-a).forEach(y => {
+        html += `<button class="btn-year-chip ${y===selectedSummaryYear?'active':''}" onclick="selectSummaryYear(${y})">${y} 年</button>`;
+      });
+      document.getElementById("phYearChipsContainer").innerHTML = html;
+    }
+    window.selectSummaryYear = (y) => { selectedSummaryYear = y; renderPhYearChips(); updatePhStatistics(); };
+
+    function updatePhStatistics() {
+      let tH = 0;
+      for (const [k, v] of Object.entries(userPhUsage)) if(k.startsWith(`${selectedSummaryYear}-`)) tH += v;
+      document.getElementById("summaryYearTitle").innerText = `${selectedSummaryYear} 年`;
+      document.getElementById("phStatTotalHours").innerText = `${tH} 小時`;
+      document.getElementById("phStatTotalDays").innerText = `${(tH/8).toFixed(2)} 日`;
+    }
+
     // 帳戶修改
     window.openChangeAccountModal = () => { document.getElementById("accountModal").style.display="flex"; };
     window.closeAccountModal = () => document.getElementById("accountModal").style.display="none";
@@ -510,36 +563,32 @@
   <div id="appPanel" style="display:none;">
     <!-- 頂部欄 -->
     <div class="top-header">
-      <div class="top-left">
-        <div class="menu-icon">☰</div>
+      <div class="top-row">
+        <!-- 指定年月日 Date Picker -->
         <div class="month-title">
-          <select id="headerMonthSelect" onchange="navToMonth(viewCalYear, parseInt(this.value))">
-            <option value="1">1月</option><option value="2">2月</option><option value="3">3月</option><option value="4">4月</option>
-            <option value="5">5月</option><option value="6">6月</option><option value="7">7月</option><option value="8">8月</option>
-            <option value="9">9月</option><option value="10">10月</option><option value="11">11月</option><option value="12">12月</option>
-          </select>
+          <input type="date" id="headerDatePicker" onchange="jumpToSpecificDate(this.value)">
         </div>
-        <!-- 3 個跳轉頁面按鈕 (緊接在 10月 旁邊) -->
-        <div class="nav-links">
-          <a href="calc.html">📅 個人更期與PH計算</a>
-          <a href="dinner.html">🍽️ 多人約食飯/對照</a>
-          <a href="swap.html">🔄 實體更表與調更</a>
+        <div class="top-right">
+          <button class="btn-today" onclick="jumpToToday()">今天</button>
+          <div class="profile-icon" id="profileIcon" onclick="openChangeAccountModal()" title="點擊修改帳號/登出">U</div>
         </div>
       </div>
-      <div class="top-right">
-        <button class="btn-today" onclick="jumpToToday()">今天</button>
-        <div class="profile-icon" id="profileIcon" onclick="openChangeAccountModal()" title="點擊修改帳號/登出">U</div>
+      <!-- 水平導航列 (可左右滑動) -->
+      <div class="nav-links">
+        <a href="calc.html">📅 舊版推算/設定</a>
+        <a href="dinner.html">🍽️ 多人約食飯對照</a>
+        <a href="swap.html">🔄 實體更表與調更</a>
       </div>
     </div>
 
-    <!-- 月份導航 (Pill Scroll) -->
+    <!-- 月份導航 (無限延伸 Pill Scroll) -->
     <div class="month-scroller" id="monthScroller"></div>
 
     <!-- 月曆網格區 -->
     <div class="calendar-wrapper">
       <div id="unifiedCalendarGrid"></div>
 
-      <!-- 重置與 PH 統計區 (置於最底，還原圖3紫色樣式) -->
+      <!-- 重置與 PH 統計區 (置於最底) -->
       <div style="margin-top: 30px; padding-top: 20px; border-top: 2px dashed #d7bde2;">
         
         <div style="display:flex; justify-content:flex-end; margin-bottom:15px;">
