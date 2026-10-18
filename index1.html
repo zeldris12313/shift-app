@@ -732,7 +732,7 @@
     };
     window.closeCombinedModal = () => document.getElementById("combinedModal").style.display="none";
 
-            window.saveCombinedData = async () => {
+    window.saveCombinedData = async () => {
       const dk = activeModalDateKey;
       const p = parseInt(document.getElementById("phHourSelect").value);
       const s = document.getElementById("modalShiftSelect").value;
@@ -746,40 +746,44 @@
       await setDoc(doc(db,"user_shift_overrides",currentUser.uid),{overrides:userShiftOverrides});
       await setDoc(doc(db,"user_day_notes",currentUser.uid),{notes:userDayNotes});
 
-      // 1. 先還原舊紀錄影響
+      // 1. 若該日原本有借還鐘紀錄，先精準扣回之前的變動量
       const prevLog = userDebtLogs[dk];
       if (prevLog && prevLog.colleague && !prevLog.noCount) {
-        userColleagueDebts[prevLog.colleague] = (userColleagueDebts[prevLog.colleague] || 0) - (prevLog.appliedDiff || 0);
+        const prevDelta = (prevLog.netDelta !== undefined) ? prevLog.netDelta : prevLog.diff;
+        userColleagueDebts[prevLog.colleague] = (userColleagueDebts[prevLog.colleague] || 0) - prevDelta;
       }
 
-      // 2. 計算新紀錄
-      const noCount = document.getElementById("debtNoCountCheck").checked;
-      const isRepay = document.getElementById("debtRepayCheck").checked;
-      const colleague = document.getElementById("debtColleagueInput").value.trim();
+      // 2. 重新計算當日的新借還鐘變動量
+      const noCount = document.getElementById("debtNoCountCheck") ? document.getElementById("debtNoCountCheck").checked : false;
+      const isRepay = document.getElementById("debtRepayCheck") ? document.getElementById("debtRepayCheck").checked : false;
+      const colleague = document.getElementById("debtColleagueInput") ? document.getElementById("debtColleagueInput").value.trim() : "";
       const origH = getShiftHours(activeModalDefaultShift);
       const newH = getShiftHours(s);
       const diff = newH - origH;
 
       if (s && s !== activeModalDefaultShift && colleague && !noCount && diff !== 0) {
+        let netDelta = 0;
         const currentDebt = userColleagueDebts[colleague] || 0;
-        let appliedDiff = 0;
 
         if (isRepay) {
-          // 【還鐘邏輯】：目地是消除現存欠鐘（向 0 平數），絕不轉為新負債
-          if (diff > 0) {
-            // 你返多咗還畀人：若本來欠佢(負數)，加到平數為止；若本來無欠佢則直接平數(0h)
-            appliedDiff = currentDebt < 0 ? Math.min(Math.abs(currentDebt), diff) : -currentDebt;
+          // 【還鐘模式】：只沖銷現存欠鐘，絕不倒欠
+          if (diff < 0) {
+            // 返少咗 (同事還鐘畀我)：沖銷「同事欠我」的正數，最多銷到 0
+            const hours = Math.abs(diff);
+            netDelta = currentDebt > 0 ? -Math.min(currentDebt, hours) : -currentDebt;
           } else {
-            // 你返少咗(同事還畀你)：若佢本來欠你(正數)，減到平數為止；若本來無欠你則直接平數(0h)
-            appliedDiff = currentDebt > 0 ? -Math.min(currentDebt, Math.abs(diff)) : -currentDebt;
+            // 返多咗 (我還鐘畀同事)：沖銷「我欠同事」的負數，最多銷到 0
+            const hours = diff;
+            netDelta = currentDebt < 0 ? Math.min(Math.abs(currentDebt), hours) : -currentDebt;
           }
         } else {
-          // 正常借鐘
-          appliedDiff = diff;
+          // 【一般借鐘模式】
+          netDelta = diff;
         }
 
-        userColleagueDebts[colleague] = currentDebt + appliedDiff;
-        userDebtLogs[dk] = { colleague, diff, appliedDiff, noCount, isRepay };
+        userColleagueDebts[colleague] = (userColleagueDebts[colleague] || 0) + netDelta;
+        // 牢牢記錄當天真正變動的 netDelta
+        userDebtLogs[dk] = { colleague, diff, netDelta, noCount, isRepay };
       } else {
         delete userDebtLogs[dk];
       }
@@ -795,7 +799,7 @@
       renderUnifiedCalendar();
     };
 
-        window.resetCombinedDate = async () => {
+    window.resetCombinedDate = async () => {
       const dk = activeModalDateKey;
       delete userPhUsage[dk]; 
       delete userShiftOverrides[dk]; 
@@ -805,10 +809,11 @@
       await setDoc(doc(db,"user_shift_overrides",currentUser.uid),{overrides:userShiftOverrides});
       await setDoc(doc(db,"user_day_notes",currentUser.uid),{notes:userDayNotes});
 
-      // 還原當日借還鐘
+      // 還原當日借還鐘：精準扣回當天加進去的時數，不再受負負得正影響
       const prevLog = userDebtLogs[dk];
       if (prevLog && prevLog.colleague && !prevLog.noCount) {
-        userColleagueDebts[prevLog.colleague] = (userColleagueDebts[prevLog.colleague] || 0) - prevLog.diff;
+        const deltaToRevert = (prevLog.netDelta !== undefined) ? prevLog.netDelta : prevLog.diff;
+        userColleagueDebts[prevLog.colleague] = (userColleagueDebts[prevLog.colleague] || 0) - deltaToRevert;
         delete userDebtLogs[dk];
         await setDoc(doc(db, "user_shift_debts", currentUser.uid), { debts: userColleagueDebts, logs: userDebtLogs });
         renderDebtsSummary();
