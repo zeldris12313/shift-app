@@ -921,10 +921,14 @@
   <div id="appPanel" style="display:none;">
     <!-- 頂部欄 -->
     <div class="top-header">
-      <div class="top-row">
+            <div class="top-row">
         <!-- 醒目日期選擇器 -->
         <div class="month-title">
           <input type="date" id="headerDatePicker" onchange="jumpToSpecificDate(this.value)">
+        </div>
+        <!-- 中間：重新整理按鈕 -->
+        <div>
+          <button class="btn-today" onclick="location.reload()" title="重新整理頁面">🔄 重新整理</button>
         </div>
         <div class="top-right">
           <button class="btn-today" onclick="jumpToToday()">今天</button>
