@@ -178,7 +178,47 @@
     
     let touchstartX = 0;
     let touchendX = 0;
+    // ----------------- 同事借還鐘資料 -----------------
+    let userColleagueDebts = {}; // 各同事總結算 { "Peter": 2 } (+欠我, -我欠)
+    let userDebtLogs = {};       // 每日調更紀錄 { "2026-10-18": { colleague, diff, noCount, isRepay } }
 
+    const SHIFT_HOURS_MAP = {
+      "9-1": 4, "8-1": 5,
+      "8-4": 8, "8-5": 9, "9-4": 7, "9-5": 8, "9-6": 9, "10-5": 7,
+      "1-9": 8, "1-10": 9, "1-11": 10, "2-10": 8, "2-11": 9, "3-10": 7, "3-11": 8,
+      "4-10": 6, "4-11": 7, "5-10": 5, "5-11": 6,
+      "N (10-8)": 10, "W": 0, "R": 0, "AL": 0, "大假": 0
+    };
+
+    function getShiftHours(s) {
+      return SHIFT_HOURS_MAP[s] !== undefined ? SHIFT_HOURS_MAP[s] : 0;
+    }
+
+    // 監聽手動調更選單變化
+    window.onModalShiftChange = () => {
+      const debtBox = document.getElementById("debtSection");
+      const selShift = document.getElementById("modalShiftSelect").value;
+      if (!debtBox) return;
+
+      if (!selShift || selShift === activeModalDefaultShift) {
+        debtBox.style.display = "none";
+        return;
+      }
+
+      debtBox.style.display = "block";
+      const origH = getShiftHours(activeModalDefaultShift);
+      const newH = getShiftHours(selShift);
+      const diff = newH - origH;
+      const tip = document.getElementById("debtCalcTip");
+
+      if (diff > 0) {
+        tip.innerHTML = `返多咗 <b>${diff}</b> 小時 <span style="color:#15803d;">(同事欠你鐘)</span>`;
+      } else if (diff < 0) {
+        tip.innerHTML = `返少咗 <b>${Math.abs(diff)}</b> 小時 <span style="color:#b91c1c;">(你欠同事/借鐘)</span>`;
+      } else {
+        tip.innerHTML = `工時相同，毋需計鐘`;
+      }
+    };
     const HK_PUBLIC_HOLIDAYS = {
       "2026-01-01": "元旦", "2026-02-17": "農曆年初一", "2026-02-18": "農曆年初二", "2026-02-19": "農曆年初三",
       "2026-04-03": "耶穌受難節", "2026-04-04": "清明節", "2026-04-06": "復活節星期一", "2026-05-01": "勞動節",
@@ -360,7 +400,7 @@
     window.userLogout = () => signOut(auth);
 
     // ------------- Firebase 資料讀寫 -------------
-    async function loadUserData() {
+        async function loadUserData() {
       if (!currentUser) return;
       const uid = currentUser.uid;
       const getD = async (col) => (await getDoc(doc(db, col, uid))).data() || {};
@@ -372,6 +412,12 @@
       timelineAnchors = tl.anchors || [{ absWeek: todayAbsWeek, group: 'group3', startRow: 14 }];
       vacationWeeks = new Set(tl.vacations || []);
       clearedYears = new Set(tl.clearedYears || []);
+
+      // 載入借還鐘資料
+      const debtData = await getD("user_shift_debts");
+      userColleagueDebts = debtData.debts || {};
+      userDebtLogs = debtData.logs || {};
+      renderDebtsSummary();
     }
 
     async function saveUserTimeline() {
@@ -630,8 +676,9 @@
       ALL_SHIFT_OPTIONS.forEach(opt => s.innerHTML += `<option value="${opt}">${opt}</option>`);
     }
 
-        window.openCombinedModal = (dk, def) => {
+            window.openCombinedModal = (dk, def) => {
       activeModalDateKey = dk;
+      activeModalDefaultShift = def || "";
       
       const phHolidayName = HK_PUBLIC_HOLIDAYS[dk];
       const banner = document.getElementById("modalHolidayBanner");
@@ -648,11 +695,28 @@
       document.getElementById("phHourSelect").value = userPhUsage[dk] || 0;
       document.getElementById("modalShiftSelect").value = userShiftOverrides[dk] || "";
       document.getElementById("modalNoteInput").value = userDayNotes[dk] || "";
+
+      // 載入當日借還鐘狀態
+      const log = userDebtLogs[dk] || null;
+      const noCountCheck = document.getElementById("debtNoCountCheck");
+      const repayCheck = document.getElementById("debtRepayCheck");
+      const colleagueInput = document.getElementById("debtColleagueInput");
+      if (log) {
+        colleagueInput.value = log.colleague || "";
+        noCountCheck.checked = !!log.noCount;
+        repayCheck.checked = !!log.isRepay;
+      } else {
+        colleagueInput.value = "";
+        noCountCheck.checked = false;
+        repayCheck.checked = false;
+      }
+      onModalShiftChange();
+
       document.getElementById("combinedModal").style.display = "flex";
     };
     window.closeCombinedModal = () => document.getElementById("combinedModal").style.display="none";
 
-    window.saveCombinedData = async () => {
+        window.saveCombinedData = async () => {
       const dk = activeModalDateKey;
       const p = parseInt(document.getElementById("phHourSelect").value);
       const s = document.getElementById("modalShiftSelect").value;
@@ -665,16 +729,60 @@
       await setDoc(doc(db,"user_ph_usage",currentUser.uid),{usage:userPhUsage});
       await setDoc(doc(db,"user_shift_overrides",currentUser.uid),{overrides:userShiftOverrides});
       await setDoc(doc(db,"user_day_notes",currentUser.uid),{notes:userDayNotes});
-      closeCombinedModal(); renderPhYearChips(); renderUnifiedCalendar();
+
+      // 結算同事借還鐘
+      const prevLog = userDebtLogs[dk];
+      if (prevLog && prevLog.colleague && !prevLog.noCount) {
+        userColleagueDebts[prevLog.colleague] = (userColleagueDebts[prevLog.colleague] || 0) - prevLog.diff;
+      }
+
+      const noCount = document.getElementById("debtNoCountCheck").checked;
+      const isRepay = document.getElementById("debtRepayCheck").checked;
+      const colleague = document.getElementById("debtColleagueInput").value.trim();
+      const origH = getShiftHours(activeModalDefaultShift);
+      const newH = getShiftHours(s);
+      const diff = newH - origH;
+
+      if (s && s !== activeModalDefaultShift && colleague && !noCount && diff !== 0) {
+        userColleagueDebts[colleague] = (userColleagueDebts[colleague] || 0) + diff;
+        userDebtLogs[dk] = { colleague, diff, noCount, isRepay };
+      } else {
+        delete userDebtLogs[dk];
+      }
+
+      await setDoc(doc(db, "user_shift_debts", currentUser.uid), {
+        debts: userColleagueDebts,
+        logs: userDebtLogs
+      });
+      renderDebtsSummary();
+
+      closeCombinedModal(); 
+      renderPhYearChips(); 
+      renderUnifiedCalendar();
     };
 
-    window.resetCombinedDate = async () => {
+        window.resetCombinedDate = async () => {
       const dk = activeModalDateKey;
-      delete userPhUsage[dk]; delete userShiftOverrides[dk]; delete userDayNotes[dk];
+      delete userPhUsage[dk]; 
+      delete userShiftOverrides[dk]; 
+      delete userDayNotes[dk];
+      
       await setDoc(doc(db,"user_ph_usage",currentUser.uid),{usage:userPhUsage});
       await setDoc(doc(db,"user_shift_overrides",currentUser.uid),{overrides:userShiftOverrides});
       await setDoc(doc(db,"user_day_notes",currentUser.uid),{notes:userDayNotes});
-      closeCombinedModal(); renderPhYearChips(); renderUnifiedCalendar();
+
+      // 還原當日借還鐘
+      const prevLog = userDebtLogs[dk];
+      if (prevLog && prevLog.colleague && !prevLog.noCount) {
+        userColleagueDebts[prevLog.colleague] = (userColleagueDebts[prevLog.colleague] || 0) - prevLog.diff;
+        delete userDebtLogs[dk];
+        await setDoc(doc(db, "user_shift_debts", currentUser.uid), { debts: userColleagueDebts, logs: userDebtLogs });
+        renderDebtsSummary();
+      }
+
+      closeCombinedModal(); 
+      renderPhYearChips(); 
+      renderUnifiedCalendar();
     };
 
     // ------------- PH 統計與重置 -------------
@@ -713,7 +821,65 @@
       document.getElementById("phStatTotalHours").innerText = `${tH} 小時`;
       document.getElementById("phStatTotalDays").innerText = `${(tH/8).toFixed(2)} 日`;
     }
+    // 渲染 PH 下方之借還鐘結算表
+    function renderDebtsSummary() {
+      const container = document.getElementById("colleagueDebtsList");
+      if (!container) return;
 
+      const colleagues = Object.keys(userColleagueDebts);
+      if (colleagues.length === 0) {
+        container.innerHTML = `<div style="font-size:0.8rem; color:#7f8c8d; text-align:center; padding:6px;">暫無任何借還鐘紀錄</div>`;
+        return;
+      }
+
+      let html = "";
+      colleagues.forEach(name => {
+        const hours = userColleagueDebts[name];
+        let tag = "";
+        if (hours > 0) {
+          tag = `<span style="background:#dcfce7; color:#15803d; padding:2px 8px; border-radius:12px; font-weight:bold;">欠你 ${hours} 小時</span>`;
+        } else if (hours < 0) {
+          tag = `<span style="background:#fee2e2; color:#b91c1c; padding:2px 8px; border-radius:12px; font-weight:bold;">你欠 ${Math.abs(hours)} 小時</span>`;
+        } else {
+          tag = `<span style="background:#f3f4f6; color:#4b5563; padding:2px 8px; border-radius:12px;">已平數 (0h)</span>`;
+        }
+
+        html += `
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px dashed #cfe2ff;">
+            <div style="font-weight:bold; font-size:0.85rem; color:#1e3a8a;">👤 ${name}：${tag}</div>
+            <div style="display:flex; gap:4px;">
+              <button onclick="adjustColleagueDebt('${name}', -1)" style="padding:2px 8px; border:1px solid #bdc1c6; background:white; border-radius:4px; font-weight:bold; cursor:pointer;">-1h</button>
+              <button onclick="adjustColleagueDebt('${name}', 1)" style="padding:2px 8px; border:1px solid #bdc1c6; background:white; border-radius:4px; font-weight:bold; cursor:pointer;">+1h</button>
+              <button onclick="deleteColleagueDebt('${name}')" style="padding:2px 6px; border:none; background:#fee2e2; color:#b91c1c; border-radius:4px; font-weight:bold; cursor:pointer;">✕</button>
+            </div>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    window.adjustColleagueDebt = async (name, delta) => {
+      userColleagueDebts[name] = (userColleagueDebts[name] || 0) + delta;
+      await setDoc(doc(db, "user_shift_debts", currentUser.uid), { debts: userColleagueDebts, logs: userDebtLogs });
+      renderDebtsSummary();
+    };
+
+    window.deleteColleagueDebt = async (name) => {
+      if (!confirm(`確定清除同事「${name}」的借還鐘紀錄嗎？`)) return;
+      delete userColleagueDebts[name];
+      await setDoc(doc(db, "user_shift_debts", currentUser.uid), { debts: userColleagueDebts, logs: userDebtLogs });
+      renderDebtsSummary();
+    };
+
+    window.promptAddColleagueDebt = async () => {
+      const name = prompt("請輸入同事名字：");
+      if (!name) return;
+      if (userColleagueDebts[name] === undefined) {
+        userColleagueDebts[name] = 0;
+        await setDoc(doc(db, "user_shift_debts", currentUser.uid), { debts: userColleagueDebts, logs: userDebtLogs });
+        renderDebtsSummary();
+      }
+    };
     // 帳戶修改
     window.openChangeAccountModal = () => { document.getElementById("accountModal").style.display="flex"; };
     window.closeAccountModal = () => document.getElementById("accountModal").style.display="none";
