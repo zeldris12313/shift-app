@@ -195,6 +195,7 @@
     }
 
     // 監聽手動調更選單變化
+        // 監聽手動調更及還鐘勾選變化
     window.onModalShiftChange = () => {
       const debtBox = document.getElementById("debtSection");
       const selShift = document.getElementById("modalShiftSelect").value;
@@ -210,13 +211,27 @@
       const newH = getShiftHours(selShift);
       const diff = newH - origH;
       const tip = document.getElementById("debtCalcTip");
+      const isRepay = document.getElementById("debtRepayCheck") ? document.getElementById("debtRepayCheck").checked : false;
+      const noCount = document.getElementById("debtNoCountCheck") ? document.getElementById("debtNoCountCheck").checked : false;
 
-      if (diff > 0) {
-        tip.innerHTML = `返多咗 <b>${diff}</b> 小時 <span style="color:#15803d;">(同事欠你鐘)</span>`;
-      } else if (diff < 0) {
-        tip.innerHTML = `返少咗 <b>${Math.abs(diff)}</b> 小時 <span style="color:#b91c1c;">(你欠同事/借鐘)</span>`;
+      if (noCount) {
+        tip.innerHTML = `<span style="color:#64748b;">⚪ 不計鐘（不納入任何欠鐘紀錄）</span>`;
+      } else if (isRepay) {
+        if (diff > 0) {
+          tip.innerHTML = `返多咗 <b>${diff}</b> 小時 <span style="color:#0284c7;">(你還鐘畀同事，抵銷欠鐘)</span>`;
+        } else if (diff < 0) {
+          tip.innerHTML = `返少咗 <b>${Math.abs(diff)}</b> 小時 <span style="color:#0284c7;">(同事還鐘畀你，抵銷欠鐘)</span>`;
+        } else {
+          tip.innerHTML = `工時相同，毋需計鐘`;
+        }
       } else {
-        tip.innerHTML = `工時相同，毋需計鐘`;
+        if (diff > 0) {
+          tip.innerHTML = `返多咗 <b>${diff}</b> 小時 <span style="color:#15803d;">(同事欠你鐘)</span>`;
+        } else if (diff < 0) {
+          tip.innerHTML = `返少咗 <b>${Math.abs(diff)}</b> 小時 <span style="color:#b91c1c;">(你欠同事/借鐘)</span>`;
+        } else {
+          tip.innerHTML = `工時相同，毋需計鐘`;
+        }
       }
     };
     const HK_PUBLIC_HOLIDAYS = {
@@ -717,7 +732,7 @@
     };
     window.closeCombinedModal = () => document.getElementById("combinedModal").style.display="none";
 
-        window.saveCombinedData = async () => {
+            window.saveCombinedData = async () => {
       const dk = activeModalDateKey;
       const p = parseInt(document.getElementById("phHourSelect").value);
       const s = document.getElementById("modalShiftSelect").value;
@@ -731,12 +746,13 @@
       await setDoc(doc(db,"user_shift_overrides",currentUser.uid),{overrides:userShiftOverrides});
       await setDoc(doc(db,"user_day_notes",currentUser.uid),{notes:userDayNotes});
 
-      // 結算同事借還鐘
+      // 1. 先還原舊紀錄影響
       const prevLog = userDebtLogs[dk];
       if (prevLog && prevLog.colleague && !prevLog.noCount) {
-        userColleagueDebts[prevLog.colleague] = (userColleagueDebts[prevLog.colleague] || 0) - prevLog.diff;
+        userColleagueDebts[prevLog.colleague] = (userColleagueDebts[prevLog.colleague] || 0) - (prevLog.appliedDiff || 0);
       }
 
+      // 2. 計算新紀錄
       const noCount = document.getElementById("debtNoCountCheck").checked;
       const isRepay = document.getElementById("debtRepayCheck").checked;
       const colleague = document.getElementById("debtColleagueInput").value.trim();
@@ -745,8 +761,25 @@
       const diff = newH - origH;
 
       if (s && s !== activeModalDefaultShift && colleague && !noCount && diff !== 0) {
-        userColleagueDebts[colleague] = (userColleagueDebts[colleague] || 0) + diff;
-        userDebtLogs[dk] = { colleague, diff, noCount, isRepay };
+        const currentDebt = userColleagueDebts[colleague] || 0;
+        let appliedDiff = 0;
+
+        if (isRepay) {
+          // 【還鐘邏輯】：目地是消除現存欠鐘（向 0 平數），絕不轉為新負債
+          if (diff > 0) {
+            // 你返多咗還畀人：若本來欠佢(負數)，加到平數為止；若本來無欠佢則直接平數(0h)
+            appliedDiff = currentDebt < 0 ? Math.min(Math.abs(currentDebt), diff) : -currentDebt;
+          } else {
+            // 你返少咗(同事還畀你)：若佢本來欠你(正數)，減到平數為止；若本來無欠你則直接平數(0h)
+            appliedDiff = currentDebt > 0 ? -Math.min(currentDebt, Math.abs(diff)) : -currentDebt;
+          }
+        } else {
+          // 正常借鐘
+          appliedDiff = diff;
+        }
+
+        userColleagueDebts[colleague] = currentDebt + appliedDiff;
+        userDebtLogs[dk] = { colleague, diff, appliedDiff, noCount, isRepay };
       } else {
         delete userDebtLogs[dk];
       }
@@ -1025,7 +1058,21 @@
           <div id="colleagueDebtsList"></div>
         </div>
       </div>
-
+      <!-- 同事借還鐘結算區塊 (加上 margin-bottom: 80px 預留充足滑動空間) -->
+      <div style="margin-top: 15px; padding-top: 12px; margin-bottom: 80px; border-top: 2px dashed #b6d4fe;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;">
+          <div style="font-weight:bold; color:#1d4ed8; font-size:0.9rem;">
+            ⚖️ 同事借還鐘結算：
+          </div>
+          <button onclick="promptAddColleagueDebt()" style="background:#2563eb; color:white; border:none; padding:4px 8px; border-radius:4px; font-size:0.75rem; font-weight:bold; cursor:pointer;">
+            + 新增同事
+          </button>
+        </div>
+        
+        <div style="background:#f0f7ff; border: 1.5px solid #b6d4fe; border-radius:10px; padding:12px;">
+          <div id="colleagueDebtsList"></div>
+        </div>
+      </div>
       <!-- 調更與 PH Modal (圖2獨立框框版) -->
   <div id="combinedModal" class="modal-overlay">
     <div class="modal-card">
@@ -1067,14 +1114,14 @@
             <input type="text" id="debtColleagueInput" placeholder="輸入同事名字 (如: Peter)" style="flex:1; padding:6px; border:1px solid #cbd5e1; border-radius:4px; font-size:0.82rem;">
           </div>
 
-          <div style="display:flex; gap:12px; font-size:0.78rem; font-weight:bold; color:#334155;">
-            <label style="cursor:pointer; display:flex; align-items:center; gap:4px;">
-              <input type="checkbox" id="debtNoCountCheck"> 不計鐘
-            </label>
-            <label style="cursor:pointer; display:flex; align-items:center; gap:4px;">
-              <input type="checkbox" id="debtRepayCheck"> 這是「還鐘」
-            </label>
-          </div>
+        <div style="display:flex; gap:12px; font-size:0.78rem; font-weight:bold; color:#334155;">
+          <label style="cursor:pointer; display:flex; align-items:center; gap:4px;">
+            <input type="checkbox" id="debtNoCountCheck" onchange="onModalShiftChange()"> 不計鐘
+          </label>
+          <label style="cursor:pointer; display:flex; align-items:center; gap:4px;">
+            <input type="checkbox" id="debtRepayCheck" onchange="onModalShiftChange()"> 這是「還鐘」
+          </label>
+        </div>
         </div>
       </div>
 
