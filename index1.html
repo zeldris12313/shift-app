@@ -1014,65 +1014,49 @@
 
       <div id="unifiedCalendarGrid"></div>
 
-      <!-- 重置與 PH 統計區 -->
-      <div style="margin-top: 6px; padding-top: 6px; border-top: 2px dashed #d7bde2;">
-        
-        <div style="display:flex; justify-content:flex-end; margin-bottom: 6px;">
+            <!-- 重置與 PH 統計區 -->
+      <div style="margin-top: 10px; padding-top: 10px;">
+        <!-- 右側紅色重置按鈕 -->
+        <div style="display:flex; justify-content:flex-end; margin-bottom: 12px;">
           <button onclick="resetYearShiftsAndPh()" style="background:#e74c3c; color:white; border:none; padding:6px 14px; border-radius:6px; cursor:pointer; font-weight:bold; box-shadow:0 2px 5px rgba(231,76,60,0.3);">
             🔄 重置今年所有已導入更期
           </button>
         </div>
 
-        <div style="font-weight:bold; color:#6c3483; font-size:0.95rem; margin-bottom: 10px;">
-          📊 歷年 PH 統計（點擊年份切換）：
+        <!-- 🟣 大卡片 1：歷年 PH 統計（專屬淡紫大框） -->
+        <div style="background:#fdf9fe; border: 1.5px solid #d7bde2; border-radius:12px; padding:14px; margin-bottom: 16px; box-shadow: 0 2px 6px rgba(142,68,173,0.06);">
+          <div style="font-weight:bold; color:#6c3483; font-size:0.95rem; margin-bottom: 8px;">
+            📊 歷年 PH 統計（點擊年份切換）：
+          </div>
+          <div class="ph-year-chips-bar" id="phYearChipsContainer" style="justify-content: flex-start; margin-bottom: 10px;"></div>
+          <div style="background:#f4ecf7; border: 1px solid #e8daf0; border-radius:10px; padding:16px; display:flex; justify-content:space-around; align-items:center; text-align:center;">
+            <div>
+              <div style="font-size:0.85rem; color:#7d3c98;" id="summaryYearTitle">2026 年</div>
+              <div style="font-size:0.85rem; color:#555; margin-top:4px;">已用總時數</div>
+              <div style="font-size:1.6rem; font-weight:bold; color:#6c3483; margin-top:4px;" id="phStatTotalHours">0 小時</div>
+            </div>
+            <div>
+              <div style="font-size:0.85rem; color:#7d3c98;">折合總日數 (8h=1日)</div>
+              <div style="font-size:1.6rem; font-weight:bold; color:#c0392b; margin-top:4px;" id="phStatTotalDays">0.00 日</div>
+            </div>
+          </div>
         </div>
-        
-        <div class="ph-year-chips-bar" id="phYearChipsContainer" style="justify-content: flex-start; margin-bottom: 10px;"></div>
-        
-        <div style="background:#f4ecf7; border: 1.5px solid #d7bde2; border-radius:10px; padding:20px; display:flex; justify-content:space-around; align-items:center; text-align:center;">
-          <div>
-            <div style="font-size:0.85rem; color:#7d3c98;" id="summaryYearTitle">2026 年</div>
-            <div style="font-size:0.85rem; color:#555; margin-top:4px;">已用總時數</div>
-            <div style="font-size:1.6rem; font-weight:bold; color:#6c3483; margin-top:4px;" id="phStatTotalHours">0 小時</div>
+
+        <!-- 🔵 大卡片 2：同事借還鐘結算（專屬淡藍大框，預留 80px 底部空間） -->
+        <div style="background:#f0f7ff; border: 1.5px solid #93c5fd; border-radius:12px; padding:14px; margin-bottom: 80px; box-shadow: 0 2px 6px rgba(37,99,235,0.06);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px;">
+            <div style="font-weight:bold; color:#1d4ed8; font-size:0.95rem;">
+              ⚖️ 同事借還鐘結算：
+            </div>
+            <button onclick="promptAddColleagueDebt()" style="background:#2563eb; color:white; border:none; padding:5px 10px; border-radius:6px; font-size:0.78rem; font-weight:bold; cursor:pointer; box-shadow: 0 1px 3px rgba(37,99,235,0.3);">
+              + 新增同事
+            </button>
           </div>
-          <div>
-            <div style="font-size:0.85rem; color:#7d3c98;">折合總日數 (8h=1日)</div>
-            <div style="font-size:1.6rem; font-weight:bold; color:#c0392b; margin-top:4px;" id="phStatTotalDays">0.00 日</div>
-          </div>
+          <div id="colleagueDebtsList"></div>
         </div>
       </div>
     </div>
   </div>
-
-      <div style="margin-top: 15px; padding-top: 12px; border-top: 2px dashed #b6d4fe;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;">
-          <div style="font-weight:bold; color:#1d4ed8; font-size:0.9rem;">
-            ⚖️ 同事借還鐘結算：
-          </div>
-          <button onclick="promptAddColleagueDebt()" style="background:#2563eb; color:white; border:none; padding:4px 8px; border-radius:4px; font-size:0.75rem; font-weight:bold; cursor:pointer;">
-            + 新增同事
-          </button>
-        </div>
-        
-        <div style="background:#f0f7ff; border: 1.5px solid #b6d4fe; border-radius:10px; padding:12px;">
-          <div id="colleagueDebtsList"></div>
-        </div>
-      </div>
-      <!-- 同事借還鐘結算區塊 (加上 margin-bottom: 80px 預留充足滑動空間) -->
-      <div style="margin-top: 15px; padding-top: 12px; margin-bottom: 80px; border-top: 2px dashed #b6d4fe;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;">
-          <div style="font-weight:bold; color:#1d4ed8; font-size:0.9rem;">
-            ⚖️ 同事借還鐘結算：
-          </div>
-          <button onclick="promptAddColleagueDebt()" style="background:#2563eb; color:white; border:none; padding:4px 8px; border-radius:4px; font-size:0.75rem; font-weight:bold; cursor:pointer;">
-            + 新增同事
-          </button>
-        </div>
-        
-        <div style="background:#f0f7ff; border: 1.5px solid #b6d4fe; border-radius:10px; padding:12px;">
-          <div id="colleagueDebtsList"></div>
-        </div>
-      </div>
       <!-- 調更與 PH Modal (圖2獨立框框版) -->
   <div id="combinedModal" class="modal-overlay">
     <div class="modal-card">
