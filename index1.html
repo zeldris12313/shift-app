@@ -196,6 +196,7 @@
 
     // 監聽手動調更選單變化
         // 監聽手動調更及還鐘勾選變化
+    // 監聽手動調更及勾選變化
     window.onModalShiftChange = () => {
       const debtBox = document.getElementById("debtSection");
       const selShift = document.getElementById("modalShiftSelect").value;
@@ -218,9 +219,9 @@
         tip.innerHTML = `<span style="color:#64748b;">⚪ 不計鐘（不納入任何欠鐘紀錄）</span>`;
       } else if (isRepay) {
         if (diff > 0) {
-          tip.innerHTML = `返多咗 <b>${diff}</b> 小時 <span style="color:#0284c7;">(你還鐘畀同事，抵銷欠鐘)</span>`;
+          tip.innerHTML = `返多咗 <b>${diff}</b> 小時 <span style="color:#0284c7;">(你還鐘畀同事，多出將轉為同事欠你)</span>`;
         } else if (diff < 0) {
-          tip.innerHTML = `返少咗 <b>${Math.abs(diff)}</b> 小時 <span style="color:#0284c7;">(同事還鐘畀你，抵銷欠鐘)</span>`;
+          tip.innerHTML = `返少咗 <b>${Math.abs(diff)}</b> 小時 <span style="color:#0284c7;">(同事還鐘畀你，多出將轉為你欠同事)</span>`;
         } else {
           tip.innerHTML = `工時相同，毋需計鐘`;
         }
@@ -778,14 +779,14 @@
       await setDoc(doc(db,"user_shift_overrides",currentUser.uid),{overrides:userShiftOverrides});
       await setDoc(doc(db,"user_day_notes",currentUser.uid),{notes:userDayNotes});
 
-      // 1. 若該日原本有借還鐘紀錄，先精準扣回之前的變動量
+      // 1. 若該日原本已記錄過借還鐘，先精準扣除舊紀錄影響
       const prevLog = userDebtLogs[dk];
       if (prevLog && prevLog.colleague && !prevLog.noCount) {
         const prevDelta = (prevLog.netDelta !== undefined) ? prevLog.netDelta : prevLog.diff;
         userColleagueDebts[prevLog.colleague] = (userColleagueDebts[prevLog.colleague] || 0) - prevDelta;
       }
 
-      // 2. 重新計算當日的新借還鐘變動量
+      // 2. 獲取當日表單勾選與數值
       const noCount = document.getElementById("debtNoCountCheck") ? document.getElementById("debtNoCountCheck").checked : false;
       const isRepay = document.getElementById("debtRepayCheck") ? document.getElementById("debtRepayCheck").checked : false;
       const colleague = document.getElementById("debtColleagueInput") ? document.getElementById("debtColleagueInput").value.trim() : "";
@@ -794,27 +795,10 @@
       const diff = newH - origH;
 
       if (s && s !== activeModalDefaultShift && colleague && !noCount && diff !== 0) {
-        let netDelta = 0;
-        const currentDebt = userColleagueDebts[colleague] || 0;
-
-        if (isRepay) {
-          // 【還鐘模式】：只沖銷現存欠鐘，絕不倒欠
-          if (diff < 0) {
-            // 返少咗 (同事還鐘畀我)：沖銷「同事欠我」的正數，最多銷到 0
-            const hours = Math.abs(diff);
-            netDelta = currentDebt > 0 ? -Math.min(currentDebt, hours) : -currentDebt;
-          } else {
-            // 返多咗 (我還鐘畀同事)：沖銷「我欠同事」的負數，最多銷到 0
-            const hours = diff;
-            netDelta = currentDebt < 0 ? Math.min(Math.abs(currentDebt), hours) : -currentDebt;
-          }
-        } else {
-          // 【一般借鐘模式】
-          netDelta = diff;
-        }
-
+        // 返多咗 (+diff) 代表自己付出更多，無論係借畀人定還畀人，總帳都應增加；
+        // 返少咗 (-diff) 代表自己少返咗，總帳都應減少。可自然過零變成倒欠。
+        const netDelta = diff;
         userColleagueDebts[colleague] = (userColleagueDebts[colleague] || 0) + netDelta;
-        // 牢牢記錄當天真正變動的 netDelta
         userDebtLogs[dk] = { colleague, diff, netDelta, noCount, isRepay };
       } else {
         delete userDebtLogs[dk];
