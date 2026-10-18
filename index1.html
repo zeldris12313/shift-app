@@ -97,7 +97,12 @@
     .pill-off { background-color: var(--pill-off); color: var(--gc-text); font-weight:bold; }
     .pill-leave { background-color: var(--pill-leave); }
     .pill-ph { background-color: var(--pill-ph); }
-    .custom-override { border-left: 3px solid #fbbc04; }
+    .custom-override { 
+  background-color: #f39c12 !important; 
+  color: #ffffff !important; 
+  border: 1.5px solid #d35400 !important; 
+  font-weight: bold !important; 
+}
 
     .week-tag { text-align: center; font-size: 0.65rem; color: var(--gc-light-text); line-height: 1.2; margin-top: 4px; }
     .week-btn { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; padding: 2px 0; border-radius: 4px; font-size: 0.6rem; cursor: pointer; width: 90%; margin: 6px auto 0 auto; display: block; }
@@ -226,7 +231,12 @@
         document.getElementById("profileIcon").innerText = initial;
         document.getElementById("authPanel").style.display = "none";
         document.getElementById("appPanel").style.display = "block";
-        await loadUserData();
+                await loadUserData();
+        // 強制重設至今日真實年月日
+        const now = new Date();
+        viewCalYear = now.getFullYear();
+        viewCalMonth = now.getMonth() + 1;
+
         initOverrideShiftSelect();
         updateQuickRowSelect("group3");
         document.getElementById("quickRowSelect").value = "14";
@@ -621,8 +631,20 @@
       ALL_SHIFT_OPTIONS.forEach(opt => s.innerHTML += `<option value="${opt}">${opt}</option>`);
     }
 
-    window.openCombinedModal = (dk, def) => {
+        window.openCombinedModal = (dk, def) => {
       activeModalDateKey = dk;
+      
+      const phHolidayName = HK_PUBLIC_HOLIDAYS[dk];
+      const banner = document.getElementById("modalHolidayBanner");
+      if (banner) {
+        if (phHolidayName) {
+          banner.style.display = "block";
+          banner.innerText = `🔴 公眾假期：${phHolidayName}`;
+        } else {
+          banner.style.display = "none";
+        }
+      }
+
       document.getElementById("modalDateTitle").innerHTML = `📅 ${dk} <span style="font-size:0.8rem; color:#70757a; font-weight:normal;">(原定: ${def||'無'})</span>`;
       document.getElementById("phHourSelect").value = userPhUsage[dk] || 0;
       document.getElementById("modalShiftSelect").value = userShiftOverrides[dk] || "";
@@ -819,9 +841,10 @@
     </div>
   </div>
 
-  <!-- 調更與 PH Modal -->
+    <!-- 調更與 PH Modal -->
   <div id="combinedModal" class="modal-overlay">
     <div class="modal-card">
+      <div id="modalHolidayBanner" style="display:none; background:#fadbd8; border-left:4px solid #c0392b; padding:6px 10px; border-radius:4px; font-size:0.85rem; color:#922b21; font-weight:bold; margin-bottom:10px; text-align:left;"></div>
       <h3 class="modal-title" id="modalDateTitle">📅 日期</h3>
       
       <div class="modal-section">
