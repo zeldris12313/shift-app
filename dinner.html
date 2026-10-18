@@ -401,11 +401,6 @@
   </div>
 
   <script>
-    const ROSTERS = {
-```
-
-**【將整段 `const ROSTERS = { ... };` 替換為】**（補入 `groupPharm` 與 `groupSenior`）：
-
 ```javascript
     const ROSTERS = {
       group2: {
@@ -656,6 +651,7 @@
 
     // 依點心紙分類判定班次
     function checkShiftCategory(s) {
+      if (!s) return 'other'; // 防呆：避免空值報錯
       if (s === 'W' || s === 'AL') return 'w';
       if (s === 'R') return 'r';
       if (s === '9-1' || s === '8-1') return 'half';
@@ -666,7 +662,6 @@
       if (['1-9','1-10','1-11','2-10','2-11','3-10','3-11','4-10','4-11','5-10','5-11'].includes(s)) return 'p';
       return 'other';
     }
-
     function isShiftAllowedByDimSum(shift) {
       const cat = checkShiftCategory(shift);
       if (cat === 'w' && document.getElementById('shift_w').checked) return true;
