@@ -262,6 +262,7 @@
     let viewCalMonth = todayObj.getMonth() + 1;
     let selectedSummaryYear = todayObj.getFullYear();
     let activeModalDateKey = null;
+    let activeModalDefaultShift = "";
 
     onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -1006,6 +1007,21 @@
     </div>
   </div>
 
+      <div style="margin-top: 15px; padding-top: 12px; border-top: 2px dashed #b6d4fe;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;">
+          <div style="font-weight:bold; color:#1d4ed8; font-size:0.9rem;">
+            ⚖️ 同事借還鐘結算：
+          </div>
+          <button onclick="promptAddColleagueDebt()" style="background:#2563eb; color:white; border:none; padding:4px 8px; border-radius:4px; font-size:0.75rem; font-weight:bold; cursor:pointer;">
+            + 新增同事
+          </button>
+        </div>
+        
+        <div style="background:#f0f7ff; border: 1.5px solid #b6d4fe; border-radius:10px; padding:12px;">
+          <div id="colleagueDebtsList"></div>
+        </div>
+      </div>
+
       <!-- 調更與 PH Modal (圖2獨立框框版) -->
   <div id="combinedModal" class="modal-overlay">
     <div class="modal-card">
@@ -1030,12 +1046,31 @@
         </select>
       </div>
 
-      <!-- 區塊 2: 手動調更 -->
+            <!-- 區塊 2: 手動調更 -->
       <div class="modal-section">
         <label>🔄 手動調更 / 覆寫當日班次：</label>
-        <select class="select-block" id="modalShiftSelect"></select>
+        <select class="select-block" id="modalShiftSelect" onchange="onModalShiftChange()"></select>
         <div style="margin-top:6px;">
           <button type="button" style="background:#e74c3c; color:white; border:none; padding:5px 10px; border-radius:4px; font-size:0.75rem; font-weight:bold; cursor:pointer;" onclick="document.getElementById('modalShiftSelect').value='AL'">🏖️ 設為單日 AL (大假)</button>
+        </div>
+
+        <!-- 補回這段漏掉的借還鐘卡片 -->
+        <div id="debtSection" style="display:none; background:#f0f7ff; border:1.5px solid #b6d4fe; border-radius:8px; padding:10px; margin-top:8px;">
+          <div style="font-weight:bold; color:#1d4ed8; font-size:0.82rem; margin-bottom:4px;">⏱️ 借還鐘計算：</div>
+          <div id="debtCalcTip" style="font-size:0.8rem; margin-bottom:8px;"></div>
+          
+          <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">
+            <input type="text" id="debtColleagueInput" placeholder="輸入同事名字 (如: Peter)" style="flex:1; padding:6px; border:1px solid #cbd5e1; border-radius:4px; font-size:0.82rem;">
+          </div>
+
+          <div style="display:flex; gap:12px; font-size:0.78rem; font-weight:bold; color:#334155;">
+            <label style="cursor:pointer; display:flex; align-items:center; gap:4px;">
+              <input type="checkbox" id="debtNoCountCheck"> 不計鐘
+            </label>
+            <label style="cursor:pointer; display:flex; align-items:center; gap:4px;">
+              <input type="checkbox" id="debtRepayCheck"> 這是「還鐘」
+            </label>
+          </div>
         </div>
       </div>
 
