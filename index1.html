@@ -812,7 +812,54 @@
         repayCheck.checked = false;
       }
       onModalShiftChange();
+      // 檢查當日是否有重複備忘，並計算剩下次數 (計埋當日)
+      const p = dk.split('-').map(Number);
+      const curDateObj = new Date(p[0], p[1] - 1, p[2]);
+      const curDOW = curDateObj.getDay();
+      const recBox = document.getElementById("modalRecurringDisplayBox");
+      const recContent = document.getElementById("modalRecurringContent");
 
+      const matchedRecs = userRecurringNotes.filter(item => {
+        if (item.days && !item.days.includes(curDOW)) return false;
+        if (item.startDate && dk < item.startDate) return false;
+        if (item.effectiveEndDate && dk > item.effectiveEndDate) return false;
+        return true;
+      });
+
+      if (matchedRecs.length > 0 && recBox && recContent) {
+        let recHtml = "";
+        matchedRecs.forEach(r => {
+          let remainText = "";
+          if (!r.effectiveEndDate) {
+            remainText = `<span style="color:#0284c7; font-weight:bold;">永久重複 (無期限)</span>`;
+          } else {
+            // 精確計算由當日 (dk) 起直至結束日共剩餘幾多次 (計埋當日)
+            let remainCount = 0;
+            let tempD = new Date(p[0], p[1] - 1, p[2]);
+            const ep = r.effectiveEndDate.split('-').map(Number);
+            const endD = new Date(ep[0], ep[1] - 1, ep[2]);
+
+            while (tempD <= endD) {
+              if (r.days && r.days.includes(tempD.getDay())) {
+                remainCount++;
+              }
+              tempD.setDate(tempD.getDate() + 1);
+            }
+            remainText = `剩下 <b style="color:#d97706; font-size:1rem;">${remainCount}</b> 次 <span style="color:#64748b; font-weight:bold; font-size:0.75rem;">(計埋當日)</span> ｜ <span style="color:#64748b; font-size:0.75rem;">直至 ${r.effectiveEndDate}</span>`;
+          }
+
+          recHtml += `
+            <div style="background:white; border:1px solid #bfdbfe; border-radius:6px; padding:8px; margin-bottom:5px;">
+              <div style="font-weight:bold; font-size:0.92rem; color:#1e40af; margin-bottom:4px;">📌 ${r.text}</div>
+              <div style="font-size:0.8rem; color:#334155;">${remainText}</div>
+            </div>
+          `;
+        });
+        recContent.innerHTML = recHtml;
+        recBox.style.display = "block";
+      } else if (recBox) {
+        recBox.style.display = "none";
+      }
       document.getElementById("combinedModal").style.display = "flex";
     };
     window.closeCombinedModal = () => document.getElementById("combinedModal").style.display="none";
@@ -1380,11 +1427,22 @@
         </div>
       </div>
 
-      <!-- 區塊 3: 個人備註 -->
+            <!-- 區塊 3: 個人備註 -->
       <div class="modal-section">
         <label>📝 個人備註事項：</label>
         <input type="text" id="modalNoteInput" placeholder="例如: 陪睇醫生、車輛驗車、兼職..." class="select-block" style="font-weight:normal;">
       </div>
+
+      <!-- 🌟 新增：區塊 4: 當日重複備忘 (超明顯藍色外框，無備忘時自動隱藏) -->
+      <div id="modalRecurringDisplayBox" style="display:none; background:#eff6ff; border:2px solid #2563eb; border-radius:8px; padding:10px; margin-bottom:10px; box-shadow:0 2px 6px rgba(37,99,235,0.12);">
+        <label style="display:block; font-size:0.85rem; font-weight:bold; color:#1d4ed8; margin-bottom:6px;">
+          🔁 當日重複備忘事項：
+        </label>
+        <div id="modalRecurringContent"></div>
+      </div>
+
+      <!-- 底部三顆按鈕 (儲存 / 還原預設 / 取消) -->
+      <div class="modal-btns">
 
       <!-- 底部三顆按鈕 (儲存 / 還原預設 / 取消) -->
       <div class="modal-btns">
