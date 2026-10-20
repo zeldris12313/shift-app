@@ -108,7 +108,41 @@
     .week-btn { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; padding: 2px 0; border-radius: 4px; font-size: 0.6rem; cursor: pointer; width: 90%; margin: 6px auto 0 auto; display: block; }
 
     /* 右下角懸浮按鈕 (FAB) - 只保留 + 用作其他未來功能 */
-    .fab { display:none; } /* 隱藏 FAB，因為設定已移至頂部 */
+    /* 左下角加大圓形按鈕 */
+    .floating-add-btn {
+      position: fixed;
+      bottom: 24px;
+      left: 18px;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: #1a73e8;
+      color: white;
+      border: none;
+      box-shadow: 0 4px 14px rgba(26,115,232,0.45);
+      font-size: 30px;
+      font-weight: 300;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 999;
+      transition: transform 0.15s, background-color 0.15s;
+    }
+    .floating-add-btn:active { transform: scale(0.92); background: #1557b0; }
+
+    /* 星期選擇膠囊 */
+    .day-selector-grid { display: flex; gap: 4px; justify-content: space-between; margin: 8px 0; }
+    .day-btn-label { flex: 1; text-align: center; }
+    .day-btn-label input { display: none; }
+    .day-btn-label span {
+      display: block; padding: 6px 0; font-size: 0.78rem; font-weight: bold;
+      border: 1px solid #cbd5e1; border-radius: 6px; background: white; color: #475569; cursor: pointer;
+    }
+    .day-btn-label input:checked + span {
+      background: #1a73e8; color: white; border-color: #1a73e8;
+    }
 
     /* PH 統計區 */
     .ph-year-chips-bar { display: flex; gap: 8px; overflow-x: auto; padding: 6px 0; -webkit-overflow-scrolling: touch; }
@@ -172,6 +206,7 @@
     let userPhUsage = {};
     let userShiftOverrides = {};
     let userDayNotes = {};
+    let userRecurringNotes = []; // 儲存重複備忘 [{ id, text, days: [6], startDate, endDate }]
     let clearedYears = new Set();
     let timelineAnchors = [];
     let vacationWeeks = new Set();
@@ -448,6 +483,10 @@
     };
     window.userLogout = () => signOut(auth);
 
+      // 載入重複備忘
+      const recSnap = await getD("user_recurring_notes");
+      userRecurringNotes = recSnap.list || [];
+
     // ------------- Firebase 資料讀寫 -------------
         async function loadUserData() {
       if (!currentUser) return;
@@ -679,6 +718,14 @@
             const custShift = userShiftOverrides[dk] || "";
             const fShift = custShift || defShift;
             const noteText = userDayNotes[dk] || "";
+                        // 檢查當日是否符合重複備忘條件 (星期與期限)
+            const curDayOfWeek = cur.getDay(); // 0是星期日，6是星期六
+            const matchedRecNotes = userRecurringNotes.filter(item => {
+              if (item.days && !item.days.includes(curDayOfWeek)) return false;
+              if (item.startDate && dk < item.startDate) return false;
+              if (item.endDate && dk > item.endDate) return false;
+              return true;
+            });
             const hDay = HK_PUBLIC_HOLIDAYS[dk];
             const phH = userPhUsage[dk] || 0;
 
@@ -691,6 +738,11 @@
               else if (fShift === '大假' || fShift === 'AL') pCls = "pill-leave";
               if (custShift) pCls += " custom-override";
               pills += `<div class="event-pill ${pCls}">${fShift}</div>`;
+            }
+                        if (matchedRecNotes.length > 0) {
+              matchedRecNotes.forEach(r => {
+                pills += `<div class="event-pill" style="background:#0284c7;" title="重複備忘: ${r.text}">🔁 ${r.text}</div>`;
+              });
             }
             if (noteText) pills += `<div class="event-pill pill-note">${noteText}</div>`;
             if (phH > 0) pills += `<div class="event-pill pill-ph">PH: ${phH}h</div>`;
@@ -935,6 +987,91 @@
         renderDebtsSummary();
       }
     };
+        // ----------------- 重複備忘功能 -----------------
+    window.openRecurringModal = () => {
+      document.getElementById("recTextInput").value = "";
+      document.getElementById("recEndDateInput").value = "";
+      // 預設選中星期六
+      document.querySelectorAll(".day-checkbox").forEach(cb => {
+        cb.checked = (cb.value === "6");
+      });
+      renderRecurringList();
+      document.getElementById("recurringModal").style.display = "flex";
+    };
+
+    window.closeRecurringModal = () => {
+      document.getElementById("recurringModal").style.display = "none";
+    };
+
+    window.saveRecurringRule = async () => {
+      if (!currentUser) return;
+      const text = document.getElementById("recTextInput").value.trim();
+      if (!text) { alert("請輸入備忘內容！"); return; }
+
+      const selectedDays = [];
+      document.querySelectorAll(".day-checkbox:checked").forEach(cb => {
+        selectedDays.push(parseInt(cb.value));
+      });
+
+      if (selectedDays.length === 0) {
+        alert("請至少選擇一個重複的星期！");
+        return;
+      }
+
+      const todayStr = `${todayObj.getFullYear()}-${String(todayObj.getMonth()+1).padStart(2,'0')}-${String(todayObj.getDate()).padStart(2,'0')}`;
+      const endDate = document.getElementById("recEndDateInput").value || null;
+
+      const newRule = {
+        id: "rec_" + Date.now(),
+        text: text,
+        days: selectedDays,
+        startDate: todayStr,
+        endDate: endDate
+      };
+
+      userRecurringNotes.push(newRule);
+      await setDoc(doc(db, "user_recurring_notes", currentUser.uid), { list: userRecurringNotes });
+      
+      document.getElementById("recTextInput").value = "";
+      document.getElementById("recEndDateInput").value = "";
+      renderRecurringList();
+      renderUnifiedCalendar();
+      alert("✅ 已成功新增重複備忘！");
+    };
+
+    window.deleteRecurringRule = async (ruleId) => {
+      if (!confirm("確定刪除此項重複備忘嗎？")) return;
+      userRecurringNotes = userRecurringNotes.filter(r => r.id !== ruleId);
+      await setDoc(doc(db, "user_recurring_notes", currentUser.uid), { list: userRecurringNotes });
+      renderRecurringList();
+      renderUnifiedCalendar();
+    };
+
+    function renderRecurringList() {
+      const listDiv = document.getElementById("recurringRulesList");
+      if (!listDiv) return;
+      if (userRecurringNotes.length === 0) {
+        listDiv.innerHTML = `<div style="font-size:0.75rem; color:#94a3b8; text-align:center; padding:8px;">未有任何重複備忘</div>`;
+        return;
+      }
+
+      const weekNames = ["日", "一", "二", "三", "四", "五", "六"];
+      let html = "";
+      userRecurringNotes.forEach(r => {
+        const daysLabel = (r.days || []).map(d => "週" + weekNames[d]).join("、");
+        const expireLabel = r.endDate ? `直至 ${r.endDate}` : "永久重複";
+        html += `
+          <div style="display:flex; justify-content:space-between; align-items:center; background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:6px 8px; margin-bottom:5px;">
+            <div style="font-size:0.8rem; text-align:left;">
+              <div style="font-weight:bold; color:#1e293b;">🔁 ${r.text}</div>
+              <div style="font-size:0.7rem; color:#64748b;">${daysLabel} ｜ <span style="color:#d97706;">${expireLabel}</span></div>
+            </div>
+            <button onclick="deleteRecurringRule('${r.id}')" style="background:#fee2e2; color:#ef4444; border:none; padding:4px 8px; border-radius:4px; font-size:0.75rem; font-weight:bold; cursor:pointer;">✕</button>
+          </div>
+        `;
+      });
+      listDiv.innerHTML = html;
+    }
     // 帳戶修改
     window.openChangeAccountModal = () => { document.getElementById("accountModal").style.display="flex"; };
     window.closeAccountModal = () => document.getElementById("accountModal").style.display="none";
@@ -980,6 +1117,8 @@
         <div class="month-title">
           <input type="date" id="headerDatePicker" onchange="jumpToSpecificDate(this.value)">
         </div>
+          <!-- 左下角浮動大圓形加號按鈕 -->
+  <button class="floating-add-btn" onclick="openRecurringModal()" title="新增每週重複備忘">＋</button>
         <!-- 中間：重新整理按鈕 -->
         <div>
           <button class="btn-today" onclick="location.reload()" title="重新整理頁面">🔄 重新整理</button>
@@ -1167,6 +1306,51 @@
         <button class="btn-modal btn-danger" onclick="userLogout()">登出帳號</button>
         <button class="btn-modal btn-cancel" style="width:100%; text-align:center;" onclick="closeAccountModal()">返回</button>
       </div>
+        <!-- 重複備忘設定 Modal -->
+  <div id="recurringModal" class="modal-overlay">
+    <div class="modal-card">
+      <h3 class="modal-title" style="color:#1a73e8;">🔁 重複備忘設定</h3>
+      
+      <!-- 1. 輸入內容 -->
+      <div class="modal-section" style="background:#f0f7ff; border-color:#bfdbfe;">
+        <label style="color:#1d4ed8;">備忘事項內容：</label>
+        <input type="text" id="recTextInput" placeholder="例如: 補習、學琴、兼職、特定練習..." class="select-block">
+      </div>
+
+      <!-- 2. 選擇重複星期 (一至日) -->
+      <div class="modal-section" style="background:#f0f7ff; border-color:#bfdbfe;">
+        <label style="color:#1d4ed8;">重複日子（可多選）：</label>
+        <div class="day-selector-grid">
+          <label class="day-btn-label"><input type="checkbox" class="day-checkbox" value="1"><span>一</span></label>
+          <label class="day-btn-label"><input type="checkbox" class="day-checkbox" value="2"><span>二</span></label>
+          <label class="day-btn-label"><input type="checkbox" class="day-checkbox" value="3"><span>三</span></label>
+          <label class="day-btn-label"><input type="checkbox" class="day-checkbox" value="4"><span>四</span></label>
+          <label class="day-btn-label"><input type="checkbox" class="day-checkbox" value="5"><span>五</span></label>
+          <label class="day-btn-label"><input type="checkbox" class="day-checkbox" value="6" checked><span>六</span></label>
+          <label class="day-btn-label"><input type="checkbox" class="day-checkbox" value="0"><span>日</span></label>
+        </div>
+      </div>
+
+      <!-- 3. 期限 (可選) -->
+      <div class="modal-section" style="background:#f0f7ff; border-color:#bfdbfe;">
+        <label style="color:#1d4ed8;">結束期限（留空為無期限一直重複）：</label>
+        <input type="date" id="recEndDateInput" class="select-block">
+      </div>
+
+      <!-- 儲存按鈕 -->
+      <button type="button" class="btn-save-modal" style="width:100%; background:#1a73e8; margin-bottom:12px;" onclick="saveRecurringRule()">＋ 加入重複排程</button>
+
+      <!-- 現有已設定的重複事項清單 -->
+      <div style="border-top:1px dashed #cbd5e1; padding-top:8px;">
+        <div style="font-size:0.78rem; font-weight:bold; color:#475569; margin-bottom:6px; text-align:left;">📋 現有重複備忘清單：</div>
+        <div id="recurringRulesList" style="max-height:140px; overflow-y:auto;"></div>
+      </div>
+
+      <div class="modal-btns" style="justify-content:center; margin-top:10px;">
+        <button class="btn-cancel-modal" style="width:100%;" onclick="closeRecurringModal()">關閉</button>
+      </div>
+    </div>
+  </div>
     </div>
   </div>
 
