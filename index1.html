@@ -718,12 +718,12 @@
             const custShift = userShiftOverrides[dk] || "";
             const fShift = custShift || defShift;
             const noteText = userDayNotes[dk] || "";
-                        // 檢查當日是否符合重複備忘條件 (星期與期限)
+               // 檢查當日是否符合重複備忘條件 (星期、開始日、指定截止日)
             const curDayOfWeek = cur.getDay(); // 0是星期日，6是星期六
             const matchedRecNotes = userRecurringNotes.filter(item => {
               if (item.days && !item.days.includes(curDayOfWeek)) return false;
               if (item.startDate && dk < item.startDate) return false;
-              if (item.endDate && dk > item.endDate) return false;
+              if (item.effectiveEndDate && dk > item.effectiveEndDate) return false;
               return true;
             });
             const hDay = HK_PUBLIC_HOLIDAYS[dk];
@@ -987,14 +987,50 @@
         renderDebtsSummary();
       }
     };
-        // ----------------- 重複備忘功能 -----------------
+    // ----------------- 重複備忘功能 (圖2完整邏輯) -----------------
+    function getTodayISO() {
+      return `${todayObj.getFullYear()}-${String(todayObj.getMonth()+1).padStart(2,'0')}-${String(todayObj.getDate()).padStart(2,'0')}`;
+    }
+
+    // 計算第 N 次發生的截止日期
+    function computeOccurrenceEndDate(startDateStr, selectedDays, count) {
+      if (!startDateStr || !selectedDays || selectedDays.length === 0 || count <= 0) return null;
+      const parts = startDateStr.split('-').map(Number);
+      let cur = new Date(parts[0], parts[1] - 1, parts[2]);
+      let matched = 0;
+      for (let i = 0; i < 730; i++) { // 最多向後找2年
+        if (selectedDays.includes(cur.getDay())) {
+          matched++;
+          if (matched === count) {
+            const ey = cur.getFullYear();
+            const em = String(cur.getMonth() + 1).padStart(2, '0');
+            const ed = String(cur.getDate()).padStart(2, '0');
+            return `${ey}-${em}-${ed}`;
+          }
+        }
+        cur.setDate(cur.getDate() + 1);
+      }
+      return null;
+    }
+
     window.openRecurringModal = () => {
       document.getElementById("recTextInput").value = "";
-      document.getElementById("recEndDateInput").value = "";
-      // 預設選中星期六
+      document.getElementById("recStartDateInput").value = getTodayISO();
+      
+      // 預設單選週六
+      const dayToday = todayObj.getDay();
       document.querySelectorAll(".day-checkbox").forEach(cb => {
         cb.checked = (cb.value === "6");
       });
+
+      // 結束設定初始化
+      document.querySelector('input[name="recEndType"][value="specify"]').checked = true;
+      document.querySelector('input[name="recSpecifyType"][value="count"]').checked = true;
+      document.getElementById("recCountInput").value = "5";
+      document.getElementById("recEndDateInput").value = "";
+      
+      toggleRecEndOptions();
+      updateRecSummary();
       renderRecurringList();
       document.getElementById("recurringModal").style.display = "flex";
     };
@@ -1003,10 +1039,68 @@
       document.getElementById("recurringModal").style.display = "none";
     };
 
+    window.onRecStartDateChange = () => {
+      updateRecSummary();
+    };
+
+    window.toggleRecEndOptions = () => {
+      const isSpecify = document.querySelector('input[name="recEndType"]:checked').value === "specify";
+      document.getElementById("recSpecifyBox").style.display = isSpecify ? "block" : "none";
+      updateRecSummary();
+    };
+
+    window.toggleRecSpecifySub = () => {
+      const specifyType = document.querySelector('input[name="recSpecifyType"]:checked').value;
+      const countInput = document.getElementById("recCountInput");
+      const dateInput = document.getElementById("recEndDateInput");
+
+      if (specifyType === "count") {
+        countInput.disabled = false;
+        dateInput.disabled = true;
+      } else {
+        countInput.disabled = true;
+        dateInput.disabled = false;
+        if (!dateInput.value) dateInput.value = document.getElementById("recStartDateInput").value;
+      }
+      updateRecSummary();
+    };
+
+    // 即時計算並更新最底「概要」文字
+    window.updateRecSummary = () => {
+      const weekNames = ["日", "一", "二", "三", "四", "五", "六"];
+      const selectedDays = [];
+      document.querySelectorAll(".day-checkbox:checked").forEach(cb => {
+        selectedDays.push(parseInt(cb.value));
+      });
+
+      const daysText = selectedDays.length > 0 
+        ? selectedDays.map(d => "星期" + weekNames[d]).join("、") 
+        : "未選日子";
+
+      const endType = document.querySelector('input[name="recEndType"]:checked').value;
+      let endText = "無期限";
+
+      if (endType === "specify") {
+        const specifyType = document.querySelector('input[name="recSpecifyType"]:checked').value;
+        if (specifyType === "count") {
+          const count = parseInt(document.getElementById("recCountInput").value) || 1;
+          endText = `${count}次`;
+        } else {
+          const endD = document.getElementById("recEndDateInput").value;
+          endText = endD ? `至${endD}` : "至指定日期";
+        }
+      }
+
+      document.getElementById("recSummaryText").innerText = `每週,${daysText},${endText}`;
+    };
+
     window.saveRecurringRule = async () => {
       if (!currentUser) return;
       const text = document.getElementById("recTextInput").value.trim();
       if (!text) { alert("請輸入備忘內容！"); return; }
+
+      const startDate = document.getElementById("recStartDateInput").value;
+      if (!startDate) { alert("請選擇開始日期！"); return; }
 
       const selectedDays = [];
       document.querySelectorAll(".day-checkbox:checked").forEach(cb => {
@@ -1014,26 +1108,41 @@
       });
 
       if (selectedDays.length === 0) {
-        alert("請至少選擇一個重複的星期！");
+        alert("請至少選擇一個重複的星期日子！");
         return;
       }
 
-      const todayStr = `${todayObj.getFullYear()}-${String(todayObj.getMonth()+1).padStart(2,'0')}-${String(todayObj.getDate()).padStart(2,'0')}`;
-      const endDate = document.getElementById("recEndDateInput").value || null;
+      const endType = document.querySelector('input[name="recEndType"]:checked').value;
+      let effectiveEndDate = null;
+      let summaryLabel = "";
+
+      if (endType === "specify") {
+        const specifyType = document.querySelector('input[name="recSpecifyType"]:checked').value;
+        if (specifyType === "count") {
+          const count = parseInt(document.getElementById("recCountInput").value) || 1;
+          effectiveEndDate = computeOccurrenceEndDate(startDate, selectedDays, count);
+          summaryLabel = `${count}次`;
+        } else {
+          effectiveEndDate = document.getElementById("recEndDateInput").value || null;
+          summaryLabel = effectiveEndDate ? `至 ${effectiveEndDate}` : "指定日期";
+        }
+      } else {
+        summaryLabel = "無期限";
+      }
 
       const newRule = {
         id: "rec_" + Date.now(),
         text: text,
         days: selectedDays,
-        startDate: todayStr,
-        endDate: endDate
+        startDate: startDate,
+        effectiveEndDate: effectiveEndDate,
+        summaryLabel: summaryLabel
       };
 
       userRecurringNotes.push(newRule);
       await setDoc(doc(db, "user_recurring_notes", currentUser.uid), { list: userRecurringNotes });
       
       document.getElementById("recTextInput").value = "";
-      document.getElementById("recEndDateInput").value = "";
       renderRecurringList();
       renderUnifiedCalendar();
       alert("✅ 已成功新增重複備忘！");
@@ -1059,12 +1168,12 @@
       let html = "";
       userRecurringNotes.forEach(r => {
         const daysLabel = (r.days || []).map(d => "週" + weekNames[d]).join("、");
-        const expireLabel = r.endDate ? `直至 ${r.endDate}` : "永久重複";
+        const expireInfo = r.summaryLabel || (r.effectiveEndDate ? `至 ${r.effectiveEndDate}` : "無期限");
         html += `
           <div style="display:flex; justify-content:space-between; align-items:center; background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:6px 8px; margin-bottom:5px;">
             <div style="font-size:0.8rem; text-align:left;">
               <div style="font-weight:bold; color:#1e293b;">🔁 ${r.text}</div>
-              <div style="font-size:0.7rem; color:#64748b;">${daysLabel} ｜ <span style="color:#d97706;">${expireLabel}</span></div>
+              <div style="font-size:0.7rem; color:#64748b;">${r.startDate} 起 ｜ ${daysLabel} ｜ <span style="color:#2563eb; font-weight:bold;">${expireInfo}</span></div>
             </div>
             <button onclick="deleteRecurringRule('${r.id}')" style="background:#fee2e2; color:#ef4444; border:none; padding:4px 8px; border-radius:4px; font-size:0.75rem; font-weight:bold; cursor:pointer;">✕</button>
           </div>
@@ -1119,8 +1228,6 @@
         </div>
         <!-- 中間：重新整理按鈕 -->
         <div>
-          <button class="btn-today" onclick="location.reload()" title="重新整理頁面">🔄 重新整理</button>
-        </div>
           <button class="btn-today" onclick="location.reload()" title="重新整理頁面">🔄 重新整理</button>
         </div>
         <div class="top-right">
@@ -1309,39 +1416,73 @@
     </div>
   </div>
 
-  <!-- 重複備忘設定 Modal (獨立於外層，不再被鎖死) -->
+   <!-- 重複備忘設定 Modal (支援圖2完整選項及概要) -->
   <div id="recurringModal" class="modal-overlay">
     <div class="modal-card">
       <h3 class="modal-title" style="color:#1a73e8;">🔁 重複備忘設定</h3>
       
-      <!-- 1. 輸入內容 -->
-      <div class="modal-section" style="background:#f0f7ff; border-color:#bfdbfe;">
-        <label style="color:#1d4ed8;">備忘事項內容：</label>
-        <input type="text" id="recTextInput" placeholder="例如: 補習、學琴、兼職、特定練習..." class="select-block">
+      <!-- 1. 備忘內容 -->
+      <div class="modal-section" style="background:#fdf7fe; border: 1.5px solid #e8daf0;">
+        <label>📝 備忘事項內容：</label>
+        <input type="text" id="recTextInput" placeholder="例如: 補習、學琴、兼職..." class="select-block" oninput="updateRecSummary()">
       </div>
 
-      <!-- 2. 選擇重複星期 (一至日) -->
-      <div class="modal-section" style="background:#f0f7ff; border-color:#bfdbfe;">
-        <label style="color:#1d4ed8;">重複日子（可多選）：</label>
+      <!-- 2. 開始日期 -->
+      <div class="modal-section" style="background:#fdf7fe; border: 1.5px solid #e8daf0;">
+        <label>📅 開始日期：</label>
+        <input type="date" id="recStartDateInput" class="select-block" onchange="onRecStartDateChange()">
+      </div>
+
+      <!-- 3. 重複日子 (可多選) -->
+      <div class="modal-section" style="background:#fdf7fe; border: 1.5px solid #e8daf0;">
+        <label>🔄 重複日子（可多選）：</label>
         <div class="day-selector-grid">
-          <label class="day-btn-label"><input type="checkbox" class="day-checkbox" value="1"><span>一</span></label>
-          <label class="day-btn-label"><input type="checkbox" class="day-checkbox" value="2"><span>二</span></label>
-          <label class="day-btn-label"><input type="checkbox" class="day-checkbox" value="3"><span>三</span></label>
-          <label class="day-btn-label"><input type="checkbox" class="day-checkbox" value="4"><span>四</span></label>
-          <label class="day-btn-label"><input type="checkbox" class="day-checkbox" value="5"><span>五</span></label>
-          <label class="day-btn-label"><input type="checkbox" class="day-checkbox" value="6" checked><span>六</span></label>
-          <label class="day-btn-label"><input type="checkbox" class="day-checkbox" value="0"><span>日</span></label>
+          <label class="day-btn-label"><input type="checkbox" class="day-checkbox" value="1" onchange="updateRecSummary()"><span>一</span></label>
+          <label class="day-btn-label"><input type="checkbox" class="day-checkbox" value="2" onchange="updateRecSummary()"><span>二</span></label>
+          <label class="day-btn-label"><input type="checkbox" class="day-checkbox" value="3" onchange="updateRecSummary()"><span>三</span></label>
+          <label class="day-btn-label"><input type="checkbox" class="day-checkbox" value="4" onchange="updateRecSummary()"><span>四</span></label>
+          <label class="day-btn-label"><input type="checkbox" class="day-checkbox" value="5" onchange="updateRecSummary()"><span>五</span></label>
+          <label class="day-btn-label"><input type="checkbox" class="day-checkbox" value="6" checked onchange="updateRecSummary()"><span>六</span></label>
+          <label class="day-btn-label"><input type="checkbox" class="day-checkbox" value="0" onchange="updateRecSummary()"><span>日</span></label>
         </div>
       </div>
 
-      <!-- 3. 期限 (可選) -->
-      <div class="modal-section" style="background:#f0f7ff; border-color:#bfdbfe;">
-        <label style="color:#1d4ed8;">結束期限（留空為無期限一直重複）：</label>
-        <input type="date" id="recEndDateInput" class="select-block">
+      <!-- 4. 結束條件 (圖2模式：沒有 / 指定次數 / 指定日期) -->
+      <div class="modal-section" style="background:#fdf7fe; border: 1.5px solid #e8daf0; font-size:0.82rem;">
+        <label>🛑 結束方式：</label>
+        <div style="display:flex; gap:16px; margin: 6px 0 8px 0;">
+          <label style="cursor:pointer; display:flex; align-items:center; gap:4px;">
+            <input type="radio" name="recEndType" value="none" onchange="toggleRecEndOptions()"> 沒有
+          </label>
+          <label style="cursor:pointer; display:flex; align-items:center; gap:4px;">
+            <input type="radio" name="recEndType" value="specify" checked onchange="toggleRecEndOptions()"> 指定
+          </label>
+        </div>
+
+        <div id="recSpecifyBox" style="padding: 8px; background: white; border-radius:6px; border:1px solid #cbd5e1;">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+            <label style="cursor:pointer; display:flex; align-items:center; gap:4px; min-width:82px; font-weight:bold;">
+              <input type="radio" name="recSpecifyType" value="count" checked onchange="toggleRecSpecifySub()"> 指定次數
+            </label>
+            <input type="number" id="recCountInput" value="5" min="1" max="99" style="width:70px; padding:4px;" class="select-block" oninput="updateRecSummary()">
+            <span>次</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <label style="cursor:pointer; display:flex; align-items:center; gap:4px; min-width:82px; font-weight:bold;">
+              <input type="radio" name="recSpecifyType" value="date" onchange="toggleRecSpecifySub()"> 指定日期
+            </label>
+            <input type="date" id="recEndDateInput" class="select-block" style="flex:1;" disabled onchange="updateRecSummary()">
+          </div>
+        </div>
       </div>
 
-      <!-- 儲存按鈕 -->
-      <button type="button" class="btn-save-modal" style="width:100%; background:#1a73e8; margin-bottom:12px;" onclick="saveRecurringRule()">＋ 加入重複排程</button>
+      <!-- 5. 概要展示框 -->
+      <div style="background:#e8f0fe; border-left:4px solid #1a73e8; padding:8px 10px; border-radius:6px; font-size:0.82rem; margin-bottom:12px; text-align:left;">
+        <b>📌 概要：</b><span id="recSummaryText" style="font-weight:bold; color:#1e40af;">每週,星期六,5次</span>
+      </div>
+
+      <!-- 按鈕 -->
+      <button type="button" class="btn-save-modal" style="width:100%; background:#1a73e8; margin-bottom:12px;" onclick="saveRecurringRule()">＋ 設定加入排程</button>
 
       <!-- 現有已設定的重複事項清單 -->
       <div style="border-top:1px dashed #cbd5e1; padding-top:8px;">
