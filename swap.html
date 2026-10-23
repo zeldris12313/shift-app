@@ -192,9 +192,9 @@
     const db = getFirestore(app);
 
         // 完整 4 個組別的班次資料
-          group2: {
+    const ROSTERS = {
+      group2: {
         name: "2組 (12行)",
-        totalRows: 12,
         data: [
           ["N (10-8)", "R", "W", "1-11", "1-9", "9-6", "9-4"],
           ["9-5", "N (10-8)", "R", "W", "1-11", "1-9", "9-5"],
@@ -592,6 +592,7 @@
       autoSaveData();
       renderUI();
     };
+};
 
     window.prevWeek = () => {
       currentViewAbsWeek--;
