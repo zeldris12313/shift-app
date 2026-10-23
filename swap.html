@@ -308,8 +308,15 @@
       return mon;
     }
 
-    function getAbsIndex(year, week) {
+        function getAbsIndex(year, week) {
       return (year - 2026) * 52 + week;
+    }
+
+    // 取得指定絕對週數所對應的真實年份與週數
+    function getYearWeekFromAbsIndex(absIndex) {
+      const year = 2026 + Math.floor(absIndex / 52);
+      const week = (absIndex % 52 === 0) ? 52 : (absIndex % 52);
+      return { year, week };
     }
     function getTodayAbsIndex() {
       const now = new Date();
@@ -474,25 +481,20 @@ highlightDayIdx = (day === 0) ? 6 : day - 1;
       tbody.innerHTML = "";
 
       for (let rowIdx = 0; rowIdx < totalRows; rowIdx++) {
-        // 如果鎖定：人名跟隨週期滾動！
-        let effectiveName = "";
-        if (isLocked) {
-          const originalRowIdx = (rowIdx - (weekDiff % totalRows) + totalRows) % totalRows;
-          effectiveName = colleagueNames[originalRowIdx] || `第 ${rowIdx + 1} 行同事`;
-        } else {
-          effectiveName = colleagueNames[rowIdx] || "";
-        }
+        // 計算該行在輪更週期中對應的真實名單索引
+        const targetIdx = (rowIdx - (weekDiff % totalRows) + totalRows) % totalRows;
+        const effectiveName = colleagueNames[targetIdx] || `第 ${rowIdx + 1} 行同事`;
 
         const isMyRow = (effectiveName === MY_LABEL);
         const trClass = isMyRow ? "my-row-highlight" : "";
 
         let rowHtml = `<tr class="${trClass}">`;
 
-        // 姓名欄 (解鎖時允許輸入，鎖定時純文字)
+        // 姓名欄 (解鎖時修改 targetIdx，鎖定時保持同一位置)
         if (isLocked) {
           rowHtml += `<td class="name-col">${effectiveName} ${isMyRow ? '📍' : ''}</td>`;
         } else {
-          rowHtml += `<td class="name-col"><input class="name-input" type="text" value="${effectiveName}" onchange="updateName(${rowIdx}, this.value)"></td>`;
+          rowHtml += `<td class="name-col"><input class="name-input" type="text" value="${effectiveName}" onchange="updateName(${targetIdx}, this.value)"></td>`;
         }
 
         // 7天班次
@@ -536,8 +538,8 @@ highlightDayIdx = (day === 0) ? 6 : day - 1;
       renderUI();
     };
 
-    window.updateName = (idx, val) => {
-      colleagueNames[idx] = val.trim();
+      window.updateName = (targetIdx, val) => {
+      colleagueNames[targetIdx] = val.trim();
       autoSaveData();
     };
 
@@ -582,12 +584,27 @@ highlightDayIdx = (day === 0) ? 6 : day - 1;
       document.getElementById("rotaTableWrapper").scrollIntoView({ behavior: 'smooth' });
     };
 
-    window.updateMyInfo = () => {
+        window.updateMyInfo = () => {
       myBaseRow = parseInt(document.getElementById("mySelfRow").value);
-      initDefaultData();
+      
+      // 將目前正在瀏覽的週數即時設為基準起點
+      const yw = getYearWeekFromAbsIndex(currentViewAbsWeek);
+      baseYear = yw.year;
+      baseWeek = yw.week;
+
+      const total = ROSTERS[selectedGroup].totalRows;
+      if (!colleagueNames || colleagueNames.length !== total) {
+        initDefaultData();
+      } else {
+        // 清除舊有的「自己」標記，避免重複
+        colleagueNames = colleagueNames.map((name, i) => (name === MY_LABEL ? String.fromCharCode(65 + i) : name));
+        // 將「自己」精準放入所選行數
+        colleagueNames[myBaseRow - 1] = MY_LABEL;
+      }
+
       autoSaveData();
       renderUI();
-      alert("✅ 已更新並自動儲存！");
+      alert("✅ 已更新！目前週「自己」已成功固定於第 " + myBaseRow + " 行。");
     };
 
     // 啟動登入監聽
@@ -634,7 +651,7 @@ highlightDayIdx = (day === 0) ? 6 : day - 1;
         </div>
 
         <div style="display:flex; align-items:center; gap:4px;">
-          <span style="font-size:0.82rem; font-weight:bold; color:#2c5282;">基準週「自己」處於：</span>
+<span style="font-size:0.82rem; font-weight:bold; color:#2c5282;">目前週「自己」處於：</span>
           <select id="mySelfRow" style="padding:4px 6px; font-weight:bold; border:1px solid #90cdf4; border-radius:5px; background:#fff; font-size:0.82rem;"></select>
         </div>
 
