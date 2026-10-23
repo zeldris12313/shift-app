@@ -311,7 +311,17 @@
     function getAbsIndex(year, week) {
       return (year - 2026) * 52 + week;
     }
-
+    function getTodayAbsIndex() {
+      const now = new Date();
+      const jan4 = new Date(now.getFullYear(), 0, 4);
+      const day = jan4.getDay() || 7;
+      const firstMon = new Date(jan4);
+      firstMon.setDate(jan4.getDate() - day + 1);
+      
+      const diffDays = Math.floor((now - firstMon) / (1000 * 60 * 60 * 24));
+      const curWeek = Math.floor(diffDays / 7) + 1;
+      return getAbsIndex(now.getFullYear(), curWeek);
+    }
     // 更新行數下拉選單
     function updateRowSelectOptions() {
       const total = ROSTERS[selectedGroup].totalRows;
@@ -325,7 +335,10 @@
     }
 
         function initDefaultData() {
-      currentViewAbsWeek = getAbsIndex(baseYear, baseWeek);
+      currentViewAbsWeek = getTodayAbsIndex();
+const now = new Date();
+const day = now.getDay();
+highlightDayIdx = (day === 0) ? 6 : day - 1;
       const total = ROSTERS[selectedGroup].totalRows;
       colleagueNames = Array(total).fill("");
 
@@ -541,8 +554,10 @@
     };
 
     window.resetThisWeek = () => {
-      currentViewAbsWeek = getAbsIndex(baseYear, baseWeek);
-      highlightDayIdx = null;
+      currentViewAbsWeek = getTodayAbsIndex();
+      const now = new Date();
+      const day = now.getDay();
+      highlightDayIdx = (day === 0) ? 6 : day - 1; // 自動直框突出今日
       renderUI();
     };
 
