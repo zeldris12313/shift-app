@@ -192,23 +192,22 @@
     const db = getFirestore(app);
 
         // 完整 4 個組別的班次資料
-    const ROSTERS = {
-      group2: {
+          group2: {
         name: "2組 (12行)",
         totalRows: 12,
         data: [
-          ["9-5", "9-5", "9-5", "8-5", "9-1", "W", "9-4"],
-          ["9-1", "9-5", "9-5", "9-6", "9-4", "8-4", "W"],
-          ["8-4", "8-4", "8-4", "9-1", "W", "8-4", "9-5"],
-          ["9-6", "W", "9-6", "4-11", "4-11", "9-5", "9-1"],
-          ["9-5", "9-5", "W", "9-5", "9-5", "9-5", "9-1"],
-          ["1-11", "5-11", "5-11", "W", "9-6", "9-6", "9-1"],
-          ["9-5", "9-5", "9-5", "8-5", "9-1", "W", "9-4"],
-          ["9-1", "9-5", "9-5", "9-6", "9-4", "8-4", "W"],
-          ["8-4", "8-4", "8-4", "9-1", "W", "8-4", "9-5"],
-          ["9-6", "W", "9-6", "4-11", "4-11", "9-5", "9-1"],
-          ["9-5", "9-5", "W", "9-5", "9-5", "9-5", "9-1"],
-          ["1-11", "5-11", "5-11", "W", "9-6", "9-6", "9-1"]
+          ["N (10-8)", "R", "W", "1-11", "1-9", "9-6", "9-4"],
+          ["9-5", "N (10-8)", "R", "W", "1-11", "1-9", "9-5"],
+          ["9-5", "9-5", "1-9", "9-5", "9-5", "9-1", "W"],
+          ["8-4", "9-5", "N (10-8)", "R", "W", "1-11", "1-9"],
+          ["9-6", "8-4", "9-4", "N (10-8)", "R", "W", "1-11"],
+          ["1-9", "9-6", "8-4", "9-5", "4-11", "W", "9-1"],
+          ["3-11", "9-5", "9-6", "9-6", "N (10-8)", "R", "W"],
+          ["8-4", "8-4", "8-4", "8-4", "8-4", "9-1", "W"],
+          ["1-11", "1-9", "W", "8-5", "9-4", "N (10-8)", "R"],
+          ["W", "1-11", "5-10", "9-1", "8-4", "9-4", "N (10-8)"],
+          ["R", "W", "1-11", "1-9", "9-6", "8-5", "8-4"],
+          ["W", "1-11", "1-9", "9-4", "9-1", "8-5", "8-4"]
         ]
       },
       group3: {
@@ -296,6 +295,7 @@
     let myBaseRow = 14;
     const MY_LABEL = "自己";
     let colleagueNames = [];
+    let groupColleaguesMap = {}; // 記憶各組名單，轉組唔洗重新入 { group2: [...], group3: [...] }
 
     let currentViewAbsWeek = 0;
     let highlightDayIdx = null;
@@ -341,32 +341,44 @@
       }
     }
 
-        function initDefaultData() {
+    function initDefaultData() {
       currentViewAbsWeek = getTodayAbsIndex();
-const now = new Date();
-const day = now.getDay();
-highlightDayIdx = (day === 0) ? 6 : day - 1;
-      const total = ROSTERS[selectedGroup].totalRows;
-      colleagueNames = Array(total).fill("");
+      const now = new Date();
+      const day = now.getDay();
+      highlightDayIdx = (day === 0) ? 6 : day - 1;
 
-      for (let i = 0; i < total; i++) {
-        if (i === myBaseRow - 1) {
-          colleagueNames[i] = MY_LABEL;
-        } else {
-          const letter = String.fromCharCode(65 + i);
-          colleagueNames[i] = letter; // 純英文字母 A, B, C...
+      const total = ROSTERS[selectedGroup].totalRows;
+
+      // 若該組已有儲存的名單，直接讀取
+      if (groupColleaguesMap[selectedGroup] && groupColleaguesMap[selectedGroup].length === total) {
+        colleagueNames = [...groupColleaguesMap[selectedGroup]];
+      } else {
+        // 全新預設名單
+        colleagueNames = Array(total).fill("");
+        for (let i = 0; i < total; i++) {
+          if (i === myBaseRow - 1) {
+            colleagueNames[i] = MY_LABEL;
+          } else {
+            colleagueNames[i] = String.fromCharCode(65 + i);
+          }
         }
+        groupColleaguesMap[selectedGroup] = [...colleagueNames];
       }
     }
 
     async function autoSaveData() {
+      if (colleagueNames && colleagueNames.length === ROSTERS[selectedGroup].totalRows) {
+        groupColleaguesMap[selectedGroup] = [...colleagueNames];
+      }
+
       const dataToSave = {
         isLocked,
         selectedGroup,
         baseYear,
         baseWeek,
         myBaseRow,
-        colleagueNames
+        colleagueNames,
+        groupColleaguesMap // 一併保存到雲端與本機
       };
       localStorage.setItem("swap_rota_data", JSON.stringify(dataToSave));
 
@@ -379,7 +391,7 @@ highlightDayIdx = (day === 0) ? 6 : day - 1;
       }
     }
 
-        async function loadSavedData() {
+    async function loadSavedData() {
       const local = localStorage.getItem("swap_rota_data");
       if (local) {
         try {
@@ -389,6 +401,7 @@ highlightDayIdx = (day === 0) ? 6 : day - 1;
           baseYear = parsed.baseYear || 2026;
           baseWeek = parsed.baseWeek || 41;
           myBaseRow = parsed.myBaseRow || 14;
+          if (parsed.groupColleaguesMap) groupColleaguesMap = parsed.groupColleaguesMap;
           if (Array.isArray(parsed.colleagueNames)) colleagueNames = parsed.colleagueNames;
         } catch(e){}
       }
@@ -403,6 +416,7 @@ highlightDayIdx = (day === 0) ? 6 : day - 1;
             baseYear = d.baseYear || baseYear;
             baseWeek = d.baseWeek || baseWeek;
             myBaseRow = d.myBaseRow || myBaseRow;
+            if (d.groupColleaguesMap) groupColleaguesMap = d.groupColleaguesMap;
             if (Array.isArray(d.colleagueNames)) colleagueNames = d.colleagueNames;
           }
         } catch(e){}
@@ -414,19 +428,37 @@ highlightDayIdx = (day === 0) ? 6 : day - 1;
       updateRowSelectOptions();
       const total = ROSTERS[selectedGroup].totalRows;
 
-            // 強制檢查長度與清除舊名字殘留，確保「自己」位置準確
-      if (!colleagueNames || colleagueNames.length !== total) {
+      if (!groupColleaguesMap[selectedGroup] || groupColleaguesMap[selectedGroup].length !== total) {
         initDefaultData();
       } else {
-        // 自動過濾舊緩存中的「同事 」前綴
-        colleagueNames = colleagueNames.map((name, i) => {
-          if (i === myBaseRow - 1) return MY_LABEL;
-          return name.replace(/^同事\s*/, '') || String.fromCharCode(65 + i);
-        });
-        currentViewAbsWeek = getAbsIndex(baseYear, baseWeek);
+        colleagueNames = [...groupColleaguesMap[selectedGroup]];
+        currentViewAbsWeek = getTodayAbsIndex();
       }
       renderUI();
     }
+
+    // 切換組別：記憶舊組別名單，並自動還原新組別名單
+    window.onGroupChange = (grp) => {
+      // 1. 先將當前組別的名單暫存起來
+      if (colleagueNames && colleagueNames.length === ROSTERS[selectedGroup].totalRows) {
+        groupColleaguesMap[selectedGroup] = [...colleagueNames];
+      }
+
+      // 2. 切換至新組別
+      selectedGroup = grp;
+      updateRowSelectOptions();
+
+      // 3. 讀取新組別專屬名單（若從未入過則自動生成，入過就完整保留）
+      const total = ROSTERS[selectedGroup].totalRows;
+      if (groupColleaguesMap[selectedGroup] && groupColleaguesMap[selectedGroup].length === total) {
+        colleagueNames = [...groupColleaguesMap[selectedGroup]];
+      } else {
+        initDefaultData();
+      }
+
+      autoSaveData();
+      renderUI();
+    };
 
     // 渲染主畫面
     function renderUI() {
@@ -480,21 +512,28 @@ highlightDayIdx = (day === 0) ? 6 : day - 1;
       const tbody = document.getElementById("rotaTableBody");
       tbody.innerHTML = "";
 
-      for (let rowIdx = 0; rowIdx < totalRows; rowIdx++) {
-        // 計算該行在輪更週期中對應的真實名單索引
-        const targetIdx = (rowIdx - (weekDiff % totalRows) + totalRows) % totalRows;
-        const effectiveName = colleagueNames[targetIdx] || `第 ${rowIdx + 1} 行同事`;
+            for (let rowIdx = 0; rowIdx < totalRows; rowIdx++) {
+        let effectiveName = "";
+
+        if (isLocked) {
+          // 🔒 鎖定狀態：人名才跟隨週期滾動！
+          const targetIdx = (rowIdx - (weekDiff % totalRows) + totalRows) % totalRows;
+          effectiveName = colleagueNames[targetIdx] || `第 ${rowIdx + 1} 行同事`;
+        } else {
+          // 🔓 解鎖狀態：完全鎖死當前畫面，畫面上第幾行就固定顯示第幾個，翻週絕對不郁！
+          effectiveName = colleagueNames[rowIdx] || "";
+        }
 
         const isMyRow = (effectiveName === MY_LABEL);
         const trClass = isMyRow ? "my-row-highlight" : "";
 
         let rowHtml = `<tr class="${trClass}">`;
 
-        // 姓名欄 (解鎖時修改 targetIdx，鎖定時保持同一位置)
+        // 姓名欄 (解鎖時允許直接編輯目前行數，鎖定時純文字)
         if (isLocked) {
           rowHtml += `<td class="name-col">${effectiveName} ${isMyRow ? '📍' : ''}</td>`;
         } else {
-          rowHtml += `<td class="name-col"><input class="name-input" type="text" value="${effectiveName}" onchange="updateName(${targetIdx}, this.value)"></td>`;
+          rowHtml += `<td class="name-col"><input class="name-input" type="text" value="${effectiveName}" onchange="updateName(${rowIdx}, this.value)"></td>`;
         }
 
         // 7天班次
@@ -513,7 +552,6 @@ highlightDayIdx = (day === 0) ? 6 : day - 1;
         rowHtml += `</tr>`;
         tbody.innerHTML += rowHtml;
       }
-    }
 
     function formatDateShort(dt) {
       const d = String(dt.getDate()).padStart(2, '0');
@@ -538,9 +576,21 @@ highlightDayIdx = (day === 0) ? 6 : day - 1;
       renderUI();
     };
 
-      window.updateName = (targetIdx, val) => {
-      colleagueNames[targetIdx] = val.trim();
+    window.updateName = (rowIdx, val) => {
+      colleagueNames[rowIdx] = val.trim();
       autoSaveData();
+    };
+
+    window.toggleLock = () => {
+      isLocked = !isLocked;
+      if (isLocked) {
+        // 當由解鎖切換至「鎖定」時，將目前正在睇緊呢一週設為基準錨點，確保鎖定後人名完完全全留喺原位
+        const yw = getYearWeekFromAbsIndex(currentViewAbsWeek);
+        baseYear = yw.year;
+        baseWeek = yw.week;
+      }
+      autoSaveData();
+      renderUI();
     };
 
     window.prevWeek = () => {
