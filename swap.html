@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PHARMACY DUTY ROTA 實體更表推算與調更</title>
   <style>
-        :root {
+    :root {
       --primary: #2c3e50;
       --accent: #2980b9;
       --highlight: #e67e22;
-      --bg: #f6f3ee; /* 淺米色背景 */
-      --card-bg: #fdfbf7; /* 淺米白卡片底色 */
+      --bg: #f6f3ee;
+      --card-bg: #fdfbf7;
       --border-color: #dcd3c9;
     }
     * { box-sizing: border-box; }
@@ -29,38 +29,6 @@
       border-radius: 8px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.06);
     }
-    /* 頂部三頁導航 */
-    .nav-tabs {
-      display: flex;
-      justify-content: center;
-      gap: 6px;
-      margin-bottom: 10px;
-      flex-wrap: wrap;
-    }
-    .tab-btn {
-      padding: 6px 10px;
-      border-radius: 6px;
-      font-size: 0.8rem;
-      font-weight: bold;
-      text-decoration: none;
-      background: #eee8e0;
-      color: #555;
-      border: 1px solid #d4c9bd;
-    }
-    .tab-btn.active {
-      background: #8e44ad;
-      color: white;
-      border-color: #8e44ad;
-    }
-
-    /* 控制面板區塊 */
-    .ctrl-box {
-      background: #fbf9f5;
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      padding: 10px;
-      margin-bottom: 12px;
-    }
     .btn {
       cursor: pointer;
       border: none;
@@ -75,7 +43,6 @@
     .btn-warning { background: #d35400; color: white; }
     .btn-purple { background: #8e44ad; color: white; }
 
-    /* 紙本 ROTA 表格樣式 */
     .rota-wrapper {
       overflow-x: auto;
       border: 1.5px solid #2c3e50;
@@ -121,8 +88,6 @@
       font-size: 0.8rem;
       border-top: 1px solid #7f8c8d;
     }
-
-    /* 🌟 鎖死固定人名欄 (Sticky Column) */
     .name-col {
       width: 90px;
       min-width: 85px;
@@ -150,8 +115,6 @@
       font-weight: bold;
       background: #fff;
     }
-
-    /* 直框高亮 (所選日子整行突出) */
     .col-highlight {
       background-color: #fef9c3 !important;
       border-left: 2.5px solid #eab308 !important;
@@ -161,8 +124,6 @@
       background-color: #fef08a !important;
       border-top: 2.5px solid #eab308 !important;
     }
-
-    /* 班次特殊顏色 */
     .shift-w { color: #e74c3c; font-weight: bold; }
     .shift-p { color: #2980b9; font-weight: bold; }
     .shift-n { color: #8e44ad; font-weight: bold; }
@@ -173,28 +134,29 @@
 
   <!-- Firebase SDK -->
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
-    // 與原本 calc.html 一致的 Firebase 配置
     const firebaseConfig = {
-      apiKey: "AIzaSyDummyKeyReplaceIfNeed",
-      authDomain: "shift-app.firebaseapp.com",
-      projectId: "shift-app",
-      storageBucket: "shift-app.appspot.com",
-      messagingSenderId: "123456789",
-      appId: "1:123456789:web:abcdef"
+      apiKey: "AIzaSyBR6sSm99LLA7k7x6bzqMRsKHP7lBLNnnM",
+      authDomain: "three-mum.firebaseapp.com",
+      projectId: "three-mum",
+      storageBucket: "three-mum.firebasestorage.app",
+      messagingSenderId: "759414785710",
+      appId: "1:759414785710:web:6ae6f93040be6325898f3f",
+      measurementId: "G-QFKQMNB71B"
     };
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-        // 完整 4 個組別的班次資料
+    // 完整 6 個組別的班次資料 (包含修正後的 2組 標準數據)
     const ROSTERS = {
       group2: {
         name: "2組 (12行)",
+        totalRows: 12,
         data: [
           ["N (10-8)", "R", "W", "1-11", "1-9", "9-6", "9-4"],
           ["9-5", "N (10-8)", "R", "W", "1-11", "1-9", "9-5"],
@@ -214,19 +176,19 @@
         name: "3組 (14行)",
         totalRows: 14,
         data: [
-          ["N", "R", "W", "9-5", "9-5", "1-11", "2-10"],
+          ["N (10-8)", "R", "W", "9-5", "9-5", "1-11", "2-10"],
           ["W", "9-6", "8-5", "9-5", "1-10", "1-10", "W"],
-          ["9-6", "2-10", "1-11", "N", "R", "W", "9-4"],
+          ["9-6", "2-10", "1-11", "N (10-8)", "R", "W", "9-4"],
           ["9-4", "9-5", "8-4", "9-1", "8-5", "9-5", "W"],
-          ["1-10", "N", "R", "W", "8-4", "8-5", "9-5"],
+          ["1-10", "N (10-8)", "R", "W", "8-4", "8-5", "9-5"],
           ["9-5", "3-11", "3-11", "W", "8-4", "9-5", "9-1"],
-          ["4-11", "1-11", "N", "R", "W", "9-6", "9-5"],
+          ["4-11", "1-11", "N (10-8)", "R", "W", "9-6", "9-5"],
           ["9-6", "8-1", "9-4", "3-11", "1-11", "W", "8-1"],
-          ["8-4", "9-6", "10-5", "1-11", "N", "R", "W"],
+          ["8-4", "9-6", "10-5", "1-11", "N (10-8)", "R", "W"],
           ["2-11", "3-10", "9-1", "9-6", "8-4", "9-4", "W"],
-          ["9-5", "9-4", "9-6", "W", "1-11", "N", "R"],
+          ["9-5", "9-4", "9-6", "W", "1-11", "N (10-8)", "R"],
           ["W", "8-4", "9-4", "9-5", "9-4", "8-4", "4-10"],
-          ["1-10", "W", "9-4", "9-4", "10-5", "9-1", "N"],
+          ["1-10", "W", "9-4", "9-4", "10-5", "9-1", "N (10-8)"],
           ["R", "W", "8-4", "8-4", "9-6", "1-10", "1-11"]
         ]
       },
@@ -234,10 +196,10 @@
         name: "4組 (5行)",
         totalRows: 5,
         data: [
-          ["9-6", "1-11", "8-4", "W", "10-5", "9-1", "9-6"],
-          ["W", "8-4", "1-11", "9-6", "9-1", "8-4", "10-5"],
-          ["1-11", "9-6", "W", "8-4", "9-6", "10-5", "9-1"],
-          ["10-5", "W", "9-6", "9-1", "8-4", "W", "8-4"],
+          ["8-1", "9-4", "9-5", "8-4", "W", "4-11", "1-10"],
+          ["9-5", "9-5", "9-5", "2-10", "9-1", "W", "8-4"],
+          ["9-4", "8-1", "W", "8-4", "9-5", "1-11", "5-11"],
+          ["10-5", "9-1", "1-11", "5-11", "W", "9-6", "9-5"],
           ["8-4", "10-5", "9-6", "1-11", "4-10", "9-1", "W"]
         ]
       },
@@ -286,49 +248,37 @@
         ]
       }
     };
+
+    const ANCHOR_DATE = new Date(2026, 0, 5); // 2026-01-05 Monday
+
+    function getAbsoluteWeekIndex(dateObj) {
+      const d = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
+      const day = d.getDay();
+      const diffToMon = day === 0 ? -6 : 1 - day;
+      const monday = new Date(d);
+      monday.setDate(d.getDate() + diffToMon);
+      return Math.round((monday.getTime() - ANCHOR_DATE.getTime()) / (7 * 24 * 60 * 60 * 1000));
+    }
+
+    function getMondayOfWeek(absIndex) {
+      const monday = new Date(ANCHOR_DATE);
+      monday.setDate(ANCHOR_DATE.getDate() + absIndex * 7);
+      return monday;
+    }
+
     // 狀態存儲
     let currentUser = null;
     let isLocked = true;
     let selectedGroup = "group3";
-    let baseYear = 2026;
-    let baseWeek = 41; // 2026-10-05 當週為第 41 週
+    let baseAbsWeek = getAbsoluteWeekIndex(new Date()); 
+    let currentViewAbsWeek = baseAbsWeek;
     let myBaseRow = 14;
     const MY_LABEL = "自己";
     let colleagueNames = [];
-    let groupColleaguesMap = {}; // 記憶各組名單，轉組唔洗重新入 { group2: [...], group3: [...] }
+    let groupColleaguesMap = {}; // 記憶各組名單
 
-    let currentViewAbsWeek = 0;
     let highlightDayIdx = null;
 
-    function getMondayOfWeek(year, week) {
-      const jan4 = new Date(year, 0, 4);
-      const day = jan4.getDay() || 7;
-      const mon = new Date(jan4);
-      mon.setDate(jan4.getDate() - day + 1 + (week - 1) * 7);
-      return mon;
-    }
-
-        function getAbsIndex(year, week) {
-      return (year - 2026) * 52 + week;
-    }
-
-    // 取得指定絕對週數所對應的真實年份與週數
-    function getYearWeekFromAbsIndex(absIndex) {
-      const year = 2026 + Math.floor(absIndex / 52);
-      const week = (absIndex % 52 === 0) ? 52 : (absIndex % 52);
-      return { year, week };
-    }
-    function getTodayAbsIndex() {
-      const now = new Date();
-      const jan4 = new Date(now.getFullYear(), 0, 4);
-      const day = jan4.getDay() || 7;
-      const firstMon = new Date(jan4);
-      firstMon.setDate(jan4.getDate() - day + 1);
-      
-      const diffDays = Math.floor((now - firstMon) / (1000 * 60 * 60 * 24));
-      const curWeek = Math.floor(diffDays / 7) + 1;
-      return getAbsIndex(now.getFullYear(), curWeek);
-    }
     // 更新行數下拉選單
     function updateRowSelectOptions() {
       const total = ROSTERS[selectedGroup].totalRows;
@@ -342,18 +292,10 @@
     }
 
     function initDefaultData() {
-      currentViewAbsWeek = getTodayAbsIndex();
-      const now = new Date();
-      const day = now.getDay();
-      highlightDayIdx = (day === 0) ? 6 : day - 1;
-
       const total = ROSTERS[selectedGroup].totalRows;
-
-      // 若該組已有儲存的名單，直接讀取
       if (groupColleaguesMap[selectedGroup] && groupColleaguesMap[selectedGroup].length === total) {
         colleagueNames = [...groupColleaguesMap[selectedGroup]];
       } else {
-        // 全新預設名單
         colleagueNames = Array(total).fill("");
         for (let i = 0; i < total; i++) {
           if (i === myBaseRow - 1) {
@@ -374,11 +316,10 @@
       const dataToSave = {
         isLocked,
         selectedGroup,
-        baseYear,
-        baseWeek,
+        baseAbsWeek,
         myBaseRow,
         colleagueNames,
-        groupColleaguesMap // 一併保存到雲端與本機
+        groupColleaguesMap
       };
       localStorage.setItem("swap_rota_data", JSON.stringify(dataToSave));
 
@@ -398,8 +339,7 @@
           const parsed = JSON.parse(local);
           isLocked = parsed.isLocked ?? true;
           selectedGroup = parsed.selectedGroup || "group3";
-          baseYear = parsed.baseYear || 2026;
-          baseWeek = parsed.baseWeek || 41;
+          baseAbsWeek = (parsed.baseAbsWeek !== undefined) ? parsed.baseAbsWeek : getAbsoluteWeekIndex(new Date());
           myBaseRow = parsed.myBaseRow || 14;
           if (parsed.groupColleaguesMap) groupColleaguesMap = parsed.groupColleaguesMap;
           if (Array.isArray(parsed.colleagueNames)) colleagueNames = parsed.colleagueNames;
@@ -413,8 +353,7 @@
             const d = snap.data();
             isLocked = d.isLocked ?? isLocked;
             selectedGroup = d.selectedGroup || selectedGroup;
-            baseYear = d.baseYear || baseYear;
-            baseWeek = d.baseWeek || baseWeek;
+            baseAbsWeek = (d.baseAbsWeek !== undefined) ? d.baseAbsWeek : baseAbsWeek;
             myBaseRow = d.myBaseRow || myBaseRow;
             if (d.groupColleaguesMap) groupColleaguesMap = d.groupColleaguesMap;
             if (Array.isArray(d.colleagueNames)) colleagueNames = d.colleagueNames;
@@ -432,37 +371,18 @@
         initDefaultData();
       } else {
         colleagueNames = [...groupColleaguesMap[selectedGroup]];
-        currentViewAbsWeek = getTodayAbsIndex();
       }
+
+      // 載入時預設跳到今日真實週
+      currentViewAbsWeek = getAbsoluteWeekIndex(new Date());
+      const now = new Date();
+      const day = now.getDay();
+      highlightDayIdx = (day === 0) ? 6 : day - 1;
+
       renderUI();
     }
 
-    // 切換組別：記憶舊組別名單，並自動還原新組別名單
-    window.onGroupChange = (grp) => {
-      // 1. 先將當前組別的名單暫存起來
-      if (colleagueNames && colleagueNames.length === ROSTERS[selectedGroup].totalRows) {
-        groupColleaguesMap[selectedGroup] = [...colleagueNames];
-      }
-
-      // 2. 切換至新組別
-      selectedGroup = grp;
-      updateRowSelectOptions();
-
-      // 3. 讀取新組別專屬名單（若從未入過則自動生成，入過就完整保留）
-      const total = ROSTERS[selectedGroup].totalRows;
-      if (groupColleaguesMap[selectedGroup] && groupColleaguesMap[selectedGroup].length === total) {
-        colleagueNames = [...groupColleaguesMap[selectedGroup]];
-      } else {
-        initDefaultData();
-      }
-
-      autoSaveData();
-      renderUI();
-    };
-
-    // 渲染主畫面
     function renderUI() {
-      // 1. 更新鎖定狀態提示
       const lockBtn = document.getElementById("toggleLockBtn");
       const lockNotice = document.getElementById("lockNotice");
       if (isLocked) {
@@ -477,13 +397,8 @@
         lockNotice.style.color = "#d35400";
       }
 
-      // 2. 計算目前瀏覽週的日期範圍
-      const baseAbs = getAbsIndex(baseYear, baseWeek);
-      const weekDiff = currentViewAbsWeek - baseAbs;
-
-      // 推算目前的週一
-      const currentMon = getMondayOfWeek(baseYear, baseWeek);
-      currentMon.setDate(currentMon.getDate() + weekDiff * 7);
+      const weekDiff = currentViewAbsWeek - baseAbsWeek;
+      const currentMon = getMondayOfWeek(currentViewAbsWeek);
 
       const monStr = formatDateShort(currentMon);
       const sunDate = new Date(currentMon);
@@ -492,7 +407,6 @@
 
       document.getElementById("rotaDateTitle").innerText = `${monStr} - ${sunStr}`;
 
-      // 3. 生成星期標題列日期
       for (let d = 0; d < 7; d++) {
         const curD = new Date(currentMon);
         curD.setDate(curD.getDate() + d);
@@ -507,20 +421,17 @@
         }
       }
 
-            // 4. 根據所選組別動態生成表格資料
       const totalRows = ROSTERS[selectedGroup].totalRows;
       const tbody = document.getElementById("rotaTableBody");
       tbody.innerHTML = "";
 
-            for (let rowIdx = 0; rowIdx < totalRows; rowIdx++) {
+      for (let rowIdx = 0; rowIdx < totalRows; rowIdx++) {
         let effectiveName = "";
 
         if (isLocked) {
-          // 🔒 鎖定狀態：人名才跟隨週期滾動！
           const targetIdx = (rowIdx - (weekDiff % totalRows) + totalRows) % totalRows;
           effectiveName = colleagueNames[targetIdx] || `第 ${rowIdx + 1} 行同事`;
         } else {
-          // 🔓 解鎖狀態：完全鎖死當前畫面，畫面上第幾行就固定顯示第幾個，翻週絕對不郁！
           effectiveName = colleagueNames[rowIdx] || "";
         }
 
@@ -529,14 +440,12 @@
 
         let rowHtml = `<tr class="${trClass}">`;
 
-        // 姓名欄 (解鎖時允許直接編輯目前行數，鎖定時純文字)
         if (isLocked) {
           rowHtml += `<td class="name-col">${effectiveName} ${isMyRow ? '📍' : ''}</td>`;
         } else {
           rowHtml += `<td class="name-col"><input class="name-input" type="text" value="${effectiveName}" onchange="updateName(${rowIdx}, this.value)"></td>`;
         }
 
-        // 7天班次
         const shiftRow = ROSTERS[selectedGroup].data[rowIdx];
         for (let d = 0; d < 7; d++) {
           const shift = shiftRow[d];
@@ -552,6 +461,7 @@
         rowHtml += `</tr>`;
         tbody.innerHTML += rowHtml;
       }
+    }
 
     function formatDateShort(dt) {
       const d = String(dt.getDate()).padStart(2, '0');
@@ -560,18 +470,30 @@
       return `${d}-${m}-${y}`;
     }
 
-    // 切換組別
     window.onGroupChange = (grp) => {
+      if (colleagueNames && colleagueNames.length === ROSTERS[selectedGroup].totalRows) {
+        groupColleaguesMap[selectedGroup] = [...colleagueNames];
+      }
+
       selectedGroup = grp;
       updateRowSelectOptions();
-      initDefaultData();
+
+      const total = ROSTERS[selectedGroup].totalRows;
+      if (groupColleaguesMap[selectedGroup] && groupColleaguesMap[selectedGroup].length === total) {
+        colleagueNames = [...groupColleaguesMap[selectedGroup]];
+      } else {
+        initDefaultData();
+      }
+
       autoSaveData();
       renderUI();
     };
 
-    // 全域操作函式
     window.toggleLock = () => {
       isLocked = !isLocked;
+      if (isLocked) {
+        baseAbsWeek = currentViewAbsWeek;
+      }
       autoSaveData();
       renderUI();
     };
@@ -580,19 +502,6 @@
       colleagueNames[rowIdx] = val.trim();
       autoSaveData();
     };
-
-    window.toggleLock = () => {
-      isLocked = !isLocked;
-      if (isLocked) {
-        // 當由解鎖切換至「鎖定」時，將目前正在睇緊呢一週設為基準錨點，確保鎖定後人名完完全全留喺原位
-        const yw = getYearWeekFromAbsIndex(currentViewAbsWeek);
-        baseYear = yw.year;
-        baseWeek = yw.week;
-      }
-      autoSaveData();
-      renderUI();
-    };
-};
 
     window.prevWeek = () => {
       currentViewAbsWeek--;
@@ -607,10 +516,10 @@
     };
 
     window.resetThisWeek = () => {
-      currentViewAbsWeek = getTodayAbsIndex();
+      currentViewAbsWeek = getAbsoluteWeekIndex(new Date());
       const now = new Date();
       const day = now.getDay();
-      highlightDayIdx = (day === 0) ? 6 : day - 1; // 自動直框突出今日
+      highlightDayIdx = (day === 0) ? 6 : day - 1;
       renderUI();
     };
 
@@ -622,34 +531,21 @@
       const day = targetDate.getDay();
       highlightDayIdx = (day === 0) ? 6 : day - 1;
 
-      const monday = new Date(targetDate);
-      monday.setDate(targetDate.getDate() - highlightDayIdx);
-
-      const baseMon = getMondayOfWeek(baseYear, baseWeek);
-      const diffDays = Math.round((monday - baseMon) / (1000 * 60 * 60 * 24));
-      const diffWeeks = Math.round(diffDays / 7);
-
-      currentViewAbsWeek = getAbsIndex(baseYear, baseWeek) + diffWeeks;
+      currentViewAbsWeek = getAbsoluteWeekIndex(targetDate);
       renderUI();
 
       document.getElementById("rotaTableWrapper").scrollIntoView({ behavior: 'smooth' });
     };
 
-        window.updateMyInfo = () => {
+    window.updateMyInfo = () => {
       myBaseRow = parseInt(document.getElementById("mySelfRow").value);
-      
-      // 將目前正在瀏覽的週數即時設為基準起點
-      const yw = getYearWeekFromAbsIndex(currentViewAbsWeek);
-      baseYear = yw.year;
-      baseWeek = yw.week;
+      baseAbsWeek = currentViewAbsWeek; // 直接錨定在目前所看的這週
 
       const total = ROSTERS[selectedGroup].totalRows;
       if (!colleagueNames || colleagueNames.length !== total) {
         initDefaultData();
       } else {
-        // 清除舊有的「自己」標記，避免重複
         colleagueNames = colleagueNames.map((name, i) => (name === MY_LABEL ? String.fromCharCode(65 + i) : name));
-        // 將「自己」精準放入所選行數
         colleagueNames[myBaseRow - 1] = MY_LABEL;
       }
 
@@ -658,7 +554,6 @@
       alert("✅ 已更新！目前週「自己」已成功固定於第 " + myBaseRow + " 行。");
     };
 
-    // 啟動登入監聽
     onAuthStateChanged(auth, async (user) => {
       currentUser = user;
       await loadSavedData();
@@ -667,8 +562,7 @@
 </head>
 <body>
 
-    <div class="container">
-    <!-- 1. 最頂置中重新整理按鈕 -->
+  <div class="container">
     <div style="text-align:center; margin-bottom:10px;">
       <button onclick="location.reload(true)" style="background:#34495e; color:white; border:none; padding:6px 16px; border-radius:6px; font-size:0.8rem; cursor:pointer; font-weight:bold;">🔄 重新整理 (Refresh)</button>
     </div>
@@ -681,13 +575,12 @@
       <a href="swap.html" style="padding:6px 10px; border-radius:6px; font-size:0.8rem; font-weight:bold; text-decoration:none; background:#e67e22; color:white;">🔄 實體更表模擬與調更</a>
     </div>
 
-            <!-- 頂部設定卡片 (常駐固定顯示，採用 calc.html 鮮明風格) -->
+    <!-- 頂部設定卡片 -->
     <div style="background:#ffffff; border:1.5px solid #3182ce; border-radius:10px; padding:12px; margin-bottom:12px; box-shadow:0 3px 8px rgba(49,130,206,0.12);">
       <div style="font-weight:bold; color:#2b6cb0; font-size:0.92rem; margin-bottom:8px; display:flex; align-items:center; gap:5px;">
         ⚙️ 基準定位與跳日設定
       </div>
 
-      <!-- ① 組別與基準行數 (並排) -->
       <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px; flex-wrap:wrap; background:#ebf8ff; padding:8px; border-radius:6px; border:1px solid #bee3f8;">
         <div style="display:flex; align-items:center; gap:4px;">
           <span style="font-size:0.82rem; font-weight:bold; color:#2c5282;">組別：</span>
@@ -702,29 +595,26 @@
         </div>
 
         <div style="display:flex; align-items:center; gap:4px;">
-<span style="font-size:0.82rem; font-weight:bold; color:#2c5282;">目前週「自己」處於：</span>
+          <span style="font-size:0.82rem; font-weight:bold; color:#2c5282;">目前週「自己」處於：</span>
           <select id="mySelfRow" style="padding:4px 6px; font-weight:bold; border:1px solid #90cdf4; border-radius:5px; background:#fff; font-size:0.82rem;"></select>
         </div>
 
         <button class="btn" onclick="updateMyInfo()" style="background:#3182ce; color:white; padding:5px 12px; border-radius:5px; font-size:0.82rem;">儲存設定</button>
       </div>
 
-      <!-- ② 快速跳指定日子 -->
       <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
         <span style="font-size:0.82rem; font-weight:bold; color:#2d3748;">🎯 快速跳至指定日子 (以直框顯示)：</span>
         <input type="date" id="jumpDatePicker" onchange="onJumpDateChange(this.value)" style="padding:4px 6px; border:1px solid #cbd5e1; border-radius:5px; font-size:0.82rem; background:#fff;">
       </div>
     </div>
 
-    <!-- 🌟 更表操作列 (鎖定按鈕置於本週按鈕正上方) -->
+    <!-- 更表操作列 -->
     <div style="display:flex; flex-direction:column; align-items:center; gap:6px; margin:10px 0;">
-      <!-- 鎖定按鈕置中 -->
       <div>
         <button id="toggleLockBtn" class="btn btn-primary" onclick="toggleLock()" style="padding:6px 16px; font-size:0.85rem; box-shadow:0 2px 5px rgba(0,0,0,0.1);">🔒 已鎖定名單</button>
       </div>
       <div id="lockNotice" style="font-size:0.75rem; font-weight:bold; text-align:center;"></div>
 
-      <!-- 上週 / 本週 / 下週 翻週按鈕 -->
       <div style="display:flex; justify-content:center; align-items:center; gap:8px;">
         <button class="btn btn-purple" onclick="prevWeek()" style="padding:6px 14px; font-size:0.85rem;">◀ 上一週</button>
         <button class="btn btn-purple" onclick="resetThisWeek()" style="padding:6px 16px; font-size:0.85rem;">📅 本週</button>
@@ -732,7 +622,7 @@
       </div>
     </div>
 
-    <!-- 🌟 紙本 ROTA 表格區 -->
+    <!-- 紙本 ROTA 表格區 -->
     <div class="rota-wrapper" id="rotaTableWrapper">
       <h2 class="rota-header-title">PHARMACY DUTY ROTA</h2>
       <div class="rota-header-sub" id="rotaDateTitle">05 OCT 2026 - 11 OCT 2026</div>
@@ -750,9 +640,7 @@
             <th id="thDay_6">SUN<br><span id="dayHeaderDate_6" style="font-size:0.7rem; font-weight:normal;"></span></th>
           </tr>
         </thead>
-        <tbody id="rotaTableBody">
-          <!-- 14行數據由 JS 自動渲染 -->
-        </tbody>
+        <tbody id="rotaTableBody"></tbody>
       </table>
     </div>
 
