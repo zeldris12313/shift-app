@@ -484,28 +484,80 @@
         window.userLogout = () => signOut(auth);
 
     // ------------- Firebase 資料讀寫 -------------
+    // ------------- Firebase 資料讀寫 (支援 LocalStorage 離線秒開快取) -------------
     async function loadUserData() {
       if (!currentUser) return;
       const uid = currentUser.uid;
+      const cacheKey = "user_cache_" + uid;
+
+      // 1. ⚡ 第一步：立即讀取本地快取 (0.01秒瞬間渲染，告別載入延遲)
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        try {
+          const cData = JSON.parse(cached);
+          userPhUsage = cData.userPhUsage || {};
+          userShiftOverrides = cData.userShiftOverrides || {};
+          userDayNotes = cData.userDayNotes || {};
+          userRecurringNotes = cData.userRecurringNotes || [];
+          timelineAnchors = cData.timelineAnchors || [{ absWeek: todayAbsWeek, group: 'group3', startRow: 14 }];
+          vacationWeeks = new Set(cData.vacationWeeks || []);
+          clearedYears = new Set(cData.clearedYears || []);
+          userColleagueDebts = cData.userColleagueDebts || {};
+          userDebtLogs = cData.userDebtLogs || {};
+
+          // 本地快取秒開渲染！
+          renderDebtsSummary();
+          renderPhYearChips();
+          renderUnifiedCalendar();
+        } catch (err) {
+          console.warn("讀取本地快取失敗，將從雲端讀取:", err);
+        }
+      }
+
+      // 2. 🌐 第二步：背景並行向 Firebase 同步最新數據 (靜默更新，保證資料一致)
       const getD = async (col) => (await getDoc(doc(db, col, uid))).data() || {};
-      userPhUsage = (await getD("user_ph_usage")).usage || {};
-      userShiftOverrides = (await getD("user_shift_overrides")).overrides || {};
-      userDayNotes = (await getD("user_day_notes")).notes || {};
       
-      const tl = await getD("user_timeline");
-      timelineAnchors = tl.anchors || [{ absWeek: todayAbsWeek, group: 'group3', startRow: 14 }];
-      vacationWeeks = new Set(tl.vacations || []);
-      clearedYears = new Set(tl.clearedYears || []);
+      try {
+        const [phData, ovData, notesData, tlData, recData, debtData] = await Promise.all([
+          getD("user_ph_usage"),
+          getD("user_shift_overrides"),
+          getD("user_day_notes"),
+          getD("user_timeline"),
+          getD("user_recurring_notes"),
+          getD("user_shift_debts")
+        ]);
 
-      // 載入重複備忘 (移至此處正確載入)
-      const recSnap = await getD("user_recurring_notes");
-      userRecurringNotes = recSnap.list || [];
+        userPhUsage = phData.usage || {};
+        userShiftOverrides = ovData.overrides || {};
+        userDayNotes = notesData.notes || {};
+        userRecurringNotes = recData.list || [];
+        timelineAnchors = tlData.anchors || [{ absWeek: todayAbsWeek, group: 'group3', startRow: 14 }];
+        vacationWeeks = new Set(tlData.vacations || []);
+        clearedYears = new Set(tlData.clearedYears || []);
+        userColleagueDebts = debtData.debts || {};
+        userDebtLogs = debtData.logs || {};
 
-      // 載入借還鐘資料
-      const debtData = await getD("user_shift_debts");
-      userColleagueDebts = debtData.debts || {};
-      userDebtLogs = debtData.logs || {};
-      renderDebtsSummary();
+        // 3. 💾 將最新雲端資料存入本地快取，供下次秒開使用
+        const dataToCache = {
+          userPhUsage,
+          userShiftOverrides,
+          userDayNotes,
+          userRecurringNotes,
+          timelineAnchors,
+          vacationWeeks: Array.from(vacationWeeks),
+          clearedYears: Array.from(clearedYears),
+          userColleagueDebts,
+          userDebtLogs
+        };
+        localStorage.setItem(cacheKey, JSON.stringify(dataToCache));
+
+        // 4. 背景更新完成後刷新介面
+        renderDebtsSummary();
+        renderPhYearChips();
+        renderUnifiedCalendar();
+      } catch (netErr) {
+        console.error("雲端同步失敗 (若有本地快取仍可離線查看):", netErr);
+      }
     }
 
     async function saveUserTimeline() {
@@ -914,7 +966,12 @@
         logs: userDebtLogs
       });
       renderDebtsSummary();
-
+      // 即時更新本地快取
+      localStorage.setItem("user_cache_" + currentUser.uid, JSON.stringify({
+        userPhUsage, userShiftOverrides, userDayNotes, userRecurringNotes,
+        timelineAnchors, vacationWeeks: Array.from(vacationWeeks), clearedYears: Array.from(clearedYears),
+        userColleagueDebts, userDebtLogs
+      }));
       closeCombinedModal(); 
       renderPhYearChips(); 
       renderUnifiedCalendar();
