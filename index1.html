@@ -359,7 +359,8 @@
                         // 判斷是否為管理員 (此處填入你的登入帳號名稱或 Email)
         const userEmail = (user.email || "").toLowerCase();
         // 假設你的管理員帳號名稱為 peter888 或特定 email
-        const isAdmin = userEmail.startsWith("peter888") || userEmail.includes("admin") || userEmail.startsWith("mak");
+        // 專屬管理員帳號判定：只有 zeldris12313 登入時才顯示公告發布面板
+        const isAdmin = userEmail.includes("zeldris12313");
         
         const adminBox = document.getElementById("adminAnnouncementBox");
         if (adminBox) {
