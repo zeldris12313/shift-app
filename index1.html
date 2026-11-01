@@ -345,6 +345,7 @@
     let viewCalMonth = todayObj.getMonth() + 1;
     let selectedSummaryYear = todayObj.getFullYear();
     let activeModalDateKey = null;
+    let currentNoticeId = "";
     let activeModalDefaultShift = "";
 
     onAuthStateChanged(auth, async (user) => {
@@ -355,6 +356,23 @@
         document.getElementById("authPanel").style.display = "none";
         document.getElementById("appPanel").style.display = "block";
                 await loadUserData();
+                        // 判斷是否為管理員 (此處填入你的登入帳號名稱或 Email)
+        const userEmail = (user.email || "").toLowerCase();
+        // 假設你的管理員帳號名稱為 peter888 或特定 email
+        const isAdmin = userEmail.startsWith("peter888") || userEmail.includes("admin") || userEmail.startsWith("mak");
+        
+        const adminBox = document.getElementById("adminAnnouncementBox");
+        if (adminBox) {
+          adminBox.style.display = isAdmin ? "block" : "none";
+          if (isAdmin) {
+            // 自動填入現有公告方便修改
+            getDoc(doc(db, "system_meta", "announcement")).then(snap => {
+              if (snap.exists()) {
+                document.getElementById("adminNoticeInput").value = snap.data().content || "";
+              }
+            });
+          }
+        }
         // 強制重設至今日真實年月日
         const now = new Date();
         viewCalYear = now.getFullYear();
@@ -1326,6 +1344,28 @@
       renderUnifiedCalendar();
       alert(editingRecurringId ? "✅ 已成功更新重複備忘！" : "✅ 已成功新增重複備忘！");
     };
+        window.publishAnnouncement = async () => {
+      const content = document.getElementById("adminNoticeInput").value.trim();
+      if (!content) {
+        alert("請輸入公告內容！");
+        return;
+      }
+      if (!confirm("確定要向全體同事發布這則更新公告嗎？\n發布後同事下次打開 App 將自動彈窗顯示。")) return;
+
+      const now = new Date();
+      const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+      const newId = "notice_" + Date.now();
+
+      await setDoc(doc(db, "system_meta", "announcement"), {
+        content: content,
+        dateStr: dateStr,
+        updatedAt: newId
+      });
+
+      // 管理員自己也標記為已讀
+      localStorage.setItem("last_ack_announcement_id", newId);
+      alert("🎉 公告已成功發布！所有同事下次開 App 時均會收到彈窗提示。");
+    };
     // 帳戶修改
     window.openChangeAccountModal = () => { document.getElementById("accountModal").style.display="flex"; };
     window.closeAccountModal = () => document.getElementById("accountModal").style.display="none";
@@ -1472,7 +1512,21 @@
         </div>
       </div>
     </div>
-
+      <!-- 🛠️ 管理員專屬：發布系統公告 (預設隱藏，管理員登入才顯示) -->
+      <div id="adminAnnouncementBox" style="display: none; background: #fffbeb; border: 1.5px solid #fcd34d; border-radius: 12px; padding: 14px; margin-top: 16px; margin-bottom: 80px; box-shadow: 0 2px 6px rgba(217,119,6,0.1);">
+        <div style="font-weight: bold; color: #b45309; font-size: 0.95rem; margin-bottom: 6px;">
+          🛠️ 管理員控制台：發布全體更新公告
+        </div>
+        <div style="font-size: 0.75rem; color: #78350f; margin-bottom: 8px;">
+          在此發布新事項後，所有同事下一次打開 App 時均會自動彈出提示。
+        </div>
+        <textarea id="adminNoticeInput" rows="4" style="width: 100%; border: 1.5px solid #d97706; border-radius: 6px; padding: 8px; font-size: 0.85rem; outline: none; box-sizing: border-box;" placeholder="輸入要向同事公告的更新內容..."></textarea>
+        <div style="display: flex; justify-content: flex-end; margin-top: 8px;">
+          <button onclick="publishAnnouncement()" style="background: #d97706; color: white; border: none; padding: 7px 16px; border-radius: 6px; font-weight: bold; font-size: 0.82rem; cursor: pointer;">
+            🚀 立即發布新公告
+          </button>
+        </div>
+      </div>
     <!-- 左下角浮動大圓形加號按鈕 (移入主介面內，未登入時自動隱藏) -->
     <button class="floating-add-btn" onclick="openRecurringModal()" title="新增每週重複備忘">＋</button>
   </div>
@@ -1550,7 +1604,21 @@
       </div>
     </div>
   </div>
-
+  <!-- 📢 全體通告彈窗 (下一次開 App 自動彈出) -->
+  <div id="announcementModal" class="modal-overlay" style="z-index: 10000;">
+    <div class="modal-card" style="border-top: 5px solid #2563eb; max-width: 360px;">
+      <h3 class="modal-title" style="color: #1d4ed8; font-size: 1.05rem;">
+        📢 系統最新更新公告
+      </h3>
+      <div style="font-size: 0.75rem; color: #64748b; margin-bottom: 8px;" id="announcementDate"></div>
+      <div id="announcementBody" style="font-size: 0.88rem; line-height: 1.5; color: #1e293b; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; white-space: pre-wrap; max-height: 260px; overflow-y: auto;">
+        載入公告中...
+      </div>
+      <div class="modal-btns" style="margin-top: 14px;">
+        <button class="btn-save-modal" style="width: 100%; background: #2563eb;" onclick="ackAnnouncement()">我知道了</button>
+      </div>
+    </div>
+  </div>
   <!-- 修改帳號 Modal -->
   <div id="accountModal" class="modal-overlay">
     <div class="modal-card">
