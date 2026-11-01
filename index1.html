@@ -1432,8 +1432,7 @@
     <!-- 月曆網格區 -->
     <div class="calendar-wrapper">
       
-      <!-- ★ 極致壓縮版設定橫條 ★ -->
-      <!-- ★ 極致壓縮版設定橫條 ★ -->
+       <!-- ★ 極致壓縮版設定橫條 ★ -->
       <div class="setup-bars-container">
         <!-- 1. 快速導入：今日 (切換組別時連動插旗組別，預設第1行) -->
         <div class="quick-setup-bar">
@@ -1455,23 +1454,6 @@
           <b style="color: #8e44ad; white-space: nowrap;">🚩插旗:</b>
           <input type="date" id="anchorDateInput" class="setup-select">
           <select id="anchorGroupSelect" class="setup-select" onchange="onAnchorGroupChange(this.value)">
-            <option value="group2">2組</option>
-            <option value="group3" selected>3組</option>
-            <option value="group4">4組</option>
-            <option value="groupCell">Cell組</option>
-            <option value="groupPharm">Pharm組</option>
-            <option value="groupSenior">Senior組</option>
-          </select>
-          <select id="anchorRowSelect" class="setup-select"></select>
-          <button onclick="setManualAnchorAtDate()" class="btn-quick-nav" style="background:#8e44ad;">套用</button>
-        </div>
-      </div>
-
-        <!-- 2. 指定日期換組/插旗 -->
-        <div class="anchor-setup-bar">
-          <b style="color: #8e44ad; white-space: nowrap;">🚩插旗:</b>
-          <input type="date" id="anchorDateInput" value="2026-10-05" class="setup-select">
-                    <select id="anchorGroupSelect" class="setup-select" onchange="onAnchorGroupChange(this.value)">
             <option value="group2">2組</option>
             <option value="group3" selected>3組</option>
             <option value="group4">4組</option>
