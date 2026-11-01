@@ -354,17 +354,27 @@
         document.getElementById("profileIcon").innerText = initial;
         document.getElementById("authPanel").style.display = "none";
         document.getElementById("appPanel").style.display = "block";
-                await loadUserData();
-        // 強制重設至今日真實年月日
+        await loadUserData();
+
+        // 1. 強制重設至今日真實年月日
         const now = new Date();
         viewCalYear = now.getFullYear();
         viewCalMonth = now.getMonth() + 1;
 
+        // 2. 自動填入今日真實 ISO 日期 (YYYY-MM-DD) 至插旗日期，唔再鎖死舊日
+        const todayISO = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+        const anchorDateInput = document.getElementById("anchorDateInput");
+        if (anchorDateInput) anchorDateInput.value = todayISO;
+
         initOverrideShiftSelect();
+
+        // 3. 今日與插旗行數全部預設為第 1 行
         updateQuickRowSelect("group3");
-        document.getElementById("quickRowSelect").value = "14";
+        document.getElementById("quickRowSelect").value = "1";
+
         onAnchorGroupChange("group3");
-        document.getElementById("anchorRowSelect").value = "14";
+        document.getElementById("anchorRowSelect").value = "1";
+
         buildMonthScroller();
         renderPhYearChips();
         renderUnifiedCalendar();
@@ -586,7 +596,19 @@
     }
 
     // ------------- 獨立雙插旗功能 (今日 vs 特定日期) -------------
-    window.updateQuickRowSelect = (grp) => {
+    // 切換「今日」組別時，連動插旗組別保持一致，並維持第1行
+    window.onQuickGroupChanged = (grp) => {
+      window.updateQuickRowSelect(grp);
+      document.getElementById("quickRowSelect").value = "1";
+
+      const anchorGrpSel = document.getElementById("anchorGroupSelect");
+      if (anchorGrpSel) {
+        anchorGrpSel.value = grp;
+        window.onAnchorGroupChange(grp);
+        document.getElementById("anchorRowSelect").value = "1";
+      }
+    };
+        window.updateQuickRowSelect = (grp) => {
       const sel = document.getElementById("quickRowSelect");
       if(!sel) return;
       sel.innerHTML = "";
@@ -1003,9 +1025,17 @@
     };
 
     // ------------- PH 統計與重置 -------------
+    // ------------- PH 統計與重置 (加入取消按鈕防手誤) -------------
     window.resetYearShiftsAndPh = async () => {
-      if (!confirm(`⚠️ 確定重置清空 ${viewCalYear} 年所有更期？\n重置後，月曆將變回未導入的空白狀態。`)) return;
-      const clrPh = confirm(`❓ 是否連同 ${viewCalYear} 年 PH 扣減紀錄一併清空？`);
+      // 第一道確認：詢問是否確定重置
+      const firstConfirm = confirm(`⚠️ 警告：確定要清空並重置 ${viewCalYear} 年所有已導入更期嗎？\n\n【按「確定」】繼續重置\n【按「取消」】保留所有更期不作任何更改`);
+      if (!firstConfirm) {
+        return; // 使用者按了取消，立即退出，不執行重置
+      }
+
+      // 第二道詢問：是否連同 PH 扣減紀錄一齊清
+      const clrPh = confirm(`❓ 是否連同 ${viewCalYear} 年的 PH (公眾假期) 扣減紀錄一併清除？\n\n【按「確定」】= 連同 PH 一併重置\n【按「取消」】= 僅清空更期，保留 PH 紀錄`);
+
       clearedYears.add(viewCalYear);
       for (const k of Object.keys(userShiftOverrides)) if(k.startsWith(`${viewCalYear}-`)) delete userShiftOverrides[k];
       for (const w of Array.from(vacationWeeks)) if(getWeekInfoFromAbsIndex(w).year === viewCalYear) vacationWeeks.delete(w);
@@ -1015,9 +1045,17 @@
       await saveUserTimeline();
       await setDoc(doc(db,"user_shift_overrides",currentUser.uid),{overrides:userShiftOverrides});
       if(clrPh) await setDoc(doc(db,"user_ph_usage",currentUser.uid),{usage:userPhUsage});
+
+      // 同步更新本地快取
+      localStorage.setItem("user_cache_" + currentUser.uid, JSON.stringify({
+        userPhUsage, userShiftOverrides, userDayNotes, userRecurringNotes,
+        timelineAnchors, vacationWeeks: Array.from(vacationWeeks), clearedYears: Array.from(clearedYears),
+        userColleagueDebts, userDebtLogs
+      }));
+
       renderPhYearChips();
       renderUnifiedCalendar();
-      alert("🎉 該年更期已徹底重置清空！");
+      alert("🎉 該年更期已成功重置清空！");
     };
 
     function renderPhYearChips() {
@@ -1395,11 +1433,12 @@
     <div class="calendar-wrapper">
       
       <!-- ★ 極致壓縮版設定橫條 ★ -->
+      <!-- ★ 極致壓縮版設定橫條 ★ -->
       <div class="setup-bars-container">
-        <!-- 1. 快速導入：今日 -->
+        <!-- 1. 快速導入：今日 (切換組別時連動插旗組別，預設第1行) -->
         <div class="quick-setup-bar">
           <b style="color: var(--gc-blue); white-space: nowrap;">📍今日:</b>
-                    <select id="quickGroupSelect" class="setup-select" onchange="updateQuickRowSelect(this.value)">
+          <select id="quickGroupSelect" class="setup-select" onchange="onQuickGroupChanged(this.value)">
             <option value="group2">2組</option>
             <option value="group3" selected>3組</option>
             <option value="group4">4組</option>
@@ -1410,6 +1449,23 @@
           <select id="quickRowSelect" class="setup-select"></select>
           <button onclick="quickApplyToday()" class="btn-quick-nav" style="background:var(--gc-blue);">🚀 推算</button>
         </div>
+
+        <!-- 2. 指定日期換組/插旗 (預設跟隨今日與第1行) -->
+        <div class="anchor-setup-bar">
+          <b style="color: #8e44ad; white-space: nowrap;">🚩插旗:</b>
+          <input type="date" id="anchorDateInput" class="setup-select">
+          <select id="anchorGroupSelect" class="setup-select" onchange="onAnchorGroupChange(this.value)">
+            <option value="group2">2組</option>
+            <option value="group3" selected>3組</option>
+            <option value="group4">4組</option>
+            <option value="groupCell">Cell組</option>
+            <option value="groupPharm">Pharm組</option>
+            <option value="groupSenior">Senior組</option>
+          </select>
+          <select id="anchorRowSelect" class="setup-select"></select>
+          <button onclick="setManualAnchorAtDate()" class="btn-quick-nav" style="background:#8e44ad;">套用</button>
+        </div>
+      </div>
 
         <!-- 2. 指定日期換組/插旗 -->
         <div class="anchor-setup-bar">
