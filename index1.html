@@ -413,6 +413,11 @@
         viewCalYear = now.getFullYear();
         viewCalMonth = now.getMonth() + 1;
 
+        // 每次開 App 自動將插旗日期填入當日真實日期 (YYYY-MM-DD)
+        const todayISO = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+        const anchorDateInput = document.getElementById("anchorDateInput");
+        if (anchorDateInput) anchorDateInput.value = todayISO;
+
         initOverrideShiftSelect();
         updateQuickRowSelect("group3");
         document.getElementById("quickRowSelect").value = "14";
@@ -1492,7 +1497,7 @@
         <!-- 2. 指定日期換組/插旗 -->
         <div class="anchor-setup-bar">
           <b style="color: #8e44ad; white-space: nowrap;">🚩插旗:</b>
-          <input type="date" id="anchorDateInput" value="2026-10-05" class="setup-select">
+          <input type="date" id="anchorDateInput" class="setup-select">
                     <select id="anchorGroupSelect" class="setup-select" onchange="onAnchorGroupChange(this.value)">
             <option value="group2">2組</option>
             <option value="group3" selected>3組</option>
