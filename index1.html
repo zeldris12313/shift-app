@@ -347,7 +347,41 @@
     let activeModalDateKey = null;
     let currentNoticeId = "";
     let activeModalDefaultShift = "";
+    
+    // 檢查最新公告 (支援分帳號記錄已讀狀態)
+    async function checkPublicAnnouncement() {
+      try {
+        const snap = await getDoc(doc(db, "system_meta", "announcement"));
+        if (!snap.exists()) return;
+        const data = snap.data();
+        if (!data || !data.content) return;
 
+        currentNoticeId = String(data.updatedAt || data.content);
+        
+        // 區分不同帳號的已讀記錄 (未登入則用訪客 key)
+        const userKey = currentUser ? currentUser.uid : "guest";
+        const lastAckId = localStorage.getItem("last_ack_announcement_" + userKey);
+
+        // 若該帳號未讀過此版本，即刻彈窗提示
+        if (lastAckId !== currentNoticeId) {
+          document.getElementById("announcementBody").innerText = data.content;
+          document.getElementById("announcementDate").innerText = data.dateStr ? `發布日期：${data.dateStr}` : "";
+          document.getElementById("announcementModal").style.display = "flex";
+        }
+      } catch (err) {
+        console.warn("讀取公告失敗:", err);
+      }
+    }
+    checkPublicAnnouncement();
+
+    window.ackAnnouncement = () => {
+      if (currentNoticeId) {
+        const userKey = currentUser ? currentUser.uid : "guest";
+        localStorage.setItem("last_ack_announcement_" + userKey, currentNoticeId);
+      }
+      document.getElementById("announcementModal").style.display = "none";
+    };
+    
     onAuthStateChanged(auth, async (user) => {
       if (user) {
         currentUser = user;
@@ -388,6 +422,9 @@
         renderPhYearChips();
         renderUnifiedCalendar();
         setupSwipeGestures();
+
+        // 登入或切換帳號後，即刻檢查該帳號是否已讀過最新公告
+        checkPublicAnnouncement();
       } else {
         currentUser = null;
         document.getElementById("authPanel").style.display = "block";
