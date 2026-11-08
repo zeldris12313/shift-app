@@ -846,9 +846,7 @@
 
             let pills = "";
             if (hDay) pills += `<div class="event-pill pill-holiday">${hDay}</div>`;
-            if (fShift) {
-              let pCls = "pill-shift";
-                          if (fShift) {
+                        if (fShift) {
               let pCls = "pill-shift";
               // 判定 1點、2點、3點、4點、5點開工的班次為 P更
               const isPShift = ["1-", "2-", "3-", "4-", "5-"].some(pre => fShift.startsWith(pre));
@@ -1413,8 +1411,9 @@
         updatedAt: newId
       });
 
-      // 管理員自己也標記為已讀
-      localStorage.setItem("last_ack_announcement_id", newId);
+            // 管理員自己也標記為已讀 (對齊分帳號 Key)
+      const userKey = currentUser ? currentUser.uid : "guest";
+      localStorage.setItem("last_ack_announcement_" + userKey, newId);
       alert("🎉 公告已成功發布！所有同事下次開 App 時均會收到彈窗提示。");
     };
     // 帳戶修改
