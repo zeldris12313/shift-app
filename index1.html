@@ -25,8 +25,9 @@
       --pill-holiday: #009688; 
       --pill-note: #039be5;    
       --pill-shift: #4285f4;
+      --pill-evening: #15803d; /* P更：深森林綠 */
       --pill-off: #f1f3f4;
-      --pill-night: #5c6bc0;
+      --pill-night: #0f172a;   /* N更：午夜曜石黑，字體自然反白 */
       --pill-leave: #e53935;
       --pill-ph: #ab47bc;
     }
@@ -94,6 +95,7 @@
     .pill-note { background-color: var(--pill-note); }
     .pill-shift { background-color: var(--pill-shift); }
     .pill-night { background-color: var(--pill-night); }
+    .pill-evening { background-color: var(--pill-evening); }
     .pill-off { background-color: var(--pill-off); color: var(--gc-text); font-weight:bold; }
     .pill-leave { background-color: var(--pill-leave); }
     .pill-ph { background-color: var(--pill-ph); }
@@ -846,8 +848,14 @@
             if (hDay) pills += `<div class="event-pill pill-holiday">${hDay}</div>`;
             if (fShift) {
               let pCls = "pill-shift";
+                          if (fShift) {
+              let pCls = "pill-shift";
+              // 判定 1點、2點、3點、4點、5點開工的班次為 P更
+              const isPShift = ["1-", "2-", "3-", "4-", "5-"].some(pre => fShift.startsWith(pre));
+
               if (fShift === 'W' || fShift === 'R') pCls = "pill-off";
               else if (fShift.startsWith('N')) pCls = "pill-night";
+              else if (isPShift) pCls = "pill-evening"; // 套用深綠色
               else if (fShift === '大假' || fShift === 'AL') pCls = "pill-leave";
               if (custShift) pCls += " custom-override";
               pills += `<div class="event-pill ${pCls}">${fShift}</div>`;
