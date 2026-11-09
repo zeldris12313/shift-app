@@ -1175,7 +1175,6 @@
         }
       }
     }
-    }
     // 渲染 PH 下方之借還鐘結算表
     function renderDebtsSummary() {
       const container = document.getElementById("colleagueDebtsList");
@@ -1601,6 +1600,7 @@
         </div>
 
         <!-- 🟣 大卡片 1：歷年 PH 統計（專屬淡紫大框） -->
+        <div style="background:#fdf9fe; border: 1.5px solid #d7bde2; border-radius:12px; padding:14px; margin-bottom: 16px; box-shadow: 0 2px 6px rgba(142,68,173,0.06);">
           <div style="font-weight:bold; color:#6c3483; font-size:0.95rem; margin-bottom: 8px;">
             📊 歷年 PH 統計（點擊年份切換）：
           </div>
@@ -1647,8 +1647,6 @@
               <div style="font-size:1.6rem; font-weight:bold; color:#c0392b; margin-top:4px;" id="phStatTotalDays">0.00 日</div>
               <!-- 實時剩餘 X日Y小時 (AL最後扣) -->
               <div id="phStatRemainDetail" style="font-size:0.78rem; font-weight:bold; color:#6b21a8; margin-top:4px;"></div>
-            </div>
-          </div>
             </div>
           </div>
         </div>
