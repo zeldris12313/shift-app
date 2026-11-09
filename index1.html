@@ -1170,13 +1170,13 @@
         if (k.startsWith(`${selectedSummaryYear}-`)) tH += v;
       }
       
-      // 更新左邊：已用量
+      // 更新左邊：已用量 (大字紅色日數 + 下方合共小時)
       const titleEl = document.getElementById("summaryYearTitle");
       if (titleEl) titleEl.innerText = `${selectedSummaryYear} 年 已用量`;
-      const totalHEl = document.getElementById("phStatTotalHours");
-      if (totalHEl) totalHEl.innerText = `${tH} 小時`;
       const totalDEl = document.getElementById("phStatTotalDays");
       if (totalDEl) totalDEl.innerText = formatDaysAndHours(tH);
+      const totalHEl = document.getElementById("phStatTotalHours");
+      if (totalHEl) totalHEl.innerText = `已用合共 ${tH} 小時`;
 
       // 3. 計算 PH 總額度 (3個=17日, 4個=11.5日, 5個=6日)
       const stored = userYearVacationCounts[selectedSummaryYear];
@@ -1695,8 +1695,10 @@
             <!-- 左邊：已用量 -->
             <div style="flex: 1; border-right: 1.5px solid #d7bde2; padding-right: 8px;">
               <div style="font-size:0.85rem; font-weight:bold; color:#7d3c98;" id="summaryYearTitle">2026 年 已用量</div>
-              <div style="font-size:0.8rem; color:#555; margin-top:4px;">折合 <b id="phStatTotalDays" style="color:#c0392b;">0日0小時</b></div>
-              <div style="font-size:0.8rem; color:#555; margin-top:4px;">折合 <b id="phStatTotalDays" style="color:#c0392b;">0.00 日</b></div>
+              <!-- 大大隻紅色顯示幾日幾小時 -->
+              <div style="font-size:1.4rem; font-weight:bold; color:#c0392b; margin-top:4px;" id="phStatTotalDays">0日0小時</div>
+              <!-- 下方細字顯示總時數 -->
+              <div style="font-size:0.8rem; color:#555; margin-top:4px;" id="phStatTotalHours">已用合共 0 小時</div>
             </div>
             <!-- 右邊：剩餘量 -->
             <div style="flex: 1.1; padding-left: 8px;">
