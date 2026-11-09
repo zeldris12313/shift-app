@@ -1098,12 +1098,83 @@
     }
     window.selectSummaryYear = (y) => { selectedSummaryYear = y; renderPhYearChips(); updatePhStatistics(); };
 
+        // ------------- 年資滿10年全域鎖定與大假設定 -------------
+    let userHasTenYears = localStorage.getItem("user_ten_years_seniority") === "true";
+    let userYearVacationCounts = JSON.parse(localStorage.getItem("user_year_vac_counts") || "{}");
+
+    window.onUserTenYearChange = (checked) => {
+      userHasTenYears = checked;
+      localStorage.setItem("user_ten_years_seniority", checked ? "true" : "false");
+      updatePhStatistics();
+    };
+
+    window.onUserVacationCountChange = (val) => {
+      userYearVacationCounts[selectedSummaryYear] = parseInt(val);
+      localStorage.setItem("user_year_vac_counts", JSON.stringify(userYearVacationCounts));
+      updatePhStatistics();
+    };
+
+    function formatDaysAndHours(hours) {
+      const isNeg = hours < 0;
+      const absH = Math.abs(hours);
+      const d = Math.floor(absH / 8);
+      const h = absH % 8;
+      const res = `${d}日${h}小時`;
+      return isNeg ? `-${res}` : res;
+    }
+
     function updatePhStatistics() {
+      // 1. 同步當前年份標籤與選單控制項
+      const yearLabel = document.getElementById("settingYearLabel");
+      if (yearLabel) yearLabel.innerText = selectedSummaryYear;
+
+      const tenYearBox = document.getElementById("userTenYearCheck");
+      if (tenYearBox) tenYearBox.checked = userHasTenYears;
+
+      const vacCount = userYearVacationCounts[selectedSummaryYear] || 4; // 預設 4 個大假
+      const vacSelect = document.getElementById("userVacationCountSelect");
+      if (vacSelect) vacSelect.value = String(vacCount);
+
+      // 2. 統計該年已用總時數
       let tH = 0;
-      for (const [k, v] of Object.entries(userPhUsage)) if(k.startsWith(`${selectedSummaryYear}-`)) tH += v;
+      for (const [k, v] of Object.entries(userPhUsage)) {
+        if (k.startsWith(`${selectedSummaryYear}-`)) tH += v;
+      }
       document.getElementById("summaryYearTitle").innerText = `${selectedSummaryYear} 年`;
       document.getElementById("phStatTotalHours").innerText = `${tH} 小時`;
       document.getElementById("phStatTotalDays").innerText = `${(tH/8).toFixed(2)} 日`;
+
+      // 3. 計算 PH 總額度 (3個大假=17日=136h, 4個大假=11.5日=92h, 5個大假=6日=48h)
+      const phQuotaDays = (vacCount === 3) ? 17 : (vacCount === 5) ? 6 : 11.5;
+      const phQuotaHours = phQuotaDays * 8;
+      const alQuotaHours = userHasTenYears ? 16 : 0; // 滿10年有 2日 AL (16小時)
+
+      const remainDetailEl = document.getElementById("phStatRemainDetail");
+      if (!remainDetailEl) return;
+
+      if (tH <= phQuotaHours) {
+        // 【階段一：PH 仲有剩】
+        const remainPhH = phQuotaHours - tH;
+        let txt = `（剩餘：${formatDaysAndHours(remainPhH)} PH`;
+        if (userHasTenYears) {
+          txt += ` ＋ 2日 AL`;
+        }
+        txt += `）`;
+        remainDetailEl.innerHTML = `<span style="color:#6b21a8;">${txt}</span>`;
+      } else {
+        // 【PH 已用盡，多出時數轉扣 AL】
+        const overPhH = tH - phQuotaHours;
+        if (userHasTenYears && overPhH <= alQuotaHours) {
+          // 【階段二：扣減 2日 AL 中】
+          const remainAlH = alQuotaHours - overPhH;
+          remainDetailEl.innerHTML = `<span style="color:#b45309;">（剩餘：0日0小時 PH ＋ ${formatDaysAndHours(remainAlH)} AL）</span>`;
+        } else {
+          // 【階段三：連 AL 都扣盡，透支超假】
+          const totalOver = overPhH - alQuotaHours;
+          remainDetailEl.innerHTML = `<span style="color:#dc2626;">（⚠️ 超假透支：${formatDaysAndHours(totalOver)}）</span>`;
+        }
+      }
+    }
     }
     // 渲染 PH 下方之借還鐘結算表
     function renderDebtsSummary() {
@@ -1530,11 +1601,41 @@
         </div>
 
         <!-- 🟣 大卡片 1：歷年 PH 統計（專屬淡紫大框） -->
-        <div style="background:#fdf9fe; border: 1.5px solid #d7bde2; border-radius:12px; padding:14px; margin-bottom: 16px; box-shadow: 0 2px 6px rgba(142,68,173,0.06);">
           <div style="font-weight:bold; color:#6c3483; font-size:0.95rem; margin-bottom: 8px;">
             📊 歷年 PH 統計（點擊年份切換）：
           </div>
           <div class="ph-year-chips-bar" id="phYearChipsContainer" style="justify-content: flex-start; margin-bottom: 10px;"></div>
+
+          <!-- 💡 假期額度指引與自選方格 (圖2規格) -->
+          <div style="background: white; border: 1.5px solid #d8b4fe; border-left: 5px solid #8e44ad; border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; font-size: 0.8rem; line-height: 1.6; color: #4a1d96;">
+            <div style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">
+              💡 假期額度指引：
+            </div>
+            <ul style="margin: 0; padding-left: 18px; color: #374151;">
+              <li><b>3 個大假</b>：該年享有 <b>17 日</b> PH (11.5 + 5.5 = 17)。</li>
+              <li><b>4 個大假</b>：該年只有 <b>11.5 日</b> PH。</li>
+              <li><b>5 個大假</b>：該年只有 <b>6 日</b> PH (11.5 - 5.5 = 6)。</li>
+              <li><b>年資滿 10 年</b>：享有額外 <b>2 日 AL</b> (年假)。</li>
+              <li>每累積 <b>8 小時</b> 折算為 1 整日 PH。</li>
+            </ul>
+
+            <!-- 自選控制項 (大假數量 + 10年年資鎖定) -->
+            <div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed #e9d5ff; display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
+              <div style="display: flex; align-items: center; gap: 4px;">
+                <b style="color: #6b21a8;"><span id="settingYearLabel">2026</span> 年大假：</b>
+                <select id="userVacationCountSelect" onchange="onUserVacationCountChange(this.value)" style="padding: 2px 6px; border: 1px solid #c084fc; border-radius: 4px; font-weight: bold; background: #faf5ff; color: #581c87; font-size: 0.78rem;">
+                  <option value="3">3 個大假 (17日 PH)</option>
+                  <option value="4" selected>4 個大假 (11.5日 PH)</option>
+                  <option value="5">5 個大假 (6日 PH)</option>
+                </select>
+              </div>
+              <label style="display: flex; align-items: center; gap: 4px; cursor: pointer; font-weight: bold; color: #7e22ce;">
+                <input type="checkbox" id="userTenYearCheck" onchange="onUserTenYearChange(this.checked)">
+                年資滿 10 年 (額外 2 日 AL)
+              </label>
+            </div>
+          </div>
+
           <div style="background:#f4ecf7; border: 1px solid #e8daf0; border-radius:10px; padding:16px; display:flex; justify-content:space-around; align-items:center; text-align:center;">
             <div>
               <div style="font-size:0.85rem; color:#7d3c98;" id="summaryYearTitle">2026 年</div>
@@ -1544,6 +1645,10 @@
             <div>
               <div style="font-size:0.85rem; color:#7d3c98;">折合總日數 (8h=1日)</div>
               <div style="font-size:1.6rem; font-weight:bold; color:#c0392b; margin-top:4px;" id="phStatTotalDays">0.00 日</div>
+              <!-- 實時剩餘 X日Y小時 (AL最後扣) -->
+              <div id="phStatRemainDetail" style="font-size:0.78rem; font-weight:bold; color:#6b21a8; margin-top:4px;"></div>
+            </div>
+          </div>
             </div>
           </div>
         </div>
