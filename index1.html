@@ -212,6 +212,7 @@
     let clearedYears = new Set();
     let timelineAnchors = [];
     let vacationWeeks = new Set();
+    let weekOverrides = {}; // 單週成行調更紀錄 { [absWeek]: { group: 'group3', row: 5 } }
     
     let touchstartX = 0;
     let touchendX = 0;
@@ -564,6 +565,8 @@
           userRecurringNotes = cData.userRecurringNotes || [];
           timelineAnchors = cData.timelineAnchors || [{ absWeek: todayAbsWeek, group: 'group3', startRow: 14 }];
           vacationWeeks = new Set(cData.vacationWeeks || []);
+                    // 在 cData 區塊內補入：
+          weekOverrides = cData.weekOverrides || {};
           clearedYears = new Set(cData.clearedYears || []);
           userColleagueDebts = cData.userColleagueDebts || {};
           userDebtLogs = cData.userDebtLogs || {};
@@ -596,6 +599,8 @@
         userRecurringNotes = recData.list || [];
         timelineAnchors = tlData.anchors || [{ absWeek: todayAbsWeek, group: 'group3', startRow: 14 }];
         vacationWeeks = new Set(tlData.vacations || []);
+                // 在 tlData 區塊內補入：
+        weekOverrides = tlData.weekOverrides || {};
         clearedYears = new Set(tlData.clearedYears || []);
         userColleagueDebts = debtData.debts || {};
         userDebtLogs = debtData.logs || {};
@@ -623,15 +628,35 @@
       }
     }
 
-    async function saveUserTimeline() {
+        async function saveUserTimeline() {
       if (!currentUser) return;
-      await setDoc(doc(db, "user_timeline", currentUser.uid), { anchors: timelineAnchors, vacations: Array.from(vacationWeeks), clearedYears: Array.from(clearedYears) });
+      await setDoc(doc(db, "user_timeline", currentUser.uid), {
+        anchors: timelineAnchors,
+        vacations: Array.from(vacationWeeks),
+        clearedYears: Array.from(clearedYears),
+        weekOverrides: weekOverrides
+      });
+      // 同步更新本地快取，確保即時生效
+      const cacheKey = "user_cache_" + currentUser.uid;
+      const cached = JSON.parse(localStorage.getItem(cacheKey) || "{}");
+      cached.timelineAnchors = timelineAnchors;
+      cached.vacationWeeks = Array.from(vacationWeeks);
+      cached.clearedYears = Array.from(clearedYears);
+      cached.weekOverrides = weekOverrides;
+      localStorage.setItem(cacheKey, JSON.stringify(cached));
     }
 
     // ------------- 推算核心 -------------
-    function getWeekShiftState(absWeek) {
+        function getWeekShiftState(absWeek) {
       const wInfo = getWeekInfoFromAbsIndex(absWeek);
       if (vacationWeeks.has(absWeek)) return { isVacation: true, shifts: ["大假","大假","大假","大假","大假","大假","大假"] };
+      if (weekOverrides[absWeek]) {
+        const ov = weekOverrides[absWeek];
+        const rost = ROSTERS[ov.group];
+        if (rost && rost.data[ov.row - 1]) {
+          return { isVacation: false, isWeekSwapped: true, group: ov.group, rowNum: ov.row, shifts: rost.data[ov.row - 1] };
+        }
+      }
       if (clearedYears.has(wInfo.year)) return { isCleared: true, shifts: ["","","","","","",""] };
       if (!timelineAnchors.some(a => a.manual)) return { isCleared: true, shifts: ["","","","","","",""] };
       
@@ -813,12 +838,13 @@
         const wInfo = getWeekInfoFromAbsIndex(w);
         const st = getWeekShiftState(w);
         
-        let rowTag = st.isCleared ? "未導入" : st.isVacation ? "大假" : st.isPending ? "待入位" : `第${st.rowNum}行`;
+        let rowTag = st.isCleared ? "未導入" : st.isVacation ? "大假" : st.isPending ? "待入位" : st.isWeekSwapped ? `<span style="color:#0284c7; font-weight:bold;">換:${ROSTERS[st.group].name}<br>第${st.rowNum}行</span>` : `第${st.rowNum}行`;
         let btnTxt = st.isVacation ? "取消" : "大假";
 
         html += `<tr><td style="text-align:center;">
           <div class="week-tag">${rowTag}</div>
           <button class="week-btn" onclick="toggleVacationWeek(${w})">${btnTxt}</button>
+          <button class="week-btn" style="background:#e0f2fe; color:#0369a1; border-color:#bae6fd; margin-top:4px;" onclick="openWeekSwapModal(${w})">換行</button>
         </td>`;
 
         for (let d = 0; d < 7; d++) {
@@ -889,7 +915,75 @@
       await saveUserTimeline(); 
       renderUnifiedCalendar();
     };
+    // ------------- 單週成行調更控制 -------------
+    let activeSwapAbsWeek = null;
 
+    window.openWeekSwapModal = (absWeek) => {
+      activeSwapAbsWeek = absWeek;
+      const wInfo = getWeekInfoFromAbsIndex(absWeek);
+      const sun = new Date(wInfo.monday);
+      sun.setDate(sun.getDate() + 6);
+      const fmt = (d) => `${d.getMonth()+1}月${d.getDate()}日`;
+      document.getElementById("weekSwapDateRange").innerText = `📅 調更週期：${fmt(wInfo.monday)} (一) 至 ${fmt(sun)} (日)`;
+
+      const existing = weekOverrides[absWeek];
+      const defaultGroup = existing ? existing.group : (document.getElementById("quickGroupSelect").value || "group3");
+      document.getElementById("weekSwapGroupSelect").value = defaultGroup;
+      
+      onWeekSwapGroupChange(defaultGroup);
+      if (existing) {
+        document.getElementById("weekSwapRowSelect").value = String(existing.row);
+      }
+      updateWeekSwapPreview();
+      document.getElementById("weekSwapModal").style.display = "flex";
+    };
+
+    window.onWeekSwapGroupChange = (grp) => {
+      const sel = document.getElementById("weekSwapRowSelect");
+      sel.innerHTML = "";
+      for (let r = 1; r <= ROSTERS[grp].totalRows; r++) {
+        sel.innerHTML += `<option value="${r}">第 ${r} 行</option>`;
+      }
+      updateWeekSwapPreview();
+    };
+
+    window.updateWeekSwapPreview = () => {
+      const grp = document.getElementById("weekSwapGroupSelect").value;
+      const row = parseInt(document.getElementById("weekSwapRowSelect").value);
+      const shifts = ROSTERS[grp]?.data[row - 1];
+      const previewEl = document.getElementById("weekSwapPreview");
+      if (shifts && previewEl) {
+        const days = ["一", "二", "三", "四", "五", "六", "日"];
+        previewEl.innerHTML = shifts.map((s, idx) => `<span style="display:inline-block; margin:1px 3px;">${days[idx]}:<b style="color:#0284c7;">${s}</b></span>`).join(" ");
+      }
+    };
+
+    window.saveWeekSwap = async () => {
+      if (activeSwapAbsWeek === null) return;
+      const grp = document.getElementById("weekSwapGroupSelect").value;
+      const row = parseInt(document.getElementById("weekSwapRowSelect").value);
+      
+      // 若該週原本設了大假，先自動取消大假狀態以顯示新班次
+      vacationWeeks.delete(activeSwapAbsWeek);
+      weekOverrides[activeSwapAbsWeek] = { group: grp, row: row };
+      
+      await saveUserTimeline();
+      closeWeekSwapModal();
+      renderUnifiedCalendar();
+    };
+
+    window.clearWeekSwap = async () => {
+      if (activeSwapAbsWeek === null) return;
+      delete weekOverrides[activeSwapAbsWeek];
+      await saveUserTimeline();
+      closeWeekSwapModal();
+      renderUnifiedCalendar();
+    };
+
+    window.closeWeekSwapModal = () => {
+      document.getElementById("weekSwapModal").style.display = "none";
+      activeSwapAbsWeek = null;
+    };
     function initOverrideShiftSelect() {
       const s = document.getElementById("modalShiftSelect");
       s.innerHTML = `<option value="">-- 維持預設 --</option>`;
@@ -1076,6 +1170,7 @@
       clearedYears.add(viewCalYear);
       for (const k of Object.keys(userShiftOverrides)) if(k.startsWith(`${viewCalYear}-`)) delete userShiftOverrides[k];
       for (const w of Array.from(vacationWeeks)) if(getWeekInfoFromAbsIndex(w).year === viewCalYear) vacationWeeks.delete(w);
+      for (const w of Object.keys(weekOverrides)) if(getWeekInfoFromAbsIndex(parseInt(w)).year === viewCalYear) delete weekOverrides[w];
       timelineAnchors = timelineAnchors.filter(a => getWeekInfoFromAbsIndex(a.absWeek).year !== viewCalYear);
       if (clrPh) for (const k of Object.keys(userPhUsage)) if(k.startsWith(`${viewCalYear}-`)) delete userPhUsage[k];
       
@@ -1812,6 +1907,42 @@
         <button class="btn-save-modal" onclick="saveCombinedData()">儲存設定</button>
         <button class="btn-reset-modal" onclick="resetCombinedDate()">還原預設</button>
         <button class="btn-cancel-modal" onclick="closeCombinedModal()">取消</button>
+      </div>
+    </div>
+  </div>
+    <!-- 🔄 單週成行調更 Modal -->
+  <div id="weekSwapModal" class="modal-overlay">
+    <div class="modal-card">
+      <h3 class="modal-title" style="color:#0284c7;">🔄 單週成行調更</h3>
+      <div id="weekSwapDateRange" style="font-size:0.82rem; color:#475569; font-weight:bold; margin-bottom:10px; background:#f0f9ff; padding:6px 10px; border-radius:6px; border-left:4px solid #0284c7;"></div>
+
+      <div class="modal-section" style="background:#f8fafc; border-color:#cbd5e1;">
+        <label style="color:#0369a1;">1️⃣ 選擇要換入的組別：</label>
+        <select id="weekSwapGroupSelect" class="select-block" onchange="onWeekSwapGroupChange(this.value)">
+          <option value="group2">2組</option>
+          <option value="group3">3組</option>
+          <option value="group4">4組</option>
+          <option value="groupCell">Cell組</option>
+          <option value="groupPharm">Pharm組</option>
+          <option value="groupSenior">Senior組</option>
+        </select>
+      </div>
+
+      <div class="modal-section" style="background:#f8fafc; border-color:#cbd5e1;">
+        <label style="color:#0369a1;">2️⃣ 選擇行數：</label>
+        <select id="weekSwapRowSelect" class="select-block" onchange="updateWeekSwapPreview()"></select>
+        <!-- 預覽該行7日班次 -->
+        <div id="weekSwapPreview" style="margin-top:8px; font-size:0.75rem; color:#334155; background:white; padding:6px; border-radius:4px; border:1px solid #e2e8f0; text-align:center; font-weight:bold;"></div>
+      </div>
+
+      <div style="font-size:0.75rem; color:#64748b; margin-bottom:10px;">
+        💡 註：此功能只替換本週（一至日）整行班次，<b>不會影響</b>下週及之後已推算的更期。
+      </div>
+
+      <div class="modal-btns">
+        <button class="btn-save-modal" style="background:#0284c7;" onclick="saveWeekSwap()">確認換行</button>
+        <button class="btn-reset-modal" onclick="clearWeekSwap()">還原原本</button>
+        <button class="btn-cancel-modal" onclick="closeWeekSwapModal()">取消</button>
       </div>
     </div>
   </div>
