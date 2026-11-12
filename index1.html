@@ -81,17 +81,29 @@
     .cal-table td:hover { background: #fbfbfb; }
     .cal-table tr td:first-child { border-left: none; width: 45px; background: #fafafa; border-right: 2px solid var(--gc-border); } 
     .cal-table tr td:last-child { border-right: none; }
+    /* 紅日公眾假期：由上而下淺紅漸變底色 + 紅色日期數字 */
+    .cal-table td.cell-holiday {
+      background: linear-gradient(180deg, #ffd6da 0%, #ffecef 55%, #fff8f8 100%) !important;
+    }
+    .date-num.holiday-num {
+      color: #d32f2f;
+      font-weight: bold;
+    }
 
     /* 強烈標記今日日期 */
-    .cal-table td.cell-today { border: 3px solid var(--gc-blue) !important; background-color: #f8fbff !important; box-shadow: inset 0 0 0 2px rgba(26,115,232,0.05); }
-    
+    .cal-table td.cell-today { border: 3px solid var(--gc-blue) !important; background-color: #f8fbff; box-shadow: inset 0 0 0 2px rgba(26,115,232,0.05); }
     .date-header { display: flex; justify-content: center; margin-bottom: 4px; margin-top: 2px; }
     .date-num { font-size: 0.8rem; color: var(--gc-light-text); width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
     .date-num.today { background: var(--gc-blue); color: white; font-weight: bold; }
 
     /* 膠囊 Event Pills */
     .event-pill { font-size: 0.7rem; padding: 2px 4px; margin-bottom: 2px; border-radius: 4px; color: white; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; line-height: 1.2; }
-    .pill-holiday { background-color: var(--pill-holiday); }
+    .pill-holiday {
+      background-color: #ffe4e6;
+      color: #be123c;
+      border: 1px solid #fda4af;
+      font-weight: bold;
+    }
     .pill-note { background-color: var(--pill-note); }
     .pill-shift { background-color: var(--pill-shift); }
     .pill-night { background-color: var(--pill-night); color: #ffffff !important; font-weight: bold; }
@@ -889,9 +901,11 @@
           const cur = new Date(wInfo.monday); cur.setDate(cur.getDate() + d);
           if (cur.getMonth() + 1 === viewCalMonth) {
             const dk = `${cur.getFullYear()}-${String(cur.getMonth()+1).padStart(2,'0')}-${String(cur.getDate()).padStart(2,'0')}`;
+                        const hDay = HK_PUBLIC_HOLIDAYS[dk];
             const isToday = cur.toDateString() === todayObj.toDateString();
-            const numHtml = `<div class="date-header"><div class="date-num ${isToday ? 'today' : ''}">${cur.getDate()}</div></div>`;
-            const cellClass = isToday ? "cell-today" : "";
+            const numCls = `${isToday ? 'today' : ''} ${(!isToday && hDay) ? 'holiday-num' : ''}`.trim();
+            const numHtml = `<div class="date-header"><div class="date-num ${numCls}">${cur.getDate()}</div></div>`;
+            const cellClass = `${isToday ? 'cell-today' : ''} ${hDay ? 'cell-holiday' : ''}`.trim();
             
             const defShift = st.shifts ? st.shifts[d] : "";
             const custShift = userShiftOverrides[dk] || "";
@@ -905,7 +919,6 @@
               if (item.effectiveEndDate && dk > item.effectiveEndDate) return false;
               return true;
             });
-            const hDay = HK_PUBLIC_HOLIDAYS[dk];
             const phH = userPhUsage[dk] || 0;
 
             let pills = "";
