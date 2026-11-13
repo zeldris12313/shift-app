@@ -636,13 +636,10 @@
       const sunday = new Date(monday);
       sunday.setDate(monday.getDate() + 6);
 
-      const thurs = new Date(monday);
-      thurs.setDate(monday.getDate() + 3);
-      const year = thurs.getFullYear();
-
-      const jan4 = new Date(year, 0, 4);
-      const jan4Abs = getAbsoluteWeekIndex(jan4);
-      const weekNum = absIndex - jan4Abs + 1;
+      // 52週為一個循環：2025-12-29 (absIndex = -1) 為 2026 W1；2026-12-28 (absIndex = 51) 為 2027 W1
+      const cycleOffset = absIndex + 1;
+      const year = 2026 + Math.floor(cycleOffset / 52);
+      const weekNum = (((cycleOffset % 52) + 52) % 52) + 1;
 
       return {
         year,
@@ -656,9 +653,8 @@
     }
 
     function getAbsIndexFromYearWeek(year, weekNum) {
-      const jan4 = new Date(year, 0, 4);
-      const jan4Abs = getAbsoluteWeekIndex(jan4);
-      return jan4Abs + (weekNum - 1);
+      // 52週循環反推：2026 W1 -> -1；2027 W1 -> 51 (2026-12-28)；2027 W5 -> 55 (2027-01-25)
+      return (year - 2026) * 52 + (weekNum - 1) - 1;
     }
 
     const todayObj = new Date();
@@ -1085,7 +1081,7 @@
         }
 
         let weekOptions = "";
-        for (let w = 1; w <= 53; w++) {
+        for (let w = 1; w <= 52; w++) {
           weekOptions += `<option value="${w}" ${w === c.targetWeek ? 'selected' : ''}>Week ${w}</option>`;
         }
 
