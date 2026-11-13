@@ -214,7 +214,7 @@
     .sim-cal-card.accent-purple .sim-card-title { color: #6b21a8; }
     .sim-cal-card.accent-orange .sim-card-title { color: #b45309; }
 
-    .btn-apply-index1 {
+    .btn-apply-main {
       background: #16a34a;
       color: white;
       border: none;
@@ -228,28 +228,7 @@
       align-items: center;
       gap: 4px;
     }
-    .btn-apply-index1:active { transform: scale(0.97); }
-
-    .sim-remark-box {
-      background: #f0fdf4;
-      border-left: 4px solid #16a34a;
-      border-radius: 6px;
-      padding: 7px 10px;
-      margin-bottom: 8px;
-      font-size: 0.8rem;
-      color: #14532d;
-      line-height: 1.45;
-    }
-    .sim-cal-card.accent-purple .sim-remark-box {
-      background: #faf5ff;
-      border-left-color: #8e44ad;
-      color: #4c1d95;
-    }
-    .sim-cal-card.accent-orange .sim-remark-box {
-      background: #fffbeb;
-      border-left-color: #d97706;
-      color: #78350f;
-    }
+    .btn-apply-main:active { transform: scale(0.97); }
 
     .sim-nav-bar {
       display: flex;
@@ -468,13 +447,16 @@
     const ADMIN_USERNAME = "zeldris12313";
     let currentAnnouncementId = null;
 
-    // 從 index1 同步過來的個人主月曆資料
+    // 同步過來的個人主月曆資料
     let userShiftOverrides = {};
     let userDayNotes = {};
     let clearedYears = new Set();
     let timelineAnchors = [];
     let vacationWeeks = new Set();
     let weekOverrides = {};
+
+    // 僅限本頁模擬對比用的「假設大假」週數（絕不寫入主月曆）
+    let simulatedVacationWeeks = new Set();
 
     // ----------------- 香港官方公眾假期清單 (PH) -----------------
     let HK_PUBLIC_HOLIDAYS = {
@@ -659,20 +641,22 @@
 
     const todayObj = new Date();
     const todayAbsWeek = getAbsoluteWeekIndex(todayObj);
+    const thisWeekInfo = getWeekInfoFromAbsIndex(todayAbsWeek);
 
+    // 預設顯示本週星期一及該 Week（僅作介面預設值，不改動任何已儲存更期）
     let myStatus = {
       group: 'group3',
       currentRow: 14,
-      leaveDate: "2026-10-26",
-      leaveYear: 2026,
-      leaveWeek: 44
+      leaveDate: thisWeekInfo.monStr,
+      leaveYear: thisWeekInfo.year,
+      leaveWeek: thisWeekInfo.weekNum
     };
 
-    // 預設全部不勾選，避免畫面出現多個無謂月曆；勾一個出一個
+    // 預設全部不勾選，且預設日期為本週星期一及該 Week
     let colleagues = [
-      { id: 1, name: "同事 A", useKnownDate: false, knownDate: "2026-10-05", knownGroup: "group3", knownRow: 3, group: "group3", baseRow: 3, targetYear: 2026, targetWeek: 45, leaveDate: "2026-11-02", enabled: false, expanded: true, simYear: 2026, simMonth: 11 },
-      { id: 2, name: "同事 B", useKnownDate: false, knownDate: "2026-10-05", knownGroup: "group2", knownRow: 1, group: "group2", baseRow: 1, targetYear: 2026, targetWeek: 45, leaveDate: "2026-11-02", enabled: false, expanded: false, simYear: 2026, simMonth: 11 },
-      { id: 3, name: "同事 C", useKnownDate: false, knownDate: "2026-10-05", knownGroup: "group4", knownRow: 1, group: "group4", baseRow: 1, targetYear: 2026, targetWeek: 45, leaveDate: "2026-11-02", enabled: false, expanded: false, simYear: 2026, simMonth: 11 }
+      { id: 1, name: "同事 A", useKnownDate: false, knownDate: thisWeekInfo.monStr, knownGroup: "group3", knownRow: 3, group: "group3", baseRow: 3, targetYear: thisWeekInfo.year, targetWeek: thisWeekInfo.weekNum, leaveDate: thisWeekInfo.monStr, enabled: false, expanded: true, simYear: thisWeekInfo.monday.getFullYear(), simMonth: thisWeekInfo.monday.getMonth() + 1 },
+      { id: 2, name: "同事 B", useKnownDate: false, knownDate: thisWeekInfo.monStr, knownGroup: "group2", knownRow: 1, group: "group2", baseRow: 1, targetYear: thisWeekInfo.year, targetWeek: thisWeekInfo.weekNum, leaveDate: thisWeekInfo.monStr, enabled: false, expanded: false, simYear: thisWeekInfo.monday.getFullYear(), simMonth: thisWeekInfo.monday.getMonth() + 1 },
+      { id: 3, name: "同事 C", useKnownDate: false, knownDate: thisWeekInfo.monStr, knownGroup: "group4", knownRow: 1, group: "group4", baseRow: 1, targetYear: thisWeekInfo.year, targetWeek: thisWeekInfo.weekNum, leaveDate: thisWeekInfo.monStr, enabled: false, expanded: false, simYear: thisWeekInfo.monday.getFullYear(), simMonth: thisWeekInfo.monday.getMonth() + 1 }
     ];
 
     window.toggleColleagueAccordion = (idx) => {
@@ -917,7 +901,7 @@
 
       const weekSelect = document.getElementById("myLeaveWeekSelect");
       weekSelect.innerHTML = "";
-      for (let w = 1; w <= 53; w++) {
+      for (let w = 1; w <= 52; w++) {
         weekSelect.innerHTML += `<option value="${w}" ${w === myStatus.leaveWeek ? 'selected' : ''}>Week ${w}</option>`;
       }
       document.getElementById("myLeaveYearSelect").value = myStatus.leaveYear;
@@ -968,6 +952,34 @@
       alert(`✅ 已成功導入主月曆！\n由本週起設定為：${ROSTERS[myStatus.group].name} 第 ${myStatus.currentRow} 行。`);
     };
 
+    // 上方綠色按鈕：假設大假（只於下方模擬月曆顯示，絕不改動主月曆資料）
+    window.applySimulatedVacation = () => {
+      const ySel = document.getElementById("myLeaveYearSelect");
+      const wSel = document.getElementById("myLeaveWeekSelect");
+      const lYear = ySel ? parseInt(ySel.value) : myStatus.leaveYear;
+      const lWeek = wSel ? parseInt(wSel.value) : myStatus.leaveWeek;
+
+      myStatus.leaveYear = lYear;
+      myStatus.leaveWeek = lWeek;
+
+      const targetAbs = getAbsIndexFromYearWeek(lYear, lWeek);
+      if (simulatedVacationWeeks.has(targetAbs)) {
+        simulatedVacationWeeks.delete(targetAbs);
+      } else {
+        simulatedVacationWeeks.add(targetAbs);
+      }
+
+      updateMyWeekTipDisplay();
+      window.calculateAll();
+    };
+
+    window.clearSimulatedVacations = () => {
+      simulatedVacationWeeks.clear();
+      updateMyWeekTipDisplay();
+      window.calculateAll();
+    };
+
+    // 下方紅色按鈕：導入大假（兩邊同步改動並儲存至雲端主月曆）
     window.applyMyLeaveWeekToVacation = async () => {
       const ySel = document.getElementById("myLeaveYearSelect");
       const wSel = document.getElementById("myLeaveWeekSelect");
@@ -978,12 +990,14 @@
       myStatus.leaveWeek = lWeek;
 
       const targetAbs = getAbsIndexFromYearWeek(lYear, lWeek);
+      simulatedVacationWeeks.delete(targetAbs);
       vacationWeeks.add(targetAbs);
       timelineAnchors = timelineAnchors.filter(a => a.absWeek < targetAbs);
 
       await saveUserTimeline();
+      updateMyWeekTipDisplay();
       window.calculateAll();
-      alert(`🏖️ 已將 ${lYear} 年 Week ${lWeek} 標記為整週大假！\n下方模擬月曆已同步更新大假週。`);
+      alert(`🏖️ 已將 ${lYear} 年 Week ${lWeek} 正式導入主月曆為整週大假！\n主月曆及下方模擬月曆已同步更新。`);
     };
 
     async function checkPublicAnnouncement(username) {
@@ -1032,6 +1046,16 @@
       }
     };
 
+    function updateMyWeekTipDisplay() {
+      const abs = getAbsIndexFromYearWeek(myStatus.leaveYear, myStatus.leaveWeek);
+      const info = getWeekInfoFromAbsIndex(abs);
+      let simBadge = "";
+      if (simulatedVacationWeeks.size > 0) {
+        simBadge = ` <span style="color:#15803d; margin-left:6px;">| 🌿 假設大假中 (${simulatedVacationWeeks.size}週) <button type="button" onclick="clearSimulatedVacations()" style="background:#e2e8f0; border:none; border-radius:4px; padding:1px 6px; font-size:0.7rem; cursor:pointer; font-weight:bold; color:#334155;">清除假設</button></span>`;
+      }
+      document.getElementById("myWeekTip").innerHTML = `📅 相當於：${info.year} 年 Week ${info.weekNum} (${info.monday.getMonth()+1}/${info.monday.getDate()} - ${info.sunday.getMonth()+1}/${info.sunday.getDate()})${simBadge}`;
+    }
+
     window.onMyLeaveDateChange = (val) => {
       if (!val) return;
       myStatus.leaveDate = val;
@@ -1048,7 +1072,7 @@
       myStatus.leaveWeek = info.weekNum;
       document.getElementById("myLeaveYearSelect").value = info.year;
       document.getElementById("myLeaveWeekSelect").value = info.weekNum;
-      document.getElementById("myWeekTip").innerText = `📅 相當於：${info.year} 年 Week ${info.weekNum} (${info.monday.getMonth()+1}/${info.monday.getDate()} - ${info.sunday.getMonth()+1}/${info.sunday.getDate()})`;
+      updateMyWeekTipDisplay();
     }
 
     window.onMyLeaveWeekChange = () => {
@@ -1058,7 +1082,7 @@
       const info = getWeekInfoFromAbsIndex(abs);
       myStatus.leaveDate = info.monStr;
       document.getElementById("myLeaveDateInput").value = info.monStr;
-      document.getElementById("myWeekTip").innerText = `📅 相當於：${info.year} 年 Week ${info.weekNum} (${info.monday.getMonth()+1}/${info.monday.getDate()} - ${info.sunday.getMonth()+1}/${info.sunday.getDate()})`;
+      updateMyWeekTipDisplay();
       window.calculateAll();
     };
 
@@ -1335,12 +1359,11 @@
           entryRow,
           entryYear: entryInfo.year,
           entryWeek: entryInfo.weekNum,
-          entryMonStr: entryInfo.monStr,
-          entryRangeStr: `${entryInfo.monday.getMonth()+1}/${entryInfo.monday.getDate()}-${entryInfo.sunday.getMonth()+1}/${entryInfo.sunday.getDate()}`
+          entryMonStr: entryInfo.monStr
         };
       });
 
-      // 摘要提示
+      // 摘要提示（已移除 index1 字眼）
       let summaryHtml = `<div style="display:flex; flex-direction:column; gap:6px;">`;
       results.forEach((r) => {
         summaryHtml += `
@@ -1349,7 +1372,7 @@
               🟢 接替【${r.name}】：由 ${r.entryMonStr} (W${r.targetWeek}) 起入位 <b>${r.groupName} 第 ${r.entryRow} 行</b>
             </div>
             <button onclick="applyAnchorToUnified('${r.group}', ${r.entryRow}, ${r.targetAbs}, '${r.name}')" style="background:#16a34a; color:white; border:none; padding:5px 10px; border-radius:5px; font-size:0.78rem; font-weight:bold; cursor:pointer;">
-              👉 導入 index1 主月曆
+              👉 導入主月曆
             </button>
           </div>
         `;
@@ -1362,12 +1385,15 @@
     };
 
     // ----------------- 模擬細月曆計算引擎 -----------------
-    // 入位前 (absWeek < simResult.targetAbs) -> 跟隨 index1.html 主月曆現有資料
-    // 入位後 (absWeek >= simResult.targetAbs) -> 模擬套入接替組別與行數並向後順推
     function getSimulatedWeekShiftState(absWeek, simResult) {
       const wInfo = getWeekInfoFromAbsIndex(absWeek);
 
-      // 1. 入位週及之後：優先執行模擬入位後推算
+      // 0. 假設大假（僅限本頁模擬月曆預覽，不影響主月曆）
+      if (simulatedVacationWeeks.has(absWeek)) {
+        return { isVacation: true, isSimVacation: true, shifts: ["大假","大假","大假","大假","大假","大假","大假"] };
+      }
+
+      // 1. 入位週及之後：執行模擬入位後推算
       if (absWeek >= simResult.targetAbs) {
         const curRoster = ROSTERS[simResult.group];
         const diff = absWeek - simResult.targetAbs;
@@ -1383,7 +1409,7 @@
         };
       }
 
-      // 2. 入位前：完全沿用 index1.html 的真實資料
+      // 2. 入位前：完全沿用主月曆現有真實資料
       if (vacationWeeks.has(absWeek)) {
         return { isVacation: true, shifts: ["大假","大假","大假","大假","大假","大假","大假"] };
       }
@@ -1469,7 +1495,9 @@
           let weekColClass = "mini-week-col";
           let weekTagHtml = `W${wInfo.weekNum}<br>`;
 
-          if (state.isEntryWeek) {
+          if (state.isSimVacation) {
+            weekTagHtml += `<b style="color:#15803d;">假設大假</b>`;
+          } else if (state.isEntryWeek) {
             weekColClass += " sim-entry-week";
             weekTagHtml += `★入位週<br>第${state.rowNum}行`;
           } else if (state.isSimulated) {
@@ -1498,19 +1526,18 @@
               const hDay = HK_PUBLIC_HOLIDAYS[dk];
               const isToday = (cur.toDateString() === todayObj.toDateString());
 
-              // 入位前保留 index1 個人單日調更；入位後展示純模擬推算更期
               const defShift = state.shifts ? state.shifts[d] : "";
-              const custShift = (!state.isSimulated && userShiftOverrides[dk]) ? userShiftOverrides[dk] : "";
+              const custShift = (!state.isSimulated && !state.isSimVacation && userShiftOverrides[dk]) ? userShiftOverrides[dk] : "";
               const fShift = custShift || defShift;
 
               let tdClasses = [];
-              if (state.isEntryWeek) tdClasses.push("mini-cell-entry");
-              else if (state.isSimulated) tdClasses.push("mini-cell-sim");
+              if (state.isEntryWeek && !state.isSimVacation) tdClasses.push("mini-cell-entry");
+              else if (state.isSimulated && !state.isSimVacation) tdClasses.push("mini-cell-sim");
               if (hDay) tdClasses.push("mini-cell-holiday");
               if (isToday) tdClasses.push("mini-cell-today");
 
               let pills = "";
-              if (state.isEntryWeek && d === 0) {
+              if (state.isEntryWeek && !state.isSimVacation && d === 0) {
                 pills += `<div class="mini-pill p-entry-badge">▶ 入位起點</div>`;
               }
               if (hDay) {
@@ -1548,15 +1575,9 @@
               <div class="sim-card-title">
                 📅 模擬月曆：接替【${r.name}】
               </div>
-              <button class="btn-apply-index1" onclick="applyAnchorToUnified('${r.group}', ${r.entryRow}, ${r.targetAbs}, '${r.name}')">
-                👉 確認採用並導入 index1 主月曆
+              <button class="btn-apply-main" onclick="applyAnchorToUnified('${r.group}', ${r.entryRow}, ${r.targetAbs}, '${r.name}')">
+                👉 確認採用並導入主月曆
               </button>
-            </div>
-
-            <!-- 入位推算備註 (Remark) -->
-            <div class="sim-remark-box">
-              <b>📌 入位推算備註：</b>由 <b>${r.entryMonStr}</b>（${r.targetYear} W${r.targetWeek}，${r.entryRangeStr}）起，正式入位 <b>${r.groupName} 第 ${r.entryRow} 行</b> 並自動向後順推。<br>
-              <span style="font-size:0.74rem; opacity:0.9;">* 入位前（白底週數）完全跟隨主頁大月曆現有更期；入位後（淺綠底週數）為模擬新更期走勢。</span>
             </div>
 
             <!-- 細月曆月份導航 -->
@@ -1588,19 +1609,18 @@
       container.innerHTML = allHtml;
     }
 
-    // ----------------- 一鍵導入至 index1.html 主月曆 -----------------
+    // ----------------- 一鍵導入至主月曆 -----------------
     window.applyAnchorToUnified = async (group, row, absWeek, colleagueName) => {
       if (!currentUser) return;
       const info = getWeekInfoFromAbsIndex(absWeek);
       const groupLabel = ROSTERS[group] ? ROSTERS[group].name : group;
 
-      if (!confirm(`確定要正式採用接替【${colleagueName || ''}】的方案，並導入「主頁大月曆 (index1)」嗎？\n\n📅 生效起點：${info.monStr} (${info.year} W${info.weekNum})\n📋 轉入班表：${groupLabel} 第 ${row} 行\n\n（導入後主月曆由該日起將自動按新行數向後推算）`)) {
+      if (!confirm(`確定要正式採用接替【${colleagueName || ''}】的方案，並導入「主頁大月曆」嗎？\n\n📅 生效起點：${info.monStr} (${info.year} W${info.weekNum})\n📋 轉入班表：${groupLabel} 第 ${row} 行\n\n（導入後主月曆由該日起將自動按新行數向後推算）`)) {
         return;
       }
 
       clearedYears.delete(info.year);
 
-      // 清除該日及之後舊旗標並寫入新入位點
       timelineAnchors = timelineAnchors.filter(a => a.absWeek < absWeek);
       timelineAnchors.push({ absWeek, group, startRow: row, manual: true });
       timelineAnchors.sort((a, b) => a.absWeek - b.absWeek);
@@ -1625,7 +1645,6 @@
           weekOverrides: weekOverrides
         });
 
-        // 同步更新 index1.html 的 LocalStorage 快取，確保跳轉過去瞬間顯示最新更期
         const cacheKey = "user_cache_" + currentUser.uid;
         const cached = JSON.parse(localStorage.getItem(cacheKey) || "{}");
         cached.timelineAnchors = timelineAnchors;
@@ -1643,7 +1662,6 @@
       if (!currentUser) return;
       const uid = currentUser.uid;
 
-      // 1. 先讀本地快取加速顯示
       try {
         const cached = JSON.parse(localStorage.getItem("user_cache_" + uid) || "null");
         if (cached) {
@@ -1656,7 +1674,6 @@
         }
       } catch (e) {}
 
-      // 2. 從雲端同步最新主月曆資料
       try {
         const [ovSnap, noteSnap, tlSnap] = await Promise.all([
           getDoc(doc(db, "user_shift_overrides", uid)),
@@ -1749,7 +1766,7 @@
       </div>
     </div>
 
-    <!-- 一鍵跳至模擬月曆按鈕 + 個人定位設定區 (保留原有設計) -->
+    <!-- 一鍵跳至模擬月曆按鈕 + 個人定位設定區 -->
     <div style="margin-bottom:12px;">
       <button onclick="scrollToSimCal()" style="background:#8e44ad; color:white; border:none; padding:10px 14px; border-radius:8px; font-weight:bold; font-size:0.95rem; cursor:pointer; width:100%; box-shadow:0 3px 6px rgba(142,68,173,0.3); display:flex; justify-content:center; align-items:center; gap:6px;">
         📅 跳至模擬對比月曆 ▼
@@ -1780,7 +1797,7 @@
         </button>
       </div>
 
-      <!-- 大假設定區 -->
+      <!-- 大假設定區（右邊改為上下雙按鈕：上綠「假設大假」、下紅「導入大假」） -->
       <div style="display:flex; gap:8px; align-items:stretch; margin-top:10px; margin-bottom:6px;">
         <div class="step-box" style="flex:1; min-width:0; padding:8px;">
           <span class="step-title">③ 幾號開始放假 (小日曆)</span>
@@ -1801,10 +1818,18 @@
           </div>
         </div>
 
-        <button type="button" onclick="applyMyLeaveWeekToVacation()" style="width:96px; flex-shrink:0; background:#e74c3c; color:white; border:none; padding:8px 4px; border-radius:6px; font-size:0.8rem; font-weight:bold; cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; line-height:1.25; box-shadow:0 2px 5px rgba(231,76,60,0.2);">
-          <span style="font-size:1.2rem;">🏖️</span>
-          <span>一鍵將該週<br>設為大假</span>
-        </button>
+        <!-- 右邊上下兩個按鈕 -->
+        <div style="width:96px; flex-shrink:0; display:flex; flex-direction:column; gap:6px;">
+          <button type="button" onclick="applySimulatedVacation()" style="flex:1; background:#16a34a; color:white; border:none; padding:6px 4px; border-radius:6px; font-size:0.82rem; font-weight:bold; cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; line-height:1.2; box-shadow:0 2px 5px rgba(22,163,74,0.2);">
+            <span style="font-size:1rem;">🌿</span>
+            <span>假設大假</span>
+          </button>
+
+          <button type="button" onclick="applyMyLeaveWeekToVacation()" style="flex:1; background:#e74c3c; color:white; border:none; padding:6px 4px; border-radius:6px; font-size:0.82rem; font-weight:bold; cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; line-height:1.2; box-shadow:0 2px 5px rgba(231,76,60,0.2);">
+            <span style="font-size:1rem;">🏖️</span>
+            <span>導入大假</span>
+          </button>
+        </div>
       </div>
 
       <div id="myWeekTip" style="font-size:0.75rem; color:#555; margin-top:4px; font-weight:bold;"></div>
