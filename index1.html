@@ -386,9 +386,10 @@
     function getWeekInfoFromAbsIndex(absIndex) {
       const monday = new Date(ANCHOR_DATE);
       monday.setDate(ANCHOR_DATE.getDate() + absIndex * 7);
-      const year = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + 3).getFullYear();
-      const jan4 = new Date(year, 0, 4);
-      const weekNum = absIndex - getAbsoluteWeekIndex(jan4) + 1;
+      // 52週為一個循環：2025-12-29 (absIndex = -1) 為 2026 W1；2026-12-28 (absIndex = 51) 為 2027 W1
+      const cycleOffset = absIndex + 1;
+      const year = 2026 + Math.floor(cycleOffset / 52);
+      const weekNum = (((cycleOffset % 52) + 52) % 52) + 1;
       return { year, weekNum, absIndex, monday };
     }
 
