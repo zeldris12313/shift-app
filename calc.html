@@ -3,20 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>更期大假銜接、推算與一體化PH個人月曆系統</title>
+  <title>大假銜接推算與模擬月曆對比 - 個人一體化更期系統</title>
+  <link rel="icon" href="icon.png" type="image/png">
+  <link rel="apple-touch-icon" href="icon.png">
   <style>
     :root {
       --primary-color: #2c3e50;
       --accent-color: #e67e22;
       --highlight: #27ae60;
-      --off-bg: #ffeaa7;
-      --night-bg: #dfe6e9;
-      --today-highlight: #fdcb6e;
-      --target-row-bg: #d4edda;
-      --target-row-border: #28a745;
-      --ph-color: #8e44ad;
-      --leave-bg: #fadbd8;
-      --leave-text: #c0392b;
+      --gc-blue: #1a73e8;
+      --pill-shift: #4285f4;
+      --pill-evening: #15803d;
+      --pill-night: brown;
+      --pill-off: #f1f3f4;
+      --pill-leave: #e53935;
     }
     * { box-sizing: border-box; }
     body {
@@ -140,8 +140,8 @@
       padding: 10px;
       border-top: 4px solid #3498db;
     }
-    .colleague-card:nth-child(2) { border-top-color: #9b59b6; }
-    .colleague-card:nth-child(3) { border-top-color: #e67e22; }
+    .colleague-card-wrap:nth-child(2) .colleague-card { border-top-color: #9b59b6; }
+    .colleague-card-wrap:nth-child(3) .colleague-card { border-top-color: #e67e22; }
     .colleague-title {
       font-weight: bold;
       margin-bottom: 6px;
@@ -171,259 +171,217 @@
       font-size: 0.85rem;
     }
 
-    /* 完整大更期表 */
-    .big-roster-section {
-      background: #ffffff;
-      border: 2px solid #2980b9;
-      border-radius: 10px;
-      padding: 12px;
-      margin-bottom: 15px;
+    /* 模擬細月曆上下對比區 */
+    .sim-calendars-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      margin-top: 12px;
     }
-    .big-roster-header {
+    .sim-cal-card {
+      background: #ffffff;
+      border: 2px solid #16a34a;
+      border-radius: 12px;
+      padding: 10px;
+      box-shadow: 0 4px 14px rgba(22, 163, 74, 0.1);
+      overflow: hidden;
+    }
+    .sim-cal-card.accent-purple {
+      border-color: #8e44ad;
+      box-shadow: 0 4px 14px rgba(142, 68, 173, 0.1);
+    }
+    .sim-cal-card.accent-orange {
+      border-color: #d97706;
+      box-shadow: 0 4px 14px rgba(217, 119, 6, 0.1);
+    }
+
+    .sim-card-top {
       display: flex;
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;
       gap: 8px;
       margin-bottom: 8px;
-      border-bottom: 2px solid #ecf0f1;
-      padding-bottom: 6px;
     }
-    .big-roster-title {
-      font-size: 1.05rem;
+    .sim-card-title {
+      font-size: 1rem;
       font-weight: bold;
-      color: #2980b9;
-    }
-    .table-container {
-      width: 100%;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      text-align: center;
-      font-size: 0.8rem;
-    }
-    th, td {
-      padding: 6px 2px;
-      border: 1px solid #e0e0e0;
-    }
-    th { background: #f1f2f6; color: #57606f; }
-    .row-my-current {
-      background-color: #fff9db !important;
-      border-left: 4px solid #f39c12 !important;
-    }
-    .row-highlight-choice {
-      background-color: var(--target-row-bg) !important;
-      border-left: 4px solid var(--target-row-border) !important;
-      font-weight: bold;
-    }
-    .choice-tag {
-      background: #27ae60;
-      color: white;
-      padding: 2px 4px;
-      border-radius: 4px;
-      font-size: 0.68rem;
-      display: inline-block;
-      margin-top: 2px;
-      line-height: 1.2;
-    }
-    .my-tag {
-      background: #f39c12;
-      color: white;
-      padding: 2px 4px;
-      border-radius: 4px;
-      font-size: 0.68rem;
-      display: inline-block;
-      margin-top: 2px;
-    }
-    .cell-today {
-      background-color: var(--today-highlight) !important;
-      border: 2px solid #e1701a !important;
-      font-weight: bold;
-    }
-    .shift-off { background-color: var(--off-bg); color: #d63031; }
-    .shift-night { background-color: var(--night-bg); }
-    .shift-leave { background-color: var(--leave-bg) !important; color: var(--leave-text) !important; font-weight: bold; }
-
-    .section-divider {
-      border: 0;
-      height: 2px;
-      background: linear-gradient(to right, #ccc, #8e44ad, #ccc);
-      margin: 20px 0 15px;
-    }
-
-    /* 一體化個人月曆 */
-    .unified-calendar-box {
-      background: #ffffff;
-      border: 2px solid #8e44ad;
-      border-radius: 10px;
-      padding: 10px;
-      margin-top: 15px;
-      box-shadow: 0 4px 15px rgba(142, 68, 173, 0.08);
-      overflow: hidden;
-    }
-    .unified-header {
+      color: #15803d;
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      flex-wrap: wrap;
       gap: 6px;
-      border-bottom: 2px solid #f4ecf7;
-      padding-bottom: 8px;
-      margin-bottom: 10px;
     }
+    .sim-cal-card.accent-purple .sim-card-title { color: #6b21a8; }
+    .sim-cal-card.accent-orange .sim-card-title { color: #b45309; }
 
-    .ph-rules-card {
-      background: #fdf7fe;
-      border-left: 4px solid #8e44ad;
+    .btn-apply-index1 {
+      background: #16a34a;
+      color: white;
+      border: none;
+      padding: 7px 12px;
       border-radius: 6px;
-      padding: 10px 12px;
-      margin-bottom: 12px;
       font-size: 0.82rem;
-      line-height: 1.5;
-      color: #4a235a;
-    }
-    .ph-rules-list {
-      margin: 6px 0 0 0;
-      padding-left: 18px;
-    }
-    .ph-rules-list li {
-      margin-bottom: 4px;
-    }
-
-    .unified-controls {
-      background: #fbf7fd;
-      border: 1px solid #e8daf0;
-      border-radius: 8px;
-      padding: 8px 10px;
-      margin-bottom: 10px;
-      display: flex;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(22, 163, 74, 0.25);
+      display: inline-flex;
       align-items: center;
-      flex-wrap: wrap;
-      gap: 6px;
+      gap: 4px;
+    }
+    .btn-apply-index1:active { transform: scale(0.97); }
+
+    .sim-remark-box {
+      background: #f0fdf4;
+      border-left: 4px solid #16a34a;
+      border-radius: 6px;
+      padding: 7px 10px;
+      margin-bottom: 8px;
       font-size: 0.8rem;
+      color: #14532d;
+      line-height: 1.45;
+    }
+    .sim-cal-card.accent-purple .sim-remark-box {
+      background: #faf5ff;
+      border-left-color: #8e44ad;
+      color: #4c1d95;
+    }
+    .sim-cal-card.accent-orange .sim-remark-box {
+      background: #fffbeb;
+      border-left-color: #d97706;
+      color: #78350f;
     }
 
-    .cal-nav-bar {
+    .sim-nav-bar {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: #f4ecf7;
-      padding: 6px 8px;
+      background: #f1f5f9;
+      padding: 5px 8px;
       border-radius: 8px;
-      margin: 8px 0;
-      flex-wrap: wrap;
+      margin-bottom: 8px;
       gap: 6px;
     }
-    .cal-nav-btn {
-      background: #8e44ad;
+    .sim-nav-btn {
+      background: #334155;
       color: white;
       border: none;
-      padding: 5px 10px;
-      border-radius: 6px;
-      cursor: pointer;
+      padding: 4px 10px;
+      border-radius: 5px;
+      font-size: 0.78rem;
       font-weight: bold;
-      font-size: 0.8rem;
+      cursor: pointer;
     }
-    .btn-quick-nav {
-      background: #6c3483;
+    .sim-jump-entry-btn {
+      background: #0284c7;
       color: white;
       border: none;
-      padding: 5px 8px;
+      padding: 4px 8px;
       border-radius: 5px;
       font-size: 0.75rem;
-      cursor: pointer;
       font-weight: bold;
+      cursor: pointer;
+    }
+    .sim-month-label {
+      font-weight: bold;
+      font-size: 0.92rem;
+      color: #1e293b;
     }
 
-    .single-month-container {
-      width: 100%;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-    }
-    .month-card {
-      background: white;
-      border: 1.5px solid #8e44ad;
-      border-radius: 8px;
-      overflow: hidden;
-      min-width: 320px;
-      width: 100%;
-    }
-    .month-header {
-      background: #8e44ad;
-      color: white;
-      text-align: center;
-      padding: 6px;
-      font-weight: bold;
-      font-size: 0.95rem;
-    }
-    .month-cal-table {
+    /* 細月曆網格 */
+    .mini-cal-table {
       width: 100%;
       table-layout: fixed;
       border-collapse: collapse;
       font-size: 0.72rem;
+      text-align: center;
     }
-    .month-cal-table th {
-      background: #f8f9fa;
+    .mini-cal-table th {
+      background: #f8fafc;
       padding: 4px 1px;
       font-size: 0.7rem;
-      color: #555;
+      color: #64748b;
+      border: 1px solid #e2e8f0;
     }
-    .month-cal-table td {
-      padding: 2px 1px;
+    .mini-cal-table td {
+      padding: 3px 2px;
       height: 54px;
       vertical-align: top;
-      border: 1px solid #f1f2f6;
-      word-break: break-all;
+      border: 1px solid #e2e8f0;
+      background: #ffffff;
     }
-    .cal-date-num {
+    .mini-week-col {
+      width: 48px;
+      background: #f8fafc !important;
+      vertical-align: middle !important;
+      font-size: 0.64rem;
+      color: #475569;
+      line-height: 1.2;
+      border-right: 2px solid #cbd5e1 !important;
+    }
+    .mini-week-col.sim-entry-week {
+      background: #dcfce7 !important;
+      color: #15803d !important;
+      border-left: 4px solid #16a34a !important;
+      font-weight: bold;
+    }
+    .mini-week-col.sim-post-week {
+      background: #f0fdf4 !important;
+      color: #166534 !important;
+      border-left: 3px solid #4ade80 !important;
+    }
+    .mini-cell-sim {
+      background-color: #f7fee7 !important;
+    }
+    .mini-cell-entry {
+      background-color: #ecfdf5 !important;
+    }
+    .mini-cell-holiday {
+      background: linear-gradient(180deg, #ffd6da 0%, #ffecef 60%, #fff8f8 100%) !important;
+    }
+    .mini-cell-today {
+      border: 2px solid var(--gc-blue) !important;
+    }
+    .mini-date-num {
+      font-size: 0.7rem;
+      font-weight: bold;
+      color: #64748b;
+      margin-bottom: 2px;
+    }
+    .mini-date-num.holiday-txt {
+      color: #d32f2f;
+    }
+    .mini-pill {
       font-size: 0.68rem;
       font-weight: bold;
-      color: #7f8c8d;
-      margin-bottom: 1px;
-    }
-    .cal-shift-text {
-      font-size: 0.75rem;
-      font-weight: bold;
       border-radius: 3px;
-      padding: 1px 1px;
-      line-height: 1.1;
-      display: inline-block;
-      width: 100%;
-    }
-    .cal-shift-custom {
-      border: 1.5px solid #2980b9 !important;
-      position: relative;
-    }
-    .has-note-cell {
-      border: 2px solid #3498db !important;
-      background-color: #ebf5fb !important;
-    }
-    .note-badge {
-      display: block;
-      background: #2980b9;
-      color: white;
-      font-size: 0.58rem;
       padding: 1px 2px;
-      border-radius: 2px;
-      margin-top: 1px;
+      line-height: 1.15;
+      color: white;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      font-weight: bold;
+      margin-bottom: 1px;
     }
-    .announcement-modal {
+    .p-shift { background-color: var(--pill-shift); }
+    .p-evening { background-color: var(--pill-evening); }
+    .p-night { background-color: var(--pill-night); color: #ffffff !important; }
+    .p-off { background-color: var(--pill-off); color: #3c4043; }
+    .p-leave { background-color: var(--pill-leave); }
+    .p-custom { background-color: #f39c12; border: 1px solid #d35400; }
+    .p-holiday { background-color: #ffe4e6; color: #be123c; border: 1px solid #fda4af; font-size: 0.58rem; }
+    .p-entry-badge { background-color: #16a34a; color: white; font-size: 0.56rem; }
+
+    /* 公告與帳號 Modal */
+    .announcement-modal, .modal-overlay {
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.65);
+      background: rgba(0,0,0,0.6);
       display: none;
       align-items: center;
       justify-content: center;
-      z-index: 100000;
+      z-index: 99999;
     }
-    .announcement-card {
+    .announcement-card, .modal-card {
       background: white;
       border-radius: 12px;
       width: 88%;
@@ -441,157 +399,6 @@
       padding: 10px;
       margin-bottom: 12px;
     }
-    .cal-week-tag-col {
-      background: #fbf7fd;
-      font-size: 0.62rem;
-      color: #8e44ad;
-      padding: 1px;
-      border-right: 1.5px solid #d7bde2;
-      width: 44px;
-      vertical-align: middle;
-      line-height: 1.15;
-      text-align: center;
-    }
-    .btn-set-leave-week {
-      background: #e74c3c;
-      color: white;
-      border: none;
-      padding: 2px 2px;
-      border-radius: 3px;
-      font-size: 0.58rem;
-      cursor: pointer;
-      margin-top: 2px;
-      display: block;
-      width: 95%;
-      margin-left: auto;
-      margin-right: auto;
-      line-height: 1.1;
-    }
-
-    .ph-tag-holiday {
-      display: block;
-      background-color: #ff7675;
-      color: white;
-      font-size: 0.58rem;
-      padding: 1px;
-      border-radius: 2px;
-      margin-bottom: 1px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      font-weight: bold;
-    }
-    .ph-hour-badge {
-      display: inline-block;
-      background: #8e44ad;
-      color: white;
-      font-size: 0.62rem;
-      font-weight: bold;
-      padding: 1px 2px;
-      border-radius: 3px;
-      margin-top: 1px;
-    }
-
-    .ph-year-chips-bar {
-      display: flex;
-      gap: 5px;
-      overflow-x: auto;
-      padding: 6px 0;
-      margin-top: 8px;
-      -webkit-overflow-scrolling: touch;
-    }
-    .btn-year-chip {
-      background: #ebdef0;
-      color: #4a235a;
-      border: 1px solid #d2b4de;
-      padding: 4px 10px;
-      border-radius: 14px;
-      cursor: pointer;
-      font-size: 0.75rem;
-      font-weight: bold;
-      white-space: nowrap;
-      flex-shrink: 0;
-    }
-    .btn-year-chip.active {
-      background: #8e44ad;
-      color: white;
-      border-color: #8e44ad;
-    }
-
-    .ph-summary-dashboard {
-      background: #ebdef0;
-      border-radius: 8px;
-      padding: 10px 12px;
-      margin-top: 10px;
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      gap: 10px;
-      text-align: center;
-    }
-    .ph-stat-item { flex: 1; }
-    .ph-stat-val {
-      font-size: 1.25rem;
-      font-weight: bold;
-      color: #6c3483;
-      margin-top: 2px;
-    }
-
-    /* Modal 視窗 */
-    .modal-overlay {
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.5);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 9999;
-    }
-    .modal-card {
-      background: white;
-      border-radius: 12px;
-      width: 90%;
-      max-width: 340px;
-      padding: 16px;
-      box-shadow: 0 5px 20px rgba(0,0,0,0.2);
-      text-align: center;
-      max-height: 90vh;
-      overflow-y: auto;
-    }
-    .modal-section {
-      background: #fcf9fe;
-      border: 1px solid #e8daf0;
-      border-radius: 8px;
-      padding: 10px;
-      margin-bottom: 10px;
-      text-align: left;
-    }
-    .modal-section-title {
-      font-size: 0.85rem;
-      font-weight: bold;
-      color: #8e44ad;
-      margin-bottom: 6px;
-      display: block;
-    }
-    .modal-holiday-banner {
-      background: #fadbd8;
-      border-left: 4px solid #c0392b;
-      padding: 6px 10px;
-      border-radius: 4px;
-      font-size: 0.85rem;
-      color: #922b21;
-      font-weight: bold;
-      margin-bottom: 10px;
-      text-align: left;
-    }
-    .select-block {
-      width: 100%;
-      padding: 7px;
-      font-size: 0.95rem;
-      font-weight: bold;
-      border: 1.5px solid #8e44ad;
-      border-radius: 6px;
-    }
     .modal-btns {
       display: flex;
       gap: 6px;
@@ -599,7 +406,7 @@
       margin-top: 10px;
     }
     .btn-save-modal {
-      background: #8e44ad;
+      background: #3498db;
       color: white;
       border: none;
       padding: 8px 12px;
@@ -608,15 +415,6 @@
       font-weight: bold;
       font-size: 0.85rem;
       flex: 1;
-    }
-    .btn-reset-modal {
-      background: #e67e22;
-      color: white;
-      border: none;
-      padding: 8px 10px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 0.8rem;
     }
     .btn-cancel-modal {
       background: #95a5a6;
@@ -632,23 +430,23 @@
   <!-- Firebase SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-    import { 
-      getAuth, 
-      signInWithEmailAndPassword, 
-      createUserWithEmailAndPassword, 
+    import {
+      getAuth,
+      signInWithEmailAndPassword,
+      createUserWithEmailAndPassword,
       updatePassword,
       updateEmail,
-      signInWithPopup, 
-      GoogleAuthProvider, 
-      onAuthStateChanged, 
-      signOut 
+      signInWithPopup,
+      GoogleAuthProvider,
+      onAuthStateChanged,
+      signOut
     } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
-    import { 
-      getFirestore, 
-      doc, 
-      setDoc, 
+    import {
+      getFirestore,
+      doc,
+      setDoc,
       getDoc,
-      deleteDoc 
+      deleteDoc
     } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -669,25 +467,61 @@
     let currentUser = null;
     const ADMIN_USERNAME = "zeldris12313";
     let currentAnnouncementId = null;
-    let userPhUsage = {};
+
+    // 從 index1 同步過來的個人主月曆資料
     let userShiftOverrides = {};
     let userDayNotes = {};
     let clearedYears = new Set();
+    let timelineAnchors = [];
+    let vacationWeeks = new Set();
+    let weekOverrides = {};
 
     // ----------------- 香港官方公眾假期清單 (PH) -----------------
-    const HK_PUBLIC_HOLIDAYS = {
+    let HK_PUBLIC_HOLIDAYS = {
       "2026-01-01": "元旦", "2026-02-17": "農曆年初一", "2026-02-18": "農曆年初二", "2026-02-19": "農曆年初三",
       "2026-04-03": "耶穌受難節", "2026-04-04": "清明節", "2026-04-06": "復活節星期一", "2026-05-01": "勞動節",
       "2026-05-25": "佛誕翌日", "2026-06-19": "端午節", "2026-07-01": "特區成立日", "2026-09-26": "中秋節翌日",
       "2026-10-01": "國慶日", "2026-10-19": "重陽節", "2026-12-25": "聖誕節", "2026-12-26": "聖誕翌日",
-      "2027-01-01": "元旦", "2027-02-06": "農曆年初一", "2027-02-08": "農曆年初二", "2027-02-09": "農曆年初三",
+      "2027-01-01": "元旦", "2027-02-06": "農曆年初一", "2027-02-08": "農曆年初三", "2027-02-09": "農曆年初四",
       "2027-03-26": "耶穌受難節", "2027-03-27": "受難節翌日", "2027-03-29": "復活節星期一", "2027-04-05": "清明節",
       "2027-05-01": "勞動節", "2027-05-13": "佛誕", "2027-06-09": "端午節", "2027-07-01": "特區成立日",
       "2027-09-16": "中秋節翌日", "2027-10-01": "國慶日", "2027-10-08": "重陽節", "2027-12-25": "聖誕節", "2027-12-27": "聖誕翌日"
     };
 
+    async function syncOfficialHkHolidays() {
+      const CACHE_KEY = "hk_official_holidays_cache";
+      try {
+        const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || "{}");
+        Object.assign(HK_PUBLIC_HOLIDAYS, cached);
+      } catch (e) {}
+
+      try {
+        const res = await fetch("https://www.1823.gov.hk/common/ical/tc.json");
+        if (!res.ok) return;
+        const json = await res.json();
+        const events = json?.vcalendar?.[0]?.vevent || [];
+        const latestMap = {};
+        events.forEach(ev => {
+          const rawDate = ev.dtstart?.[0];
+          const summary = ev.summary;
+          if (rawDate && rawDate.length === 8 && summary) {
+            const fmtDate = `${rawDate.slice(0,4)}-${rawDate.slice(4,6)}-${rawDate.slice(6,8)}`;
+            latestMap[fmtDate] = summary;
+          }
+        });
+        if (Object.keys(latestMap).length > 0) {
+          Object.assign(HK_PUBLIC_HOLIDAYS, latestMap);
+          localStorage.setItem(CACHE_KEY, JSON.stringify(latestMap));
+          if (typeof window.calculateAll === "function" && currentUser) {
+            window.calculateAll();
+          }
+        }
+      } catch (err) {}
+    }
+    syncOfficialHkHolidays();
+
     // ----------------- 班表資料 -----------------
-        const ROSTERS = {
+    const ROSTERS = {
       group2: {
         name: "2組 (12行)",
         totalRows: 12,
@@ -783,16 +617,6 @@
       }
     };
 
-      const ALL_SHIFT_OPTIONS = [
-      "AL",
-      "9-1", "8-1",
-      "8-4", "8-5", "9-4", "9-5", "9-6", "10-5", "10-6",
-      "1-9", "1-10", "1-11", "2-10", "2-11", "3-10", "3-11", "4-10", "4-11", "5-10", "5-11",
-      "N (10-8)", "N (10-9)",
-      "R",
-      "W"
-    ];
-
     const dayNames = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
     const ANCHOR_DATE = new Date(2026, 0, 5);
 
@@ -802,7 +626,6 @@
       const diffToMon = day === 0 ? -6 : 1 - day;
       const monday = new Date(d);
       monday.setDate(d.getDate() + diffToMon);
-      
       const diffMs = monday.getTime() - ANCHOR_DATE.getTime();
       return Math.round(diffMs / (7 * 24 * 60 * 60 * 1000));
     }
@@ -841,11 +664,6 @@
     const todayObj = new Date();
     const todayAbsWeek = getAbsoluteWeekIndex(todayObj);
 
-    let timelineAnchors = [
-      { absWeek: todayAbsWeek, group: 'group3', startRow: 14 }
-    ];
-    let vacationWeeks = new Set();
-
     let myStatus = {
       group: 'group3',
       currentRow: 14,
@@ -854,25 +672,17 @@
       leaveWeek: 44
     };
 
+    // 預設全部不勾選，避免畫面出現多個無謂月曆；勾一個出一個
     let colleagues = [
-      { id: 1, name: "同事 A", useKnownDate: false, knownDate: "2026-10-05", knownGroup: "group3", knownRow: 3, group: "group3", baseRow: 3, targetYear: 2026, targetWeek: 45, leaveDate: "2026-11-02", enabled: true, expanded: true },
-      { id: 2, name: "同事 B", useKnownDate: false, knownDate: "2026-10-05", knownGroup: "group2", knownRow: 1, group: "group2", baseRow: 1, targetYear: 2026, targetWeek: 45, leaveDate: "2026-11-02", enabled: false, expanded: false },
-      { id: 3, name: "同事 C", useKnownDate: false, knownDate: "2026-10-05", knownGroup: "group4", knownRow: 1, group: "group4", baseRow: 1, targetYear: 2026, targetWeek: 45, leaveDate: "2026-11-02", enabled: false, expanded: false }
+      { id: 1, name: "同事 A", useKnownDate: false, knownDate: "2026-10-05", knownGroup: "group3", knownRow: 3, group: "group3", baseRow: 3, targetYear: 2026, targetWeek: 45, leaveDate: "2026-11-02", enabled: false, expanded: true, simYear: 2026, simMonth: 11 },
+      { id: 2, name: "同事 B", useKnownDate: false, knownDate: "2026-10-05", knownGroup: "group2", knownRow: 1, group: "group2", baseRow: 1, targetYear: 2026, targetWeek: 45, leaveDate: "2026-11-02", enabled: false, expanded: false, simYear: 2026, simMonth: 11 },
+      { id: 3, name: "同事 C", useKnownDate: false, knownDate: "2026-10-05", knownGroup: "group4", knownRow: 1, group: "group4", baseRow: 1, targetYear: 2026, targetWeek: 45, leaveDate: "2026-11-02", enabled: false, expanded: false, simYear: 2026, simMonth: 11 }
     ];
 
     window.toggleColleagueAccordion = (idx) => {
       colleagues[idx].expanded = !colleagues[idx].expanded;
       initColleaguesUI();
     };
-
-    let middleRosterGroup = "group3";
-    let currentCandidates = [];
-
-    let viewCalYear = todayObj.getFullYear();
-    let viewCalMonth = todayObj.getMonth() + 1;
-    let selectedSummaryYear = todayObj.getFullYear();
-    let activeModalDateKey = null;
-    let activeModalDefaultShift = "";
 
     onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -883,12 +693,9 @@
         document.getElementById("appPanel").style.display = "block";
         await loadUserData();
         checkPublicAnnouncement(uname);
-        initDynamicYears();
         initMyStatusUI();
         initColleaguesUI();
-        initOverrideShiftSelect();
         window.calculateAll();
-        renderUnifiedCalendar();
       } else {
         currentUser = null;
         document.getElementById("authPanel").style.display = "block";
@@ -898,7 +705,6 @@
 
     // ----------------- 帳戶與登入 -----------------
     let authMode = "login";
-
     const toVirtualEmail = (username) => {
       const cleanUser = username.toLowerCase().replace(/[^a-z0-9_]/g, '');
       return `${cleanUser}@shift.local`;
@@ -915,7 +721,6 @@
         passInput.style.display = "block";
         userInput.placeholder = "帳戶名稱 (例如: peter888)";
         passInput.placeholder = "密碼 (最少6位)";
-        document.getElementById("authTitle").innerText = "📝 註冊帳戶名";
         document.getElementById("submitAuthBtn").innerText = "立即註冊";
         document.getElementById("toggleBtn").innerText = "已有帳號？點此登入";
         document.getElementById("forgotBtn").style.display = "none";
@@ -924,7 +729,6 @@
         passInput.style.display = "block";
         userInput.placeholder = "帳戶名稱 (例如: peter888)";
         passInput.placeholder = "密碼 (最少6位)";
-        document.getElementById("authTitle").innerText = "🔒 登入推算系統";
         document.getElementById("submitAuthBtn").innerText = "登入";
         document.getElementById("toggleBtn").innerText = "未有帳號？點此註冊";
         document.getElementById("forgotBtn").style.display = "inline";
@@ -943,7 +747,6 @@
         passInput.style.display = "block";
         userInput.placeholder = "設定【新帳戶名稱】(例如: peter888)";
         passInput.placeholder = "設定【新密碼】(最少6位)";
-        document.getElementById("authTitle").innerText = "🔑 忘記帳號/密碼重設";
         document.getElementById("submitAuthBtn").innerText = "重設帳戶名及密碼並登入";
         document.getElementById("forgotBtn").innerText = "返回登入";
         document.getElementById("toggleBtn").style.display = "none";
@@ -952,7 +755,6 @@
         passInput.style.display = "block";
         userInput.placeholder = "帳戶名稱 (例如: peter888)";
         passInput.placeholder = "密碼 (最少6位)";
-        document.getElementById("authTitle").innerText = "🔒 登入推算系統";
         document.getElementById("submitAuthBtn").innerText = "登入";
         document.getElementById("forgotBtn").innerText = "忘記密碼？";
         document.getElementById("toggleBtn").style.display = "inline";
@@ -977,19 +779,13 @@
 
       try {
         if (authMode === "register") {
-          if (!pass || pass.length < 6) { 
-            msgBox.innerText = "請設定最少 6 位密碼！"; 
-            return; 
-          }
-          if (!staffId) { 
-            msgBox.innerText = "請填寫員工編號（此編號不能重複且用於驗證）！"; 
-            return; 
-          }
+          if (!pass || pass.length < 6) { msgBox.innerText = "請設定最少 6 位密碼！"; return; }
+          if (!staffId) { msgBox.innerText = "請填寫員工編號（此編號不能重複且用於驗證）！"; return; }
 
           const staffCheckRef = doc(db, "registered_staff_ids", staffId);
           const staffCheckSnap = await getDoc(staffCheckRef);
           if (staffCheckSnap.exists()) {
-            msgBox.innerText = `❌ 員工編號【${staffId}】已被其他帳戶註冊！若忘記帳密請點左下方「忘記密碼？」`;
+            msgBox.innerText = `❌ 員工編號【${staffId}】已被其他帳戶註冊！`;
             return;
           }
 
@@ -998,23 +794,15 @@
           await setDoc(doc(db, "public_user_map", username.toLowerCase()), { uid: userCred.user.uid, staffId: staffId });
           await setDoc(doc(db, "user_security", userCred.user.uid), { username: username, staffId: staffId });
 
-          alert(`🎉 註冊成功！\n帳戶名稱: ${username}\n員工編號: ${staffId}\n系統即將為你登入。`);
-
+          alert(`🎉 註冊成功！\n帳戶名稱: ${username}\n員工編號: ${staffId}`);
         } else if (authMode === "forgot") {
-          if (!staffId) { 
-            msgBox.innerText = "請輸入登記時綁定的員工編號！"; 
-            return; 
-          }
-          if (!pass || pass.length < 6) {
-            msgBox.innerText = "請輸入最少 6 位新密碼！";
-            return;
-          }
+          if (!staffId) { msgBox.innerText = "請輸入登記時綁定的員工編號！"; return; }
+          if (!pass || pass.length < 6) { msgBox.innerText = "請輸入最少 6 位新密碼！"; return; }
 
           const staffRef = doc(db, "registered_staff_ids", staffId);
           const staffSnap = await getDoc(staffRef);
-
           if (!staffSnap.exists()) {
-            msgBox.innerText = `❌ 查無員工編號【${staffId}】之登記紀錄，請點右下方「註冊」！`;
+            msgBox.innerText = `❌ 查無員工編號【${staffId}】之登記紀錄！`;
             return;
           }
 
@@ -1022,17 +810,7 @@
           const oldUid = oldData.uid;
           const oldUsername = oldData.username;
 
-          let newCred;
-          try {
-            newCred = await createUserWithEmailAndPassword(auth, vEmail, pass);
-          } catch (createErr) {
-            if (createErr.code === 'auth/email-already-in-use') {
-              msgBox.innerText = "❌ 此帳戶名稱已被其他同事使用，請換另一個名稱！";
-              return;
-            }
-            throw createErr;
-          }
-
+          const newCred = await createUserWithEmailAndPassword(auth, vEmail, pass);
           const newUid = newCred.user.uid;
 
           if (oldUid && oldUid !== newUid) {
@@ -1040,53 +818,27 @@
             for (const col of collectionsToMigrate) {
               try {
                 const oldDoc = await getDoc(doc(db, col, oldUid));
-                if (oldDoc.exists()) {
-                  await setDoc(doc(db, col, newUid), oldDoc.data());
-                }
-              } catch (migrateErr) {
-                console.error(`遷移 ${col} 失敗:`, migrateErr);
-              }
+                if (oldDoc.exists()) await setDoc(doc(db, col, newUid), oldDoc.data());
+              } catch (migrateErr) {}
             }
           }
 
-          await setDoc(staffRef, {
-            username: username,
-            uid: newUid,
-            updatedAt: new Date().toISOString()
-          });
-
+          await setDoc(staffRef, { username: username, uid: newUid, updatedAt: new Date().toISOString() });
           if (oldUsername && oldUsername.toLowerCase() !== username.toLowerCase()) {
-            try {
-              await deleteDoc(doc(db, "public_user_map", oldUsername.toLowerCase()));
-            } catch (delErr) {}
+            try { await deleteDoc(doc(db, "public_user_map", oldUsername.toLowerCase())); } catch (delErr) {}
           }
+          await setDoc(doc(db, "public_user_map", username.toLowerCase()), { uid: newUid, staffId: staffId });
+          await setDoc(doc(db, "user_security", newUid), { username: username, staffId: staffId });
 
-          await setDoc(doc(db, "public_user_map", username.toLowerCase()), {
-            uid: newUid,
-            staffId: staffId
-          });
-
-          await setDoc(doc(db, "user_security", newUid), {
-            username: username,
-            staffId: staffId
-          });
-
-                    alert(`🎉 帳號名稱及密碼重設成功！\n新帳戶名稱: ${username}\n員工編號: ${staffId}\n舊有更期及 PH 資料已全數轉移，系統已自動為你登入。`);
-          window.location.href = "index1.html"; // 重設成功後，強制跳轉去大月曆主頁
-
-                } else {
+          alert(`🎉 帳號名稱及密碼重設成功！`);
+          window.location.href = "index1.html";
+        } else {
           if (!pass) { msgBox.innerText = "請輸入密碼！"; return; }
           await signInWithEmailAndPassword(auth, vEmail, pass);
-          window.location.href = "index1.html"; // 登入成功後，強制跳轉去大月曆主頁
+          window.location.href = "index1.html";
         }
       } catch (e) {
-        if (e.code === 'auth/email-already-in-use') {
-          msgBox.innerText = "❌ 此帳戶名稱已被使用，請換另一個名稱！";
-        } else if (e.code === 'auth/invalid-credential' || e.code === 'auth/wrong-password') {
-          msgBox.innerText = "❌ 帳戶名稱或密碼錯誤！若忘記請點下方「忘記密碼？」";
-        } else {
-          msgBox.innerText = "操作失敗: " + e.message;
-        }
+        msgBox.innerText = "操作失敗: " + e.message;
       }
     };
 
@@ -1107,7 +859,6 @@
       document.getElementById("editAccountMsg").innerText = "";
       document.getElementById("accountModal").style.display = "flex";
     };
-    window.openChangePasswordModal = window.openChangeAccountModal;
 
     window.closeAccountModal = () => {
       document.getElementById("accountModal").style.display = "none";
@@ -1118,18 +869,10 @@
       const newUsername = document.getElementById("editUsernameInput").value.trim();
       const newPass = document.getElementById("editPasswordInput").value;
       const msgBox = document.getElementById("editAccountMsg");
-      msgBox.style.color = "#e74c3c";
       msgBox.innerText = "";
 
-      if (!newUsername) {
-        msgBox.innerText = "請輸入帳戶名稱！";
-        return;
-      }
-
-      if (newPass && newPass.length < 6) {
-        msgBox.innerText = "新密碼最少需 6 位！";
-        return;
-      }
+      if (!newUsername) { msgBox.innerText = "請輸入帳戶名稱！"; return; }
+      if (newPass && newPass.length < 6) { msgBox.innerText = "新密碼最少需 6 位！"; return; }
 
       const currentUname = currentUser.email ? currentUser.email.replace("@shift.local", "") : "";
       const isNameChanged = (newUsername.toLowerCase() !== currentUname.toLowerCase());
@@ -1143,20 +886,15 @@
       try {
         let staffId = "";
         const secSnap = await getDoc(doc(db, "user_security", currentUser.uid));
-        if (secSnap.exists()) {
-          staffId = secSnap.data().staffId || "";
-        }
+        if (secSnap.exists()) staffId = secSnap.data().staffId || "";
 
         if (isNameChanged) {
           const checkSnap = await getDoc(doc(db, "public_user_map", newUsername.toLowerCase()));
           if (checkSnap.exists() && checkSnap.data().uid !== currentUser.uid) {
-            msgBox.innerText = "❌ 此帳戶名稱已被其他同事使用，請換另一個名稱！";
+            msgBox.innerText = "❌ 此帳戶名稱已被其他同事使用！";
             return;
           }
-
-          const newEmail = toVirtualEmail(newUsername);
-          await updateEmail(currentUser, newEmail);
-
+          await updateEmail(currentUser, toVirtualEmail(newUsername));
           if (currentUname) {
             try { await deleteDoc(doc(db, "public_user_map", currentUname.toLowerCase())); } catch (e) {}
           }
@@ -1165,53 +903,16 @@
             await setDoc(doc(db, "registered_staff_ids", staffId), { username: newUsername, uid: currentUser.uid, updatedAt: new Date().toISOString() }, { merge: true });
           }
           await setDoc(doc(db, "user_security", currentUser.uid), { username: newUsername, staffId }, { merge: true });
-
           document.getElementById("userLabel").innerText = newUsername;
         }
 
-        if (isPassChanged) {
-          await updatePassword(currentUser, newPass);
-        }
-
-        alert(`🎉 帳戶資料修改成功！\n${isNameChanged ? `新帳戶名稱: ${newUsername}\n` : ''}${isPassChanged ? '密碼已更新\n' : ''}下次登入請使用最新帳號及密碼。`);
+        if (isPassChanged) await updatePassword(currentUser, newPass);
+        alert("🎉 帳戶資料修改成功！");
         closeAccountModal();
-
       } catch (e) {
-        if (e.code === 'auth/requires-recent-login') {
-          msgBox.innerText = "⚠️ 安全驗證超時，請先登出再重新登入後方可修改！";
-        } else if (e.code === 'auth/email-already-in-use') {
-          msgBox.innerText = "❌ 此帳戶名稱已被使用，請換另一個名稱！";
-        } else {
-          msgBox.innerText = "修改失敗: " + e.message;
-        }
+        msgBox.innerText = "修改失敗: " + e.message;
       }
     };
-
-    function initDynamicYears() {
-      const curY = new Date().getFullYear();
-      const years = [];
-      for (let y = curY - 2; y <= curY + 6; y++) {
-        years.push(y);
-      }
-
-      const viewYSelect = document.getElementById("viewCalYearSelect");
-      if (viewYSelect) {
-        viewYSelect.innerHTML = "";
-        years.forEach(y => {
-          viewYSelect.innerHTML += `<option value="${y}" ${y === viewCalYear ? 'selected' : ''}>${y}年</option>`;
-        });
-      }
-      renderPhYearChips();
-    }
-
-    function initOverrideShiftSelect() {
-      const sel = document.getElementById("modalShiftSelect");
-      if (!sel) return;
-      sel.innerHTML = `<option value="">-- 維持原本輪更更期 --</option>`;
-      ALL_SHIFT_OPTIONS.forEach(s => {
-        sel.innerHTML += `<option value="${s}">${s}</option>`;
-      });
-    }
 
     // ----------------- 我目前的定位 UI -----------------
     function initMyStatusUI() {
@@ -1229,7 +930,7 @@
     }
 
     function updateMyRowSelect() {
-      const rowSelect = document.getElementById("myCurrentRowSelect") || document.getElementById("myRowSelect");
+      const rowSelect = document.getElementById("myCurrentRowSelect");
       if (!rowSelect) return;
       const maxR = ROSTERS[myStatus.group].totalRows;
       rowSelect.innerHTML = "";
@@ -1238,35 +939,26 @@
       }
     }
 
-    window.updateMyGroup = (g) => {
+    window.onGroupChange = (g) => {
       myStatus.group = g;
       myStatus.currentRow = 1;
       updateMyRowSelect();
       window.calculateAll();
     };
-    window.onGroupChange = window.updateMyGroup;
 
-    window.updateMyRow = (r) => {
-      myStatus.currentRow = parseInt(r);
-      window.calculateAll();
-    };
-
-    window.scrollToCalendar = () => {
-      const elem = document.getElementById("unifiedCalAnchor");
+    window.scrollToSimCal = () => {
+      const elem = document.getElementById("simCalAnchor");
       if (elem) elem.scrollIntoView({ behavior: 'smooth' });
     };
 
-    window.applyMyStatusToCalendar = async () => {
+    window.applySetupToCalendar = async () => {
       const groupSel = document.getElementById("myGroupSelect");
       if (groupSel) myStatus.group = groupSel.value;
 
-      const curRowSel = document.getElementById("myCurrentRowSelect") || document.getElementById("myRowSelect");
+      const curRowSel = document.getElementById("myCurrentRowSelect");
       if (curRowSel) myStatus.currentRow = parseInt(curRowSel.value) || 1;
 
-      if (typeof clearedYears !== 'undefined') {
-        clearedYears.delete(todayObj.getFullYear());
-        clearedYears.delete(viewCalYear);
-      }
+      clearedYears.delete(todayObj.getFullYear());
 
       timelineAnchors = [{
         absWeek: todayAbsWeek,
@@ -1275,17 +967,10 @@
         manual: true
       }];
 
-      viewCalYear = todayObj.getFullYear();
-      viewCalMonth = todayObj.getMonth() + 1;
-
       await saveUserTimeline();
-      renderUnifiedCalendar();
-
-      const calElem = document.getElementById("unifiedCalAnchor");
-      if (calElem) calElem.scrollIntoView({ behavior: 'smooth' });
-      alert(`✅ 已成功導入月曆！\n由本週起設定為：${ROSTERS[myStatus.group].name} 第 ${myStatus.currentRow} 行。`);
+      window.calculateAll();
+      alert(`✅ 已成功導入主月曆！\n由本週起設定為：${ROSTERS[myStatus.group].name} 第 ${myStatus.currentRow} 行。`);
     };
-    window.applySetupToCalendar = window.applyMyStatusToCalendar;
 
     window.applyMyLeaveWeekToVacation = async () => {
       const ySel = document.getElementById("myLeaveYearSelect");
@@ -1298,19 +983,11 @@
 
       const targetAbs = getAbsIndexFromYearWeek(lYear, lWeek);
       vacationWeeks.add(targetAbs);
-
       timelineAnchors = timelineAnchors.filter(a => a.absWeek < targetAbs);
 
-      viewCalYear = lYear;
-      const targetInfo = getWeekInfoFromAbsIndex(targetAbs);
-      viewCalMonth = targetInfo.monday.getMonth() + 1;
-
       await saveUserTimeline();
-      renderUnifiedCalendar();
-
-      const calElem = document.getElementById("unifiedCalAnchor");
-      if (calElem) calElem.scrollIntoView({ behavior: 'smooth' });
-      alert(`🏖️ 已將 ${lYear} 年 Week ${lWeek} 標記為整週大假！\n該大假週後續所有殘留舊旗已全部清空，後續更期已自動進入待入位。`);
+      window.calculateAll();
+      alert(`🏖️ 已將 ${lYear} 年 Week ${lWeek} 標記為整週大假！\n下方模擬月曆已同步更新大假週。`);
     };
 
     async function checkPublicAnnouncement(username) {
@@ -1326,7 +1003,6 @@
           if (data && data.enabled) {
             currentAnnouncementId = data.versionId;
             const lastReadId = localStorage.getItem("last_read_announcement_id");
-
             if (lastReadId !== currentAnnouncementId) {
               document.getElementById("popNoticeTitle").innerText = data.title || "最新公告";
               document.getElementById("popNoticeContent").innerText = data.content || "";
@@ -1334,39 +1010,26 @@
             }
           }
         }
-      } catch (e) {
-        console.error("載入公告出錯:", e);
-      }
+      } catch (e) {}
     }
 
     window.dismissAnnouncement = () => {
-      if (currentAnnouncementId) {
-        localStorage.setItem("last_read_announcement_id", currentAnnouncementId);
-      }
+      if (currentAnnouncementId) localStorage.setItem("last_read_announcement_id", currentAnnouncementId);
       document.getElementById("announcementModal").style.display = "none";
     };
 
     window.publishNewAnnouncement = async () => {
       const title = document.getElementById("adminNoticeTitle").value.trim();
       const content = document.getElementById("adminNoticeContent").value.trim();
-      if (!title || !content) {
-        alert("請輸入公告標題及內容！");
-        return;
-      }
-
-      if (!confirm("確定要向全體同事發布此公告？發布後所有同事下次開網頁均會彈出此視窗一次！")) return;
+      if (!title || !content) { alert("請輸入公告標題及內容！"); return; }
+      if (!confirm("確定要向全體同事發布此公告？")) return;
 
       try {
         const newVersionId = "v_" + Date.now();
         await setDoc(doc(db, "system_configs", "latest_announcement"), {
-          title,
-          content,
-          versionId: newVersionId,
-          enabled: true,
-          updatedAt: new Date().toISOString()
+          title, content, versionId: newVersionId, enabled: true, updatedAt: new Date().toISOString()
         });
-
-        alert("🎉 公告發布成功！全部同事重新進入時均會彈出一次。");
+        alert("🎉 公告發布成功！");
         localStorage.setItem("last_read_announcement_id", newVersionId);
       } catch (e) {
         alert("發布失敗: " + e.message);
@@ -1440,19 +1103,19 @@
         if (idx > 0) {
           toggleBtnHtml = `
             <div onclick="toggleColleagueAccordion(${idx})" style="background:#eef2f7; border:1px solid #cbd5e1; border-radius:6px; padding:7px 10px; margin-bottom:5px; font-size:0.82rem; font-weight:bold; color:#334155; cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
-              <span>👤 ${c.name} (${c.enabled ? '已加入計算' : '未計算'})</span>
+              <span>👤 ${c.name} (${c.enabled ? '✅ 已顯示模擬月曆' : '未勾選'})</span>
               <span style="color:#2563eb; font-size:0.75rem;">${c.expanded ? '▲ 點按收起' : '▼ 點按打開設定'}</span>
             </div>
           `;
         }
 
         container.innerHTML += `
-          <div style="margin-bottom:8px;">
+          <div class="colleague-card-wrap" style="margin-bottom:8px;">
             ${toggleBtnHtml}
             <div class="colleague-card" style="${isCollapsed ? 'display:none;' : ''}">
               <div class="colleague-title">
                 <input type="text" value="${c.name}" onchange="updateColleague(${idx}, 'name', this.value)" style="width:105px; font-weight:bold;">
-                <label style="font-size:0.8rem; cursor:pointer;">
+                <label style="font-size:0.82rem; cursor:pointer; color:#15803d; font-weight:bold;">
                   <input type="checkbox" ${c.enabled ? 'checked' : ''} onchange="updateColleague(${idx}, 'enabled', this.checked)"> 加入計算
                 </label>
               </div>
@@ -1497,7 +1160,7 @@
                 <div class="field-row">
                   <div style="display:flex; align-items:center; gap:3px;">
                     <span>當時組:</span>
-                        <select onchange="updateColleagueKnownGroup(${idx}, this.value)" style="max-width:95px;">
+                    <select onchange="updateColleagueKnownGroup(${idx}, this.value)" style="max-width:95px;">
                       <option value="group2" ${c.knownGroup==='group2'?'selected':''}>2組 (12行)</option>
                       <option value="group3" ${c.knownGroup==='group3'?'selected':''}>3組 (14行)</option>
                       <option value="group4" ${c.knownGroup==='group4'?'selected':''}>4組 (5行)</option>
@@ -1516,7 +1179,7 @@
               </div>
 
               <div class="field-row">
-                <span style="color:#d35400; font-weight:bold;">放假首日:</span>
+                <span style="color:#d35400; font-weight:bold;">放假/換組首日:</span>
                 <input type="date" value="${c.leaveDate}" onchange="onColleagueDateChange(${idx}, this.value)">
               </div>
               <div class="field-row">
@@ -1558,6 +1221,12 @@
       if (key === 'useKnownDate') {
         initColleaguesUI();
       }
+      if (key === 'enabled' && val === true) {
+        const abs = getAbsIndexFromYearWeek(colleagues[idx].targetYear, colleagues[idx].targetWeek);
+        const info = getWeekInfoFromAbsIndex(abs);
+        colleagues[idx].simYear = info.monday.getFullYear();
+        colleagues[idx].simMonth = info.monday.getMonth() + 1;
+      }
       window.calculateAll();
     };
 
@@ -1577,7 +1246,9 @@
       const info = getWeekInfoFromAbsIndex(abs);
       colleagues[idx].targetYear = info.year;
       colleagues[idx].targetWeek = info.weekNum;
-      
+      colleagues[idx].simYear = d.getFullYear();
+      colleagues[idx].simMonth = d.getMonth() + 1;
+
       const ySelect = document.getElementById(`colleagueYear_${idx}`);
       const wSelect = document.getElementById(`colleagueWeek_${idx}`);
       if (ySelect) ySelect.value = info.year;
@@ -1593,7 +1264,9 @@
       const abs = getAbsIndexFromYearWeek(y, w);
       const info = getWeekInfoFromAbsIndex(abs);
       colleagues[idx].leaveDate = info.monStr;
-      
+      colleagues[idx].simYear = info.monday.getFullYear();
+      colleagues[idx].simMonth = info.monday.getMonth() + 1;
+
       const card = document.querySelectorAll(".colleague-card")[idx];
       if (card) {
         const dInput = card.querySelector('input[type="date"]');
@@ -1602,11 +1275,10 @@
       window.calculateAll();
     };
 
-    // ----------------- 推算核心 -----------------
+    // ----------------- 推算核心（完全保留原有算法） -----------------
     window.calculateAll = () => {
-      const activeList = colleagues.filter(c => c.enabled);
       const summaryText = document.getElementById("summaryText");
-      currentCandidates = [];
+      const simContainer = document.getElementById("simCalendarsContainer");
 
       colleagues.forEach((c, idx) => {
         const tip = document.getElementById(`colleagueTip_${idx}`);
@@ -1617,13 +1289,18 @@
         }
       });
 
-      if (activeList.length === 0) {
-        summaryText.innerHTML = "<div style='color:#666; font-size:0.85rem;'>請勾選同事以推算可揀接替入位的行數。</div>";
-        renderBigRoster();
+      const activeWithIdx = colleagues
+        .map((c, originalIdx) => ({ c, originalIdx }))
+        .filter(item => item.c.enabled);
+
+      // 沒有勾選任何同事時，下方月曆完全不出現
+      if (activeWithIdx.length === 0) {
+        summaryText.innerHTML = "<div style='color:#64748b; font-size:0.85rem; padding:6px 2px;'>💡 請勾選上方同事的「加入計算」，下方將自動彈出對應的模擬入位月曆進行比較。</div>";
+        simContainer.innerHTML = "";
         return;
       }
 
-      const results = activeList.map(c => {
+      const results = activeWithIdx.map(({ c, originalIdx }) => {
         const targetAbs = getAbsIndexFromYearWeek(c.targetYear, c.targetWeek);
         let actualGroup = c.group;
         let entryRow = 1;
@@ -1651,6 +1328,8 @@
         const entryInfo = getWeekInfoFromAbsIndex(targetAbs);
 
         return {
+          colleagueObj: c,
+          originalIdx,
           name: c.name,
           targetYear: c.targetYear,
           targetWeek: c.targetWeek,
@@ -1660,129 +1339,82 @@
           entryRow,
           entryYear: entryInfo.year,
           entryWeek: entryInfo.weekNum,
-          entryMonStr: entryInfo.monStr
+          entryMonStr: entryInfo.monStr,
+          entryRangeStr: `${entryInfo.monday.getMonth()+1}/${entryInfo.monday.getDate()}-${entryInfo.sunday.getMonth()+1}/${entryInfo.sunday.getDate()}`
         };
       });
 
-      currentCandidates = results.map(r => ({
-        group: r.group,
-        row: r.entryRow,
-        name: r.name,
-        targetWeekLabel: `${r.targetYear} W${r.targetWeek}`,
-        targetAbs: r.targetAbs
-      }));
-
-      if (results.length > 0) {
-        middleRosterGroup = results[0].group;
-        document.getElementById("middleGroupSelect").value = middleRosterGroup;
-      }
-
-      let html = `<div style="display:flex; flex-direction:column; gap:6px;">`;
+      // 摘要提示
+      let summaryHtml = `<div style="display:flex; flex-direction:column; gap:6px;">`;
       results.forEach((r) => {
-        html += `
-          <div style="background:#f0fdf4; border:1.5px solid #22c55e; border-radius:8px; padding:10px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-            <div style="font-weight:bold; font-size:0.88rem; color:#15803d; line-height:1.4;">
-              🟢 接替 ${r.name}：${r.entryMonStr} 起轉為 <b>${r.groupName} 第 ${r.entryRow} 行</b>
+        summaryHtml += `
+          <div style="background:#f0fdf4; border:1.5px solid #22c55e; border-radius:8px; padding:8px 10px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+            <div style="font-weight:bold; font-size:0.86rem; color:#15803d;">
+              🟢 接替【${r.name}】：由 ${r.entryMonStr} (W${r.targetWeek}) 起入位 <b>${r.groupName} 第 ${r.entryRow} 行</b>
             </div>
-            <button class="btn btn-success" onclick="applyAnchorToUnified('${r.group}', ${r.entryRow}, ${r.targetAbs})" style="background:#16a34a; color:white; border:none; padding:5px 12px; border-radius:5px; font-size:0.8rem; font-weight:bold; cursor:pointer;">
-              👉 套用至個人月曆
+            <button onclick="applyAnchorToUnified('${r.group}', ${r.entryRow}, ${r.targetAbs}, '${r.name}')" style="background:#16a34a; color:white; border:none; padding:5px 10px; border-radius:5px; font-size:0.78rem; font-weight:bold; cursor:pointer;">
+              👉 導入 index1 主月曆
             </button>
           </div>
         `;
       });
-      html += `</div>`;
-      summaryText.innerHTML = html;
-      renderBigRoster();
+      summaryHtml += `</div>`;
+      summaryText.innerHTML = summaryHtml;
+
+      // 渲染上下對比模擬細月曆
+      renderSimulatedCalendars(results);
     };
 
-    // ----------------- 中間大表 -----------------
-    window.changeMiddleGroup = (val) => {
-      middleRosterGroup = val;
-      renderBigRoster();
-    };
-
-    function renderBigRoster() {
-      const roster = ROSTERS[middleRosterGroup];
-      const table = document.getElementById("bigRosterTable");
-
-      const todayDay = todayObj.getDay();
-      const todayIdx = todayDay === 0 ? 6 : todayDay - 1;
-      
-      let html = `
-        <thead>
-          <tr>
-            <th style="width: 110px;">更期行數</th>
-            <th>MON</th><th>TUE</th><th>WED</th><th>THU</th><th>FRI</th><th>SAT</th><th>SUN</th>
-          </tr>
-        </thead>
-        <tbody>
-      `;
-
-      roster.data.forEach((row, idx) => {
-        const rowNum = idx + 1;
-        const matched = currentCandidates.filter(c => c.group === middleRosterGroup && c.row === rowNum);
-        const isTarget = matched.length > 0;
-        const isMyCurrent = (myStatus.group === middleRosterGroup && myStatus.currentRow === rowNum);
-
-        let rowClasses = [];
-        if (isTarget) rowClasses.push('row-highlight-choice');
-        else if (isMyCurrent) rowClasses.push('row-my-current');
-
-        html += `<tr class="${rowClasses.join(' ')}">`;
-        
-        let labelHtml = `<b>第 ${rowNum} 行</b>`;
-        if (isMyCurrent) {
-          labelHtml += `<br><span class="my-tag">★我今日處於</span>`;
-        }
-        if (isTarget) {
-          const names = matched.map(m => `接替 ${m.name} (${m.targetWeekLabel})`).join('<br>');
-          labelHtml += `<br><span class="choice-tag">★可揀入位<br>${names}</span>`;
-        }
-        html += `<td>${labelHtml}</td>`;
-
-        row.forEach((shift, dayIdx) => {
-          let cellClasses = [];
-          if (shift === 'W' || shift === 'R') cellClasses.push('shift-off');
-          if (shift.startsWith('N')) cellClasses.push('shift-night');
-          if (isMyCurrent && dayIdx === todayIdx) cellClasses.push('cell-today');
-
-          html += `<td class="${cellClasses.join(' ')}">${shift}</td>`;
-        });
-
-        html += `</tr>`;
-      });
-
-      html += `</tbody>`;
-      table.innerHTML = html;
-    }
-
-    // ----------------- 一體化個人月曆推算引擎 -----------------
-    function getWeekShiftState(absWeek) {
+    // ----------------- 模擬細月曆計算引擎 -----------------
+    // 入位前 (absWeek < simResult.targetAbs) -> 跟隨 index1.html 主月曆現有資料
+    // 入位後 (absWeek >= simResult.targetAbs) -> 模擬套入接替組別與行數並向後順推
+    function getSimulatedWeekShiftState(absWeek, simResult) {
       const wInfo = getWeekInfoFromAbsIndex(absWeek);
 
-      if (vacationWeeks.has(absWeek)) {
-        return { isVacation: true, group: null, rowNum: null, shifts: ["大假","大假","大假","大假","大假","大假","大假"] };
+      // 1. 入位週及之後：優先執行模擬入位後推算
+      if (absWeek >= simResult.targetAbs) {
+        const curRoster = ROSTERS[simResult.group];
+        const diff = absWeek - simResult.targetAbs;
+        let r = ((simResult.entryRow - 1 + diff) % curRoster.totalRows) + 1;
+        if (r <= 0) r += curRoster.totalRows;
+
+        return {
+          isSimulated: true,
+          isEntryWeek: (absWeek === simResult.targetAbs),
+          group: simResult.group,
+          rowNum: r,
+          shifts: curRoster.data[r - 1]
+        };
       }
 
-      if (typeof clearedYears !== 'undefined' && clearedYears.has(wInfo.year)) {
-        return { isCleared: true, isVacation: false, group: null, rowNum: null, shifts: ["", "", "", "", "", "", ""] };
+      // 2. 入位前：完全沿用 index1.html 的真實資料
+      if (vacationWeeks.has(absWeek)) {
+        return { isVacation: true, shifts: ["大假","大假","大假","大假","大假","大假","大假"] };
+      }
+
+      if (weekOverrides[absWeek]) {
+        const ov = weekOverrides[absWeek];
+        const rost = ROSTERS[ov.group];
+        if (rost && rost.data[ov.row - 1]) {
+          return { isWeekSwapped: true, group: ov.group, rowNum: ov.row, shifts: rost.data[ov.row - 1] };
+        }
+      }
+
+      if (clearedYears.has(wInfo.year)) {
+        return { isCleared: true, shifts: ["","","","","","",""] };
       }
 
       if (!timelineAnchors || timelineAnchors.length === 0 || !timelineAnchors.some(a => a.manual)) {
-        return { isCleared: true, isVacation: false, group: null, rowNum: null, shifts: ["", "", "", "", "", "", ""] };
+        return { isCleared: true, shifts: ["","","","","","",""] };
       }
 
       const baseAnchor = timelineAnchors.find(a => a.manual) || timelineAnchors[0];
-      if (!baseAnchor || !ROSTERS[baseAnchor.group]) {
-        return { isCleared: true, isVacation: false, group: null, rowNum: null, shifts: ["", "", "", "", "", "", ""] };
-      }
-
       const pastVacations = Array.from(vacationWeeks).filter(v => v < absWeek).sort((a,b) => b - a);
       if (pastVacations.length > 0) {
         const latestVacation = pastVacations[0];
         const manualAfterVacation = timelineAnchors.find(a => a.absWeek > latestVacation && a.absWeek <= absWeek && a.manual);
         if (!manualAfterVacation) {
-          return { isPending: true, group: null, rowNum: null, shifts: ["待入位","待入位","待入位","待入位","待入位","待入位","待入位"] };
+          return { isPending: true, shifts: ["待入位","待入位","待入位","待入位","待入位","待入位","待入位"] };
         }
       }
 
@@ -1795,448 +1427,260 @@
       return { isVacation: false, group: activeAnchor.group, rowNum: r, shifts: curRoster.data[r - 1] };
     }
 
-    window.setManualAnchorAtDate = async () => {
-      const dateStr = document.getElementById("anchorDateInput").value;
-      if (!dateStr) { alert("請先選擇要插旗換組的日期！"); return; }
-
-      const parts = dateStr.split('-');
-      const d = new Date(parts[0], parts[1] - 1, parts[2]);
-      const absWeek = getAbsoluteWeekIndex(d);
-      const group = document.getElementById("anchorGroupSelect").value;
-      const row = parseInt(document.getElementById("anchorRowSelect").value);
-
-      if (typeof clearedYears !== 'undefined') {
-        clearedYears.delete(d.getFullYear());
-      }
-
-      timelineAnchors = timelineAnchors.filter(a => a.absWeek < absWeek);
-      timelineAnchors.push({ absWeek, group, startRow: row, manual: true });
-      timelineAnchors.sort((a,b) => a.absWeek - b.absWeek);
-
-      await saveUserTimeline();
-      renderUnifiedCalendar();
-      alert(`✅ 成功設定更期起點！\n由 ${dateStr} 起採用 ${ROSTERS[group].name} 第 ${row} 行，後續所有更期已自動沿此起點向後順推。`);
+    window.navSimCalMonth = (colleagueIdx, delta) => {
+      const c = colleagues[colleagueIdx];
+      if (!c) return;
+      c.simMonth += delta;
+      if (c.simMonth > 12) { c.simMonth = 1; c.simYear++; }
+      if (c.simMonth < 1) { c.simMonth = 12; c.simYear--; }
+      window.calculateAll();
     };
 
-    window.applyAnchorToUnified = async (group, row, absWeek) => {
-      const info = getWeekInfoFromAbsIndex(absWeek);
-      if (typeof clearedYears !== 'undefined') {
-        clearedYears.delete(info.year);
-      }
-
-      timelineAnchors = timelineAnchors.filter(a => a.absWeek < absWeek);
-      timelineAnchors.push({ absWeek, group, startRow: row, manual: true });
-      timelineAnchors.sort((a,b) => a.absWeek - b.absWeek);
-
-      viewCalYear = info.year;
-      viewCalMonth = info.monday.getMonth() + 1;
-
-      await saveUserTimeline();
-      renderUnifiedCalendar();
-      const anchor = document.getElementById("unifiedCalAnchor");
-      if (anchor) anchor.scrollIntoView({ behavior: 'smooth' });
+    window.jumpSimCalToEntry = (colleagueIdx, year, month) => {
+      const c = colleagues[colleagueIdx];
+      if (!c) return;
+      c.simYear = year;
+      c.simMonth = month;
+      window.calculateAll();
     };
 
-    window.toggleVacationWeek = async (absWeek) => {
-      if (vacationWeeks.has(absWeek)) {
-        vacationWeeks.delete(absWeek);
-      } else {
-        vacationWeeks.add(absWeek);
-        timelineAnchors = timelineAnchors.filter(a => a.absWeek < absWeek);
-      }
-      await saveUserTimeline();
-      renderUnifiedCalendar();
-    };
+    function renderSimulatedCalendars(results) {
+      const container = document.getElementById("simCalendarsContainer");
+      let allHtml = "";
 
-    // ----------------- 渲染合拼個人月曆 -----------------
-    window.navUnifiedMonth = (delta) => {
-      viewCalMonth += delta;
-      if (viewCalMonth > 12) { viewCalMonth = 1; viewCalYear++; }
-      if (viewCalMonth < 1) { viewCalMonth = 12; viewCalYear--; }
-      renderUnifiedCalendar();
-    };
+      results.forEach((r) => {
+        const c = r.colleagueObj;
+        const viewY = c.simYear || r.entryYear;
+        const viewM = c.simMonth || 1;
+        const entryInfo = getWeekInfoFromAbsIndex(r.targetAbs);
+        const entryY = entryInfo.monday.getFullYear();
+        const entryM = entryInfo.monday.getMonth() + 1;
 
-    window.onViewCalYearChange = (val) => {
-      viewCalYear = parseInt(val);
-      renderUnifiedCalendar();
-    };
+        let accentClass = "";
+        if (r.originalIdx === 1) accentClass = "accent-purple";
+        else if (r.originalIdx === 2) accentClass = "accent-orange";
 
-    window.onViewCalMonthChange = (val) => {
-      viewCalMonth = parseInt(val);
-      renderUnifiedCalendar();
-    };
+        const firstDate = new Date(viewY, viewM - 1, 1);
+        const lastDate = new Date(viewY, viewM, 0);
+        const firstAbs = getAbsoluteWeekIndex(firstDate);
+        const lastAbs = getAbsoluteWeekIndex(lastDate);
 
-    window.jumpUnifiedToJanuary = () => {
-      viewCalMonth = 1;
-      renderUnifiedCalendar();
-    };
+        let tableRowsHtml = "";
+        for (let wAbs = firstAbs; wAbs <= lastAbs; wAbs++) {
+          const wInfo = getWeekInfoFromAbsIndex(wAbs);
+          const state = getSimulatedWeekShiftState(wAbs, r);
 
-    window.jumpUnifiedToToday = () => {
-      viewCalYear = todayObj.getFullYear();
-      viewCalMonth = todayObj.getMonth() + 1;
-      renderUnifiedCalendar();
-    };
+          let weekColClass = "mini-week-col";
+          let weekTagHtml = `W${wInfo.weekNum}<br>`;
 
-    function renderUnifiedCalendar() {
-      const ySelect = document.getElementById("viewCalYearSelect");
-      const mSelect = document.getElementById("viewCalMonthSelect");
-      if (ySelect) ySelect.value = viewCalYear;
-      if (mSelect) mSelect.value = viewCalMonth;
-      document.getElementById("unifiedNavTitle").innerText = `${viewCalYear} 年 ${viewCalMonth} 月`;
+          if (state.isEntryWeek) {
+            weekColClass += " sim-entry-week";
+            weekTagHtml += `★入位週<br>第${state.rowNum}行`;
+          } else if (state.isSimulated) {
+            weekColClass += " sim-post-week";
+            weekTagHtml += `推算<br>第${state.rowNum}行`;
+          } else if (state.isVacation) {
+            weekTagHtml += `<b style="color:#dc2626;">大假</b>`;
+          } else if (state.isPending) {
+            weekTagHtml += `<span style="color:#64748b;">待入位</span>`;
+          } else if (state.isCleared) {
+            weekTagHtml += `<span style="color:#94a3b8;">未導入</span>`;
+          } else if (state.isWeekSwapped) {
+            weekTagHtml += `<span style="color:#0284c7;">換:${ROSTERS[state.group].name.split(' ')[0]}<br>第${state.rowNum}行</span>`;
+          } else {
+            weekTagHtml += `<b>第${state.rowNum}行</b>`;
+          }
 
-      const firstDate = new Date(viewCalYear, viewCalMonth - 1, 1);
-      const lastDate = new Date(viewCalYear, viewCalMonth, 0);
-      const firstAbs = getAbsoluteWeekIndex(firstDate);
-      const lastAbs = getAbsoluteWeekIndex(lastDate);
+          tableRowsHtml += `<tr><td class="${weekColClass}">${weekTagHtml}</td>`;
 
-      const container = document.getElementById("unifiedCalendarGrid");
-      let html = `
-        <div class="month-card">
-          <div class="month-header">${viewCalYear} 年 ${viewCalMonth} 月個人更期月曆</div>
-          <table class="month-cal-table">
-            <thead>
-              <tr>
-                <th style="width:44px;">週/操作</th>
-                <th>MON</th><th>TUE</th><th>WED</th><th>THU</th><th>FRI</th><th>SAT</th><th>SUN</th>
-              </tr>
-            </thead>
-            <tbody>
-      `;
+          for (let d = 0; d < 7; d++) {
+            const cur = new Date(wInfo.monday);
+            cur.setDate(wInfo.monday.getDate() + d);
 
-      for (let wAbs = firstAbs; wAbs <= lastAbs; wAbs++) {
-        const wInfo = getWeekInfoFromAbsIndex(wAbs);
-        const state = getWeekShiftState(wAbs);
+            if (cur.getMonth() + 1 === viewM) {
+              const dk = `${cur.getFullYear()}-${String(cur.getMonth()+1).padStart(2,'0')}-${String(cur.getDate()).padStart(2,'0')}`;
+              const hDay = HK_PUBLIC_HOLIDAYS[dk];
+              const isToday = (cur.toDateString() === todayObj.toDateString());
 
-        let rowTag = "";
-        let leaveBtnText = "🏖️大假";
-        let leaveBtnClass = "btn-set-leave-week";
+              // 入位前保留 index1 個人單日調更；入位後展示純模擬推算更期
+              const defShift = state.shifts ? state.shifts[d] : "";
+              const custShift = (!state.isSimulated && userShiftOverrides[dk]) ? userShiftOverrides[dk] : "";
+              const fShift = custShift || defShift;
 
-        if (state.isCleared) {
-          rowTag = `<span style="color:#94a3b8; font-size:0.65rem;">未導入</span>`;
-          leaveBtnText = "🏖️大假";
-        } else if (state.isVacation) {
-          rowTag = `<b style="color:#c0392b;">大假</b>`;
-          leaveBtnText = "↺取消";
-        } else if (state.isPending) {
-          rowTag = `<span style="color:#7f8c8d;">待入位</span>`;
-        } else {
-          rowTag = `<b style="color:#8e44ad;">第${state.rowNum}行</b>`;
+              let tdClasses = [];
+              if (state.isEntryWeek) tdClasses.push("mini-cell-entry");
+              else if (state.isSimulated) tdClasses.push("mini-cell-sim");
+              if (hDay) tdClasses.push("mini-cell-holiday");
+              if (isToday) tdClasses.push("mini-cell-today");
+
+              let pills = "";
+              if (state.isEntryWeek && d === 0) {
+                pills += `<div class="mini-pill p-entry-badge">▶ 入位起點</div>`;
+              }
+              if (hDay) {
+                pills += `<div class="mini-pill p-holiday">${hDay}</div>`;
+              }
+              if (fShift) {
+                let pCls = "p-shift";
+                const isPShift = ["1-", "2-", "3-", "4-", "5-"].some(pre => fShift.startsWith(pre));
+                if (fShift === 'W' || fShift === 'R') pCls = "p-off";
+                else if (fShift.startsWith('N')) pCls = "p-night";
+                else if (isPShift) pCls = "p-evening";
+                else if (fShift === '大假' || fShift === 'AL') pCls = "p-leave";
+                if (custShift) pCls = "p-custom";
+
+                pills += `<div class="mini-pill ${pCls}">${fShift}</div>`;
+              }
+
+              const numCls = (!isToday && hDay) ? "mini-date-num holiday-txt" : "mini-date-num";
+              tableRowsHtml += `
+                <td class="${tdClasses.join(' ')}">
+                  <div class="${numCls}">${cur.getDate()}</div>
+                  ${pills}
+                </td>
+              `;
+            } else {
+              tableRowsHtml += `<td style="background:#f8fafc;"><div class="mini-date-num" style="color:#cbd5e1;">${cur.getDate()}</div></td>`;
+            }
+          }
+          tableRowsHtml += `</tr>`;
         }
 
-        html += `<tr>`;
-        html += `
-          <td class="cal-week-tag-col">
-            W${wInfo.weekNum}<br>${rowTag}
-            <button class="${leaveBtnClass}" onclick="toggleVacationWeek(${wAbs})">${leaveBtnText}</button>
-          </td>
+        allHtml += `
+          <div class="sim-cal-card ${accentClass}">
+            <div class="sim-card-top">
+              <div class="sim-card-title">
+                📅 模擬月曆：接替【${r.name}】
+              </div>
+              <button class="btn-apply-index1" onclick="applyAnchorToUnified('${r.group}', ${r.entryRow}, ${r.targetAbs}, '${r.name}')">
+                👉 確認採用並導入 index1 主月曆
+              </button>
+            </div>
+
+            <!-- 入位推算備註 (Remark) -->
+            <div class="sim-remark-box">
+              <b>📌 入位推算備註：</b>由 <b>${r.entryMonStr}</b>（${r.targetYear} W${r.targetWeek}，${r.entryRangeStr}）起，正式入位 <b>${r.groupName} 第 ${r.entryRow} 行</b> 並自動向後順推。<br>
+              <span style="font-size:0.74rem; opacity:0.9;">* 入位前（白底週數）完全跟隨主頁大月曆現有更期；入位後（淺綠底週數）為模擬新更期走勢。</span>
+            </div>
+
+            <!-- 細月曆月份導航 -->
+            <div class="sim-nav-bar">
+              <button class="sim-nav-btn" onclick="navSimCalMonth(${r.originalIdx}, -1)">◀ 上月</button>
+              <div style="display:flex; align-items:center; gap:6px;">
+                <span class="sim-month-label">${viewY} 年 ${viewM} 月</span>
+                <button class="sim-jump-entry-btn" onclick="jumpSimCalToEntry(${r.originalIdx}, ${entryY}, ${entryM})">🎯 入位月</button>
+              </div>
+              <button class="sim-nav-btn" onclick="navSimCalMonth(${r.originalIdx}, 1)">下月 ▶</button>
+            </div>
+
+            <!-- 細月曆表格 -->
+            <table class="mini-cal-table">
+              <thead>
+                <tr>
+                  <th style="width:48px;">週/狀態</th>
+                  <th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六</th><th>日</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${tableRowsHtml}
+              </tbody>
+            </table>
+          </div>
         `;
+      });
 
-        for (let d = 0; d < 7; d++) {
-          const cur = new Date(wInfo.monday);
-          cur.setDate(wInfo.monday.getDate() + d);
-          const y = cur.getFullYear();
-          const m = String(cur.getMonth() + 1).padStart(2, '0');
-          const dayNum = String(cur.getDate()).padStart(2, '0');
-          const dateKey = `${y}-${m}-${dayNum}`;
-
-          if (cur.getMonth() + 1 === viewCalMonth) {
-            const phHours = userPhUsage[dateKey] || 0;
-            const phHolidayName = HK_PUBLIC_HOLIDAYS[dateKey];
-            const defaultShift = state.shifts ? state.shifts[d] : "";
-            const customShift = userShiftOverrides[dateKey] || "";
-            const finalShift = customShift || defaultShift;
-
-            let shiftClass = "";
-            if (finalShift === 'W' || finalShift === 'R') shiftClass = 'shift-off';
-            else if (finalShift && finalShift.startsWith('N')) shiftClass = 'shift-night';
-            else if (finalShift === '大假' || finalShift === 'AL') shiftClass = 'shift-leave';
-
-            const noteText = userDayNotes[dateKey] || "";
-            let holidayTag = phHolidayName ? `<span class="ph-tag-holiday" title="${phHolidayName}">🔴 ${phHolidayName}</span>` : '';
-            let phBadge = phHours > 0 ? `<div class="ph-hour-badge">PH:${phHours}h</div>` : '';
-            let isCustomBadge = customShift ? `<span style="font-size:0.6rem; color:#2980b9; display:block;">(調)</span>` : '';
-            let noteBadge = noteText ? `<span class="note-badge" title="${noteText}">📝 ${noteText}</span>` : '';
-            let isTodayBorder = (cur.toDateString() === todayObj.toDateString()) ? 'border: 2px solid #e67e22 !important;' : '';
-            let noteClass = noteText ? 'has-note-cell' : '';
-
-            let shiftHtml = finalShift ? `<div class="cal-shift-text ${shiftClass} ${customShift ? 'cal-shift-custom' : ''}">${finalShift}</div>` : '';
-
-            html += `
-              <td class="${noteClass}" style="${isTodayBorder} cursor:pointer;" onclick="openCombinedModal('${dateKey}', '${defaultShift}')">
-                <div class="cal-date-num">${cur.getDate()}</div>
-                ${holidayTag}
-                ${shiftHtml}
-                ${isCustomBadge}
-                ${phBadge}
-                ${noteBadge}
-              </td>
-            `;
-          } else {
-            html += `<td style="background:#fafafa;"><div class="cal-date-num" style="color:#eee;">${cur.getDate()}</div></td>`;
-          }
-        }
-        html += `</tr>`;
-      }
-
-      html += `</tbody></table></div>`;
-      container.innerHTML = html;
-
-      updatePhStatistics();
+      container.innerHTML = allHtml;
     }
 
-    // ----------------- 重置今年更期 -----------------
-    window.resetYearShiftsAndPh = async () => {
+    // ----------------- 一鍵導入至 index1.html 主月曆 -----------------
+    window.applyAnchorToUnified = async (group, row, absWeek, colleagueName) => {
       if (!currentUser) return;
-      const targetYear = viewCalYear;
+      const info = getWeekInfoFromAbsIndex(absWeek);
+      const groupLabel = ROSTERS[group] ? ROSTERS[group].name : group;
 
-      const confirmShifts = confirm(`⚠️ 確定要重置並清空 ${targetYear} 年所有已導入的更期嗎？\n\n重置後，${targetYear} 年月曆將清空所有更期班次，重設為未導入狀態。`);
-      if (!confirmShifts) return;
-
-      const resetPhAlso = confirm(`❓ 是否連同 ${targetYear} 年的 PH (公眾假期) 扣減紀錄一併清除？\n\n【按「確定」】= 連同 PH 一併重置 (清空該年 PH 時數)\n【按「取消」】= 保留 PH 紀錄 (只重置更期班次)`);
-
-      clearedYears.add(targetYear);
-
-      for (const dateKey of Object.keys(userShiftOverrides)) {
-        if (dateKey.startsWith(`${targetYear}-`)) {
-          delete userShiftOverrides[dateKey];
-        }
+      if (!confirm(`確定要正式採用接替【${colleagueName || ''}】的方案，並導入「主頁大月曆 (index1)」嗎？\n\n📅 生效起點：${info.monStr} (${info.year} W${info.weekNum})\n📋 轉入班表：${groupLabel} 第 ${row} 行\n\n（導入後主月曆由該日起將自動按新行數向後推算）`)) {
+        return;
       }
 
-      for (const absW of Array.from(vacationWeeks)) {
-        const info = getWeekInfoFromAbsIndex(absW);
-        if (info.year === targetYear) {
-          vacationWeeks.delete(absW);
-        }
-      }
+      clearedYears.delete(info.year);
 
-      timelineAnchors = timelineAnchors.filter(a => {
-        const info = getWeekInfoFromAbsIndex(a.absWeek);
-        return info.year !== targetYear;
-      });
+      // 清除該日及之後舊旗標並寫入新入位點
+      timelineAnchors = timelineAnchors.filter(a => a.absWeek < absWeek);
+      timelineAnchors.push({ absWeek, group, startRow: row, manual: true });
+      timelineAnchors.sort((a, b) => a.absWeek - b.absWeek);
 
-      if (resetPhAlso) {
-        for (const dateKey of Object.keys(userPhUsage)) {
-          if (dateKey.startsWith(`${targetYear}-`)) {
-            delete userPhUsage[dateKey];
-          }
-        }
-      }
+      await saveUserTimeline();
 
-      try {
-        await saveUserTimeline();
-        await setDoc(doc(db, "user_shift_overrides", currentUser.uid), { overrides: userShiftOverrides });
-        if (resetPhAlso) {
-          await setDoc(doc(db, "user_ph_usage", currentUser.uid), { usage: userPhUsage });
-        }
-
-        renderPhYearChips();
-        renderUnifiedCalendar();
-        updatePhStatistics();
-
-        alert(`🎉 已成功重置 ${targetYear} 年更期！\n月曆更期已徹底清空。\n${resetPhAlso ? '🔴 PH 扣減紀錄已一併清空。' : '🟢 PH 扣減紀錄已完整保留。'}\n\n如需重新排更，請在上方點擊「導入組別和行數至個人月曆」。`);
-      } catch (e) {
-        alert("重置失敗: " + e.message);
-      }
-    };
-
-    // ----------------- PH 統計 -----------------
-    function renderPhYearChips() {
-      const container = document.getElementById("phYearChipsContainer");
-      if (!container) return;
-
-      const yearsSet = new Set([todayObj.getFullYear()]);
-      for (const key of Object.keys(userPhUsage)) {
-        const y = parseInt(key.split('-')[0]);
-        if (!isNaN(y)) yearsSet.add(y);
-      }
-      const sortedYears = Array.from(yearsSet).sort((a,b) => b - a);
-
-      let html = "";
-      sortedYears.forEach(y => {
-        const isActive = (y === selectedSummaryYear) ? 'active' : '';
-        html += `<button class="btn-year-chip ${isActive}" onclick="selectSummaryYear(${y})">${y} 年</button>`;
-      });
-      container.innerHTML = html;
-    }
-
-    window.selectSummaryYear = (y) => {
-      selectedSummaryYear = y;
-      renderPhYearChips();
-      updatePhStatistics();
-    };
-
-    function updatePhStatistics() {
-      let totalHoursInYear = 0;
-
-      for (const [key, hours] of Object.entries(userPhUsage)) {
-        if (key.startsWith(`${selectedSummaryYear}-`)) {
-          totalHoursInYear += hours;
-        }
-      }
-
-      const totalDaysConverted = (totalHoursInYear / 8).toFixed(2);
-      const wholeDays = Math.floor(totalHoursInYear / 8);
-      const remHours = totalHoursInYear % 8;
-
-      document.getElementById("summaryYearTitle").innerText = `${selectedSummaryYear} 年`;
-      document.getElementById("phStatTotalHours").innerText = `${totalHoursInYear} 小時`;
-      document.getElementById("phStatTotalDays").innerText = `${totalDaysConverted} 日 (${wholeDays}日 + ${remHours}h)`;
-    }
-
-    // ----------------- PH 及手動調更 Modal -----------------
-    window.openCombinedModal = (dateKey, defaultShift) => {
-      activeModalDateKey = dateKey;
-      activeModalDefaultShift = defaultShift;
-
-      if (typeof HK_PUBLIC_HOLIDAYS !== 'undefined') {
-        const phHolidayName = HK_PUBLIC_HOLIDAYS[dateKey];
-        const banner = document.getElementById("modalHolidayBanner");
-        if (banner) {
-          if (phHolidayName) {
-            banner.style.display = "block";
-            banner.innerText = `🔴 公眾假期：${phHolidayName}`;
-          } else {
-            banner.style.display = "none";
-          }
-        }
-      }
-
-      const titleElem = document.getElementById("modalDateTitle");
-      if (titleElem) titleElem.innerText = `📅 設定 ${dateKey} 之紀錄：`;
-
-      const dutyDisplayElem = document.getElementById("modalDutyInfo");
-      if (dutyDisplayElem) {
-        dutyDisplayElem.innerHTML = `今日預設更期：<b>${defaultShift || '無'}</b>`;
-      }
-      
-      const curPh = (typeof userPhUsage !== 'undefined' && userPhUsage[dateKey]) ? userPhUsage[dateKey] : 0;
-      const phSelect = document.getElementById("phHourSelect");
-      if (phSelect) phSelect.value = curPh;
-
-      const curShift = (typeof userShiftOverrides !== 'undefined' && userShiftOverrides[dateKey]) ? userShiftOverrides[dateKey] : "";
-      const shiftSelect = document.getElementById("modalShiftSelect");
-      if (shiftSelect) shiftSelect.value = curShift;
-
-      const noteInput = document.getElementById("modalNoteInput");
-      if (noteInput) {
-        noteInput.value = (typeof userDayNotes !== 'undefined' && userDayNotes[dateKey]) ? userDayNotes[dateKey] : "";
-      }
-
-      document.getElementById("combinedModal").style.display = "flex";
-    };
-
-    window.closeCombinedModal = () => {
-      document.getElementById("combinedModal").style.display = "none";
-      activeModalDateKey = null;
-    };
-
-    window.saveCombinedData = async () => {
-      if (!activeModalDateKey || !currentUser) return;
-
-      const phVal = parseInt(document.getElementById("phHourSelect").value);
-      if (phVal > 0) {
-        userPhUsage[activeModalDateKey] = phVal;
+      if (confirm("🎉 已成功將此方案導入「主頁大月曆」！\n\n按「確定」立即前往主頁大月曆查看，按「取消」留在此頁繼續比較。")) {
+        window.location.href = "index1.html";
       } else {
-        delete userPhUsage[activeModalDateKey];
-      }
-
-      const shiftVal = document.getElementById("modalShiftSelect").value;
-      if (shiftVal) {
-        userShiftOverrides[activeModalDateKey] = shiftVal;
-      } else {
-        delete userShiftOverrides[activeModalDateKey];
-      }
-
-      const noteVal = document.getElementById("modalNoteInput").value.trim();
-      if (noteVal) {
-        userDayNotes[activeModalDateKey] = noteVal;
-      } else {
-        delete userDayNotes[activeModalDateKey];
-      }
-
-      try {
-        await setDoc(doc(db, "user_ph_usage", currentUser.uid), { usage: userPhUsage });
-        await setDoc(doc(db, "user_shift_overrides", currentUser.uid), { overrides: userShiftOverrides });
-        await setDoc(doc(db, "user_day_notes", currentUser.uid), { notes: userDayNotes });
-        closeCombinedModal();
-        renderPhYearChips();
-        renderUnifiedCalendar();
-      } catch (e) {
-        alert("儲存失敗: " + e.message);
+        window.calculateAll();
       }
     };
 
-    window.resetCombinedDate = async () => {
-      if (!activeModalDateKey || !currentUser) return;
-      delete userPhUsage[activeModalDateKey];
-      delete userShiftOverrides[activeModalDateKey];
-      delete userDayNotes[activeModalDateKey];
-
-      try {
-        await setDoc(doc(db, "user_ph_usage", currentUser.uid), { usage: userPhUsage });
-        await setDoc(doc(db, "user_shift_overrides", currentUser.uid), { overrides: userShiftOverrides });
-        await setDoc(doc(db, "user_day_notes", currentUser.uid), { notes: userDayNotes });
-        closeCombinedModal();
-        renderPhYearChips();
-        renderUnifiedCalendar();
-      } catch (e) {
-        alert("還原失敗: " + e.message);
-      }
-    };
-
-    // ----------------- 雲端歷史紀錄與載入 -----------------
+    // ----------------- 雲端與本地快取讀寫 -----------------
     async function saveUserTimeline() {
       if (!currentUser) return;
       try {
         await setDoc(doc(db, "user_timeline", currentUser.uid), {
           anchors: timelineAnchors,
           vacations: Array.from(vacationWeeks),
-          clearedYears: Array.from(clearedYears)
+          clearedYears: Array.from(clearedYears),
+          weekOverrides: weekOverrides
         });
-      } catch (e) { console.error(e); }
+
+        // 同步更新 index1.html 的 LocalStorage 快取，確保跳轉過去瞬間顯示最新更期
+        const cacheKey = "user_cache_" + currentUser.uid;
+        const cached = JSON.parse(localStorage.getItem(cacheKey) || "{}");
+        cached.timelineAnchors = timelineAnchors;
+        cached.vacationWeeks = Array.from(vacationWeeks);
+        cached.clearedYears = Array.from(clearedYears);
+        cached.weekOverrides = weekOverrides;
+        localStorage.setItem(cacheKey, JSON.stringify(cached));
+      } catch (e) {
+        console.error("儲存失敗:", e);
+        alert("儲存至雲端失敗: " + e.message);
+      }
     }
 
     async function loadUserData() {
       if (!currentUser) return;
+      const uid = currentUser.uid;
+
+      // 1. 先讀本地快取加速顯示
       try {
-        const phSnap = await getDoc(doc(db, "user_ph_usage", currentUser.uid));
-        if (phSnap.exists() && phSnap.data().usage) {
-          userPhUsage = phSnap.data().usage;
-        } else {
-          userPhUsage = {};
+        const cached = JSON.parse(localStorage.getItem("user_cache_" + uid) || "null");
+        if (cached) {
+          userShiftOverrides = cached.userShiftOverrides || {};
+          userDayNotes = cached.userDayNotes || {};
+          timelineAnchors = cached.timelineAnchors || [];
+          vacationWeeks = new Set(cached.vacationWeeks || []);
+          clearedYears = new Set(cached.clearedYears || []);
+          weekOverrides = cached.weekOverrides || {};
         }
+      } catch (e) {}
 
-        const ovSnap = await getDoc(doc(db, "user_shift_overrides", currentUser.uid));
-        if (ovSnap.exists() && ovSnap.data().overrides) {
-          userShiftOverrides = ovSnap.data().overrides;
-        } else {
-          userShiftOverrides = {};
-        }
+      // 2. 從雲端同步最新主月曆資料
+      try {
+        const [ovSnap, noteSnap, tlSnap] = await Promise.all([
+          getDoc(doc(db, "user_shift_overrides", uid)),
+          getDoc(doc(db, "user_day_notes", uid)),
+          getDoc(doc(db, "user_timeline", uid))
+        ]);
 
-        const noteSnap = await getDoc(doc(db, "user_day_notes", currentUser.uid));
-        if (noteSnap.exists() && noteSnap.data().notes) {
-          userDayNotes = noteSnap.data().notes;
-        } else {
-          userDayNotes = {};
-        }
+        userShiftOverrides = (ovSnap.exists() && ovSnap.data().overrides) ? ovSnap.data().overrides : {};
+        userDayNotes = (noteSnap.exists() && noteSnap.data().notes) ? noteSnap.data().notes : {};
 
-        const tlSnap = await getDoc(doc(db, "user_timeline", currentUser.uid));
         if (tlSnap.exists()) {
           timelineAnchors = tlSnap.data().anchors || [];
           vacationWeeks = new Set(tlSnap.data().vacations || []);
           clearedYears = new Set(tlSnap.data().clearedYears || []);
+          weekOverrides = tlSnap.data().weekOverrides || {};
         }
-      } catch (e) { console.error(e); }
-    }
-
-    window.onAnchorGroupChange = (grp) => {
-      const select = document.getElementById("anchorRowSelect");
-      const totalR = ROSTERS[grp].totalRows;
-      select.innerHTML = "";
-      for (let r = 1; r <= totalR; r++) {
-        select.innerHTML += `<option value="${r}">第 ${r} 行</option>`;
+      } catch (e) {
+        console.error(e);
       }
-    };
+    }
   </script>
 </head>
 <body>
@@ -2267,9 +1711,6 @@
       <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#ffffff" d="M12.24 10.285V13.4h6.887C18.2 16.14 15.645 18 12.24 18c-3.315 0-6-2.685-6-6s2.685-6 6-6c1.47 0 2.805.54 3.84 1.425l2.385-2.385C16.98 3.555 14.73 2.7 12.24 2.7 7.155 2.7 3 6.855 3 11.94s4.155 9.24 9.24 9.24c5.325 0 8.865-3.75 8.865-9.03 0-.615-.06-1.2-.165-1.755H12.24z"/></svg>
       Google 一鍵登入
     </button>
-    <div style="font-size:0.75rem; color:#7f8c8d; margin-top:8px; line-height:1.4;">
-      ⚠️ 若首次使用 Google 登入未有反應，請<b>再按一下</b>「Google 一鍵登入」即可。
-    </div>
     <div id="authMsg" style="color:#e74c3c; font-size:0.85rem; margin-top:10px; font-weight:bold;"></div>
   </div>
 
@@ -2280,11 +1721,11 @@
       <div style="font-weight:bold; color:#d35400; font-size:0.85rem; margin-bottom:6px;">
         👑 管理員專用：發布全體新公告
       </div>
-      <input type="text" id="adminNoticeTitle" placeholder="公告標題 (例如: 系統更新或假期通知)" style="width:100%; padding:6px; margin-bottom:6px; font-size:0.82rem; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;">
-      <textarea id="adminNoticeContent" placeholder="輸入公告內容... (支援換行)" rows="3" style="width:100%; padding:6px; font-size:0.82rem; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;"></textarea>
+      <input type="text" id="adminNoticeTitle" placeholder="公告標題" style="width:100%; padding:6px; margin-bottom:6px; font-size:0.82rem; border:1px solid #ccc; border-radius:4px;">
+      <textarea id="adminNoticeContent" placeholder="輸入公告內容..." rows="3" style="width:100%; padding:6px; font-size:0.82rem; border:1px solid #ccc; border-radius:4px;"></textarea>
       <div style="text-align:right; margin-top:6px;">
         <button onclick="publishNewAnnouncement()" style="background:#e67e22; color:white; border:none; padding:6px 14px; border-radius:4px; font-size:0.8rem; font-weight:bold; cursor:pointer;">
-          🚀 發布新公告（所有同事下次進入將彈出一次）
+          🚀 發布新公告
         </button>
       </div>
     </div>
@@ -2294,22 +1735,17 @@
       <button onclick="location.reload()" style="background:#34495e; color:white; border:none; padding:6px 16px; border-radius:6px; font-size:0.8rem; cursor:pointer; font-weight:bold;">🔄 重新整理 (Refresh)</button>
     </div>
 
-    <!-- 手機安裝技巧提示框 -->
-    <div style="background:#e8f4fd; border-left:4px solid #3498db; padding:6px 10px; margin-bottom:8px; border-radius:4px; font-size:0.8rem; color:#2980b9; line-height:1.4;">
-      📲 <b>手機安裝技巧：</b>在手機瀏覽器點擊下方「<b>分享</b>」圖示（或右上角設定），然後選擇「<b>加至主畫面 (Add to Home Screen)</b>」，即可當作獨立 App 隨時點開使用！
-    </div>
-
-        <!-- 頁面切換按鈕 -->
+    <!-- 頁面切換按鈕 -->
     <div style="display:flex; justify-content:center; gap:6px; margin-bottom:8px; flex-wrap:wrap;">
       <a href="index1.html" style="padding:6px 10px; border-radius:6px; font-size:0.8rem; font-weight:bold; text-decoration:none; background:#f8f9fa; color:#555; border:1px solid #ccc;">🏠 主頁大月曆</a>
       <a href="calc.html" style="padding:6px 10px; border-radius:6px; font-size:0.8rem; font-weight:bold; text-decoration:none; background:#e67e22; color:white;">📅 大假推算</a>
       <a href="dinner.html" style="padding:6px 10px; border-radius:6px; font-size:0.8rem; font-weight:bold; text-decoration:none; background:#f8f9fa; color:#555; border:1px solid #ccc;">🍽️ 多人約食飯／撞假對照</a>
       <a href="swap.html" style="padding:6px 10px; border-radius:6px; font-size:0.8rem; font-weight:bold; text-decoration:none; background:#f8f9fa; color:#555; border:1px solid #ccc;">🔄 實體更表模擬與調更</a>
     </div>
+
     <div class="top-bar" style="margin-bottom:6px;">
       <div>
         👤 目前用戶：<b id="userLabel" style="color:var(--highlight);"></b>
-        <div style="color:#e74c3c; font-size:0.75rem; font-weight:bold; margin-top:2px;">⚠️ 測試版本 (Beta)</div>
       </div>
       <div style="display:flex; gap:6px;">
         <button class="btn-logout" style="background:#3498db;" onclick="openChangeAccountModal()">🔑 修改帳號名／密碼</button>
@@ -2317,10 +1753,10 @@
       </div>
     </div>
 
-    <!-- 一鍵跳至月曆按鈕 -->
+    <!-- 一鍵跳至模擬月曆按鈕 + 個人定位設定區 (保留原有設計) -->
     <div style="margin-bottom:12px;">
-      <button onclick="scrollToCalendar()" style="background:#8e44ad; color:white; border:none; padding:10px 14px; border-radius:8px; font-weight:bold; font-size:0.95rem; cursor:pointer; width:100%; box-shadow:0 3px 6px rgba(142,68,173,0.3); display:flex; justify-content:center; align-items:center; gap:6px;">
-        📅 跳至個人月曆 ▼
+      <button onclick="scrollToSimCal()" style="background:#8e44ad; color:white; border:none; padding:10px 14px; border-radius:8px; font-weight:bold; font-size:0.95rem; cursor:pointer; width:100%; box-shadow:0 3px 6px rgba(142,68,173,0.3); display:flex; justify-content:center; align-items:center; gap:6px;">
+        📅 跳至模擬對比月曆 ▼
       </button>
 
       <!-- 步驟推算設定區塊 -->
@@ -2343,28 +1779,28 @@
           </div>
         </div>
 
-        <button class="btn btn-primary" onclick="applySetupToCalendar()" style="width:100%; margin-top:8px; padding:8px; font-size:0.85rem; font-weight:bold; background:#2980b9; color:white; border:none; border-radius:6px;">
+        <button class="btn btn-primary" onclick="applySetupToCalendar()" style="width:100%; margin-top:8px; padding:8px; font-size:0.85rem; font-weight:bold; background:#2980b9; color:white; border:none; border-radius:6px; cursor:pointer;">
           🗳️ 導入組別和行數至個人月曆
         </button>
       </div>
 
       <!-- 大假設定區 -->
       <div style="display:flex; gap:8px; align-items:stretch; margin-top:10px; margin-bottom:6px;">
-        <div class="step-box" style="flex:1; min-width:0; box-sizing:border-box; padding:8px;">
+        <div class="step-box" style="flex:1; min-width:0; padding:8px;">
           <span class="step-title">③ 幾號開始放假 (小日曆)</span>
-          <div style="width:100%; box-sizing:border-box;">
-            <input type="date" id="myLeaveDateInput" onchange="onMyLeaveDateChange(this.value)" style="width:100%; height:34px; line-height:34px; padding:0 6px; box-sizing:border-box; -webkit-appearance:none; border:1px solid #ccc; border-radius:6px; font-size:0.82rem; background:#fff; display:block;">
+          <div style="width:100%;">
+            <input type="date" id="myLeaveDateInput" onchange="onMyLeaveDateChange(this.value)" style="width:100%; height:34px; line-height:34px; padding:0 6px; -webkit-appearance:none; border:1px solid #ccc; border-radius:6px; font-size:0.82rem; background:#fff; display:block;">
           </div>
           
           <div style="margin-top:6px;">
             <span class="step-title">④ 或選放哪一週大假</span>
-            <div style="display:flex; gap:4px; width:100%; box-sizing:border-box;">
-              <select id="myLeaveYearSelect" onchange="onMyLeaveWeekChange()" style="flex:1; height:34px; min-width:0; box-sizing:border-box;">
+            <div style="display:flex; gap:4px; width:100%;">
+              <select id="myLeaveYearSelect" onchange="onMyLeaveWeekChange()" style="flex:1; height:34px; min-width:0;">
                 <option value="2026">2026年</option>
                 <option value="2027">2027年</option>
                 <option value="2028">2028年</option>
               </select>
-              <select id="myLeaveWeekSelect" onchange="onMyLeaveWeekChange()" style="flex:1.2; height:34px; min-width:0; box-sizing:border-box;"></select>
+              <select id="myLeaveWeekSelect" onchange="onMyLeaveWeekChange()" style="flex:1.2; height:34px; min-width:0;"></select>
             </div>
           </div>
         </div>
@@ -2378,133 +1814,16 @@
       <div id="myWeekTip" style="font-size:0.75rem; color:#555; margin-top:4px; font-weight:bold;"></div>
     </div>
 
-    <!-- 同事大假推算 -->
-    <h1 style="margin: 0 0 8px 0; font-size:1.1rem; color:var(--primary-color);">👥 多同事大假重疊推算 (日曆 / Week 雙選)</h1>
+    <!-- 同事大假 / 換組推算設定 -->
+    <h1 style="margin: 12px 0 8px 0; font-size:1.05rem; color:var(--primary-color);">👥 同事大假／換組入位推算（勾選即出模擬細月曆）</h1>
     <div class="colleagues-grid" id="colleaguesList"></div>
     
     <!-- 分析結果摘要 -->
-    <div class="result-alert" id="summaryText">載入分析中...</div>
+    <div class="result-alert" id="summaryText"></div>
 
-    <!-- 完整大更期月曆表 -->
-    <div class="big-roster-section">
-      <div class="big-roster-header">
-        <div class="big-roster-title">
-          📋 完整更期月曆大表
-          <span style="font-size:0.75rem; color:#27ae60; font-weight:normal;">（綠色整行標註 ★可揀入位）</span>
-        </div>
-        <div>
-          <label style="font-weight:bold; font-size:0.8rem;">組別：</label>
-          <select id="middleGroupSelect" onchange="changeMiddleGroup(this.value)">
-            <option value="group2">2組 (12行)</option>
-            <option value="group3" selected>3組 (14行)</option>
-            <option value="group4">4組 (5行)</option>
-            <option value="groupCell">Cell組 (6行)</option>
-            <option value="groupPharm">Pharm組 (14行)</option>
-            <option value="groupSenior">Senior組 (6行)</option>
-          </select>
-        </div>
-      </div>
-      <div class="table-container">
-        <table id="bigRosterTable"></table>
-      </div>
-    </div>
-
-    <hr class="section-divider">
-
-    <!-- 個人一體化更期月曆 -->
-    <div class="unified-calendar-box" id="unifiedCalAnchor">
-      <div class="unified-header">
-        <div style="font-size:1.05rem; font-weight:bold; color:#8e44ad;">
-          📅 個人一體化更期月曆（班次推算・手動調更・PH記錄）
-        </div>
-        <div style="font-size:0.75rem; color:#666;">
-          點選日期可記 PH 及手動調更；點左側可一鍵設整週大假
-        </div>
-      </div>
-
-      <div class="ph-rules-card">
-        <b>💡 假期額度指引：</b>
-        <ul class="ph-rules-list">
-          <li><b>4 個大假</b>：該年只有 <b>11.5 日</b> PH。</li>
-          <li><b>5 個大假</b>：該年只有 <b>6 日</b> PH (11.5 - 5.5 = 6)。</li>
-          <li><b>年資滿 10 年</b>：享有額外 <b>2 日 AL</b> (年假)。</li>
-          <li><i>每累積 8 小時折算為 1 整日 PH。</i></li>
-        </ul>
-      </div>
-
-      <!-- 換組/插旗控制列 -->
-      <div class="unified-controls">
-        <b>🚩 換組插旗設定：</b>
-        <span>由</span>
-        <input type="date" id="anchorDateInput" value="2026-10-05">
-        <span>起轉為：</span>
-        <select id="anchorGroupSelect" onchange="onAnchorGroupChange(this.value)">
-          <option value="group2">2組 (12行)</option>
-          <option value="group3" selected>3組 (14行)</option>
-          <option value="group4">4組 (5行)</option>
-          <option value="groupCell">Cell組 (6行)</option>
-          <option value="groupPharm">Pharm組 (14行)</option>
-          <option value="groupSenior">Senior組 (6行)</option>
-        </select>
-        <select id="anchorRowSelect">
-          <option value="1">第 1 行</option><option value="2">第 2 行</option><option value="3">第 3 行</option>
-          <option value="4">第 4 行</option><option value="5">第 5 行</option><option value="6">第 6 行</option>
-          <option value="7">第 7 行</option><option value="8">第 8 行</option><option value="9">第 9 行</option>
-          <option value="10">第 10 行</option><option value="11">第 11 行</option><option value="12">第 12 行</option>
-          <option value="13">第 13 行</option><option value="14" selected>第 14 行</option>
-        </select>
-        <button class="btn-quick-nav" onclick="setManualAnchorAtDate()">套用並向後推算</button>
-      </div>
-
-      <!-- 月曆導航條 -->
-      <div class="cal-nav-bar">
-        <div style="display:flex; gap:4px; align-items:center;">
-          <button class="cal-nav-btn" onclick="navUnifiedMonth(-1)">◀ 上月</button>
-          <button class="btn-quick-nav" onclick="jumpUnifiedToJanuary()">🚀 1月</button>
-          <button class="btn-quick-nav" style="background:#e67e22;" onclick="jumpUnifiedToToday()">🎯 今日</button>
-        </div>
-
-        <div class="cal-nav-title" style="color:#8e44ad; font-size:0.95rem; font-weight:bold;">
-          <span id="unifiedNavTitle">2026 年 10 月</span>
-          <select id="viewCalYearSelect" onchange="onViewCalYearChange(this.value)" style="padding:2px 4px;"></select>
-          <select id="viewCalMonthSelect" onchange="onViewCalMonthChange(this.value)" style="padding:2px 4px;">
-            <option value="1">1月</option><option value="2">2月</option><option value="3">3月</option>
-            <option value="4">4月</option><option value="5">5月</option><option value="6">6月</option>
-            <option value="7">7月</option><option value="8">8月</option><option value="9">9月</option>
-            <option value="10" selected>10月</option><option value="11">11月</option><option value="12">12月</option>
-          </select>
-        </div>
-
-        <button class="cal-nav-btn" onclick="navUnifiedMonth(1)">下月 ▶</button>
-      </div>
-
-      <!-- 單月實體月曆格仔 -->
-      <div class="single-month-container" id="unifiedCalendarGrid"></div>
-
-      <!-- 右下角：重置今年所有已導入更期按鈕 -->
-      <div style="display:flex; justify-content:flex-end; margin-top:8px; padding-right:2px;">
-        <button type="button" onclick="resetYearShiftsAndPh()" style="background:#e74c3c; color:white; border:none; padding:6px 12px; border-radius:6px; font-size:0.78rem; font-weight:bold; cursor:pointer; box-shadow:0 2px 5px rgba(231,76,60,0.25); display:flex; align-items:center; gap:4px;">
-          <span>🔄 重置今年所有已導入更期</span>
-        </button>
-      </div>
-
-      <!-- PH 統計部分 -->
-      <div style="margin-top:15px; border-top:2px dashed #d7bde2; padding-top:12px;">
-        <div style="font-weight:bold; color:#6c3483; font-size:0.85rem;">📊 歷年 PH 統計（點擊年份切換）：</div>
-        <div class="ph-year-chips-bar" id="phYearChipsContainer"></div>
-        <div class="ph-summary-dashboard">
-          <div class="ph-stat-item">
-            <div style="font-size:0.75rem; color:#7d3c98;" id="summaryYearTitle">2026 年</div>
-            <div style="font-size:0.75rem; color:#555;">已用總時數</div>
-            <div class="ph-stat-val" id="phStatTotalHours">0 小時</div>
-          </div>
-          <div class="ph-stat-item">
-            <div style="font-size:0.75rem; color:#7d3c98;">折合總日數 (8h=1日)</div>
-            <div class="ph-stat-val" style="color:#c0392b;" id="phStatTotalDays">0.00 日</div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <!-- 模擬細月曆上下對比區 (只有勾選「加入計算」才會渲染) -->
+    <div id="simCalAnchor"></div>
+    <div class="sim-calendars-stack" id="simCalendarsContainer"></div>
 
     <div style="text-align:center; margin-top:20px; padding:10px 0;">
       <button onclick="location.reload()" style="background:#34495e; color:white; border:none; padding:8px 18px; border-radius:6px; font-size:0.85rem; cursor:pointer; font-weight:bold;">🔄 重新整理頁面 (Refresh)</button>
@@ -2525,72 +1844,21 @@
     </div>
   </div>
 
-  <!-- PH 時數及手動調更 Modal -->
-  <div id="combinedModal" class="modal-overlay" style="display:none;">
-    <div class="modal-card">
-      <div id="modalHolidayBanner" class="modal-holiday-banner" style="display:none; background:#fed7d7; color:#c53030; padding:6px 10px; border-radius:6px; font-weight:bold; font-size:0.85rem; margin-bottom:8px;"></div>
-      <div class="modal-section-title" id="modalDateTitle" style="font-size:0.95rem;"></div>
-      <div id="modalDutyInfo" style="background:#edf2f7; border-left:4px solid #3182ce; padding:6px 10px; margin-bottom:10px; border-radius:4px; font-size:0.85rem; color:#2d3748; line-height:1.4;"></div>
-
-      <div class="modal-section">
-        <span class="modal-section-title">🏖️ 扣減 PH (公眾假期) 時數：</span>
-        <select class="select-block" id="phHourSelect">
-          <option value="0">0 小時 (未請 PH)</option>
-          <option value="1">1 小時</option>
-          <option value="2">2 小時</option>
-          <option value="3">3 小時</option>
-          <option value="4">4 小時 (半日)</option>
-          <option value="5">5 小時</option>
-          <option value="6">6 小時</option>
-          <option value="7">7 小時</option>
-          <option value="8">8 小時 (全日)</option>
-          <option value="9">9 小時</option>
-          <option value="10">10 小時</option>
-        </select>
-      </div>
-
-      <div class="modal-section">
-        <span class="modal-section-title">🔄 手動調更 / 覆寫當日班次：</span>
-        <select class="select-block" id="modalShiftSelect"></select>
-        <div style="margin-top:6px; display:flex; gap:6px; align-items:center;">
-          <button type="button" style="background:#e74c3c; color:white; border:none; padding:4px 10px; border-radius:4px; font-size:0.75rem; font-weight:bold; cursor:pointer;" onclick="document.getElementById('modalShiftSelect').value='AL'">🏖️ 設為單日 AL (大假)</button>
-        </div>
-        <div style="font-size:0.72rem; color:#7f8c8d; margin-top:4px;">* 調更或放單日 AL 只影響當日，後續日子依然自動推算</div>
-      </div>
-
-      <div class="modal-section">
-        <span class="modal-section-title">📝 個人備註事項：</span>
-        <input type="text" id="modalNoteInput" placeholder="例如: 陪睇醫生、車輛驗車、兼職..." style="width:100%; padding:6px; border:1.5px solid #3498db; border-radius:6px; font-size:0.85rem;">
-        <div style="font-size:0.72rem; color:#7f8c8d; margin-top:4px;">* 加入備註後，月曆格仔會自動標註專屬顏色框框</div>
-      </div>
-
-      <div class="modal-btns">
-        <button class="btn-save-modal" onclick="saveCombinedData()">儲存設定</button>
-        <button class="btn-reset-modal" onclick="resetCombinedDate()">還原預設</button>
-        <button class="btn-cancel-modal" onclick="closeCombinedModal()">取消</button>
-      </div>
-    </div>
-  </div>
-
   <!-- 帳號名及密碼修改專屬 Modal -->
-  <div id="accountModal" class="modal-overlay" style="display:none;">
+  <div id="accountModal" class="modal-overlay">
     <div class="modal-card">
       <h3 style="margin-top:0; color:#2c3e50; font-size:1rem;">🔑 修改帳號名稱與密碼</h3>
-      
       <div style="text-align:left; margin-bottom:10px;">
         <label style="font-size:0.8rem; font-weight:bold; color:#555;">帳戶名稱：</label>
-        <input type="text" id="editUsernameInput" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:0.9rem; margin-top:4px;" placeholder="輸入帳戶名稱">
+        <input type="text" id="editUsernameInput" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:0.9rem; margin-top:4px;">
       </div>
-
       <div style="text-align:left; margin-bottom:12px;">
         <label style="font-size:0.8rem; font-weight:bold; color:#555;">新密碼（若不改密碼請留空）：</label>
         <input type="password" id="editPasswordInput" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:0.9rem; margin-top:4px;" placeholder="最少 6 位新密碼">
       </div>
-
       <div id="editAccountMsg" style="font-size:0.8rem; margin-bottom:10px; font-weight:bold; color:#e74c3c;"></div>
-
       <div class="modal-btns">
-        <button class="btn-save-modal" style="background:#3498db;" onclick="submitAccountUpdate()">確認修改</button>
+        <button class="btn-save-modal" onclick="submitAccountUpdate()">確認修改</button>
         <button class="btn-cancel-modal" onclick="closeAccountModal()">取消</button>
       </div>
     </div>
