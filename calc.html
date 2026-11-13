@@ -896,9 +896,6 @@
 
     // ----------------- 我目前的定位 UI -----------------
     function initMyStatusUI() {
-      document.getElementById("myGroupSelect").value = myStatus.group;
-      updateMyRowSelect();
-
       const weekSelect = document.getElementById("myLeaveWeekSelect");
       weekSelect.innerHTML = "";
       for (let w = 1; w <= 52; w++) {
@@ -1297,7 +1294,6 @@
 
     // ----------------- 推算核心（完全保留原有算法） -----------------
     window.calculateAll = () => {
-      const summaryText = document.getElementById("summaryText");
       const simContainer = document.getElementById("simCalendarsContainer");
 
       colleagues.forEach((c, idx) => {
@@ -1315,7 +1311,6 @@
 
       // 沒有勾選任何同事時，下方月曆完全不出現
       if (activeWithIdx.length === 0) {
-        summaryText.innerHTML = "<div style='color:#64748b; font-size:0.85rem; padding:6px 2px;'>💡 請勾選上方同事的「加入計算」，下方將自動彈出對應的模擬入位月曆進行比較。</div>";
         simContainer.innerHTML = "";
         return;
       }
@@ -1362,24 +1357,6 @@
           entryMonStr: entryInfo.monStr
         };
       });
-
-      // 摘要提示（已移除 index1 字眼）
-      let summaryHtml = `<div style="display:flex; flex-direction:column; gap:6px;">`;
-      results.forEach((r) => {
-        summaryHtml += `
-          <div style="background:#f0fdf4; border:1.5px solid #22c55e; border-radius:8px; padding:8px 10px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
-            <div style="font-weight:bold; font-size:0.86rem; color:#15803d;">
-              🟢 接替【${r.name}】：由 ${r.entryMonStr} (W${r.targetWeek}) 起入位 <b>${r.groupName} 第 ${r.entryRow} 行</b>
-            </div>
-            <button onclick="applyAnchorToUnified('${r.group}', ${r.entryRow}, ${r.targetAbs}, '${r.name}')" style="background:#16a34a; color:white; border:none; padding:5px 10px; border-radius:5px; font-size:0.78rem; font-weight:bold; cursor:pointer;">
-              👉 導入主月曆
-            </button>
-          </div>
-        `;
-      });
-      summaryHtml += `</div>`;
-      summaryText.innerHTML = summaryHtml;
-
       // 渲染上下對比模擬細月曆
       renderSimulatedCalendars(results);
     };
@@ -1729,19 +1706,6 @@
 
   <!-- 2. 主面板 -->
   <div class="container" id="appPanel" style="display:none;">
-    <!-- 管理員公告發布區 -->
-    <div id="adminAnnouncementBox" class="admin-announcement-panel">
-      <div style="font-weight:bold; color:#d35400; font-size:0.85rem; margin-bottom:6px;">
-        👑 管理員專用：發布全體新公告
-      </div>
-      <input type="text" id="adminNoticeTitle" placeholder="公告標題" style="width:100%; padding:6px; margin-bottom:6px; font-size:0.82rem; border:1px solid #ccc; border-radius:4px;">
-      <textarea id="adminNoticeContent" placeholder="輸入公告內容..." rows="3" style="width:100%; padding:6px; font-size:0.82rem; border:1px solid #ccc; border-radius:4px;"></textarea>
-      <div style="text-align:right; margin-top:6px;">
-        <button onclick="publishNewAnnouncement()" style="background:#e67e22; color:white; border:none; padding:6px 14px; border-radius:4px; font-size:0.8rem; font-weight:bold; cursor:pointer;">
-          🚀 發布新公告
-        </button>
-      </div>
-    </div>
 
     <!-- 重新整理按鈕 -->
     <div style="text-align:center; margin-bottom:10px;">
@@ -1771,31 +1735,6 @@
       <button onclick="scrollToSimCal()" style="background:#8e44ad; color:white; border:none; padding:10px 14px; border-radius:8px; font-weight:bold; font-size:0.95rem; cursor:pointer; width:100%; box-shadow:0 3px 6px rgba(142,68,173,0.3); display:flex; justify-content:center; align-items:center; gap:6px;">
         📅 跳至模擬對比月曆 ▼
       </button>
-
-      <!-- 步驟推算設定區塊 -->
-      <div style="background:#ffffff; border:1.5px solid #3182ce; border-radius:10px; padding:12px; margin-top:10px;">
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
-          <div>
-            <label style="font-size:0.82rem; font-weight:bold; color:#2c3e50;">① 我的組別</label>
-            <select id="myGroupSelect" onchange="onGroupChange(this.value)" style="width:100%; padding:6px; font-weight:bold; border:1px solid #cbd5e1; border-radius:6px; margin-top:4px;">
-              <option value="group2">2組 (12行)</option>
-              <option value="group3" selected>3組 (14行)</option>
-              <option value="group4">4組 (5行)</option>
-              <option value="groupCell">Cell組 (6行)</option>
-              <option value="groupPharm">Pharm組 (14行)</option>
-              <option value="groupSenior">Senior組 (6行)</option>
-            </select>
-          </div>
-          <div>
-            <label style="font-size:0.82rem; font-weight:bold; color:#2c3e50;">② 今日我正處於</label>
-            <select id="myCurrentRowSelect" style="width:100%; padding:6px; font-weight:bold; border:1px solid #cbd5e1; border-radius:6px; margin-top:4px;"></select>
-          </div>
-        </div>
-
-        <button class="btn btn-primary" onclick="applySetupToCalendar()" style="width:100%; margin-top:8px; padding:8px; font-size:0.85rem; font-weight:bold; background:#2980b9; color:white; border:none; border-radius:6px; cursor:pointer;">
-          🗳️ 導入組別和行數至個人月曆
-        </button>
-      </div>
 
       <!-- 大假設定區（右邊改為上下雙按鈕：上綠「假設大假」、下紅「導入大假」） -->
       <div style="display:flex; gap:8px; align-items:stretch; margin-top:10px; margin-bottom:6px;">
@@ -1838,9 +1777,6 @@
     <!-- 同事大假 / 換組推算設定 -->
     <h1 style="margin: 12px 0 8px 0; font-size:1.05rem; color:var(--primary-color);">👥 同事大假／換組入位推算（勾選即出模擬細月曆）</h1>
     <div class="colleagues-grid" id="colleaguesList"></div>
-    
-    <!-- 分析結果摘要 -->
-    <div class="result-alert" id="summaryText"></div>
 
     <!-- 模擬細月曆上下對比區 (只有勾選「加入計算」才會渲染) -->
     <div id="simCalAnchor"></div>
